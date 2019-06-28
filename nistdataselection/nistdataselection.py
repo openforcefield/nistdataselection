@@ -1,34 +1,554 @@
 """
-nistdataselection.py
 Records the tools and decisions used to select NIST data for curation.
-
-Handles the primary functions
 """
+import glob
+import json
+import os
+import re
+import shutil
+import subprocess
+
+import logging
+
+import pandas
+from openeye import oedepict
+from openforcefield.topology import Molecule, Topology
+from openforcefield.typing.engines import smirnoff
 
 
-def canvas(with_attribution=True):
-    """
-    Placeholder function to show example docstring (NumPy format)
-
-    Replace this function and doc string for your own project
+def get_data_filename(relative_path: str):
+    """Get the full path to one of the reference files in the
+     data directory.
 
     Parameters
     ----------
-    with_attribution : bool, Optional, default: True
-        Set whether or not to display who the quote is from
+    relative_path : str
+        The relative path of the file to load.
+    """
+
+    from pkg_resources import resource_filename
+    fn = resource_filename('nistdataselection', os.path.join('data', relative_path))
+
+    if not os.path.exists(fn):
+        raise FileNotFoundError("Sorry! %s does not exist. If you just added it, you'll have to re-install" % fn)
+
+    return fn
+
+
+def cleanup_raw_data(raw_data_directory):
+    """A helper function to strip all unpublished NIST values and uncertainties
+    from the raw data, remove any duplicate, and produce count files.
+
+    This function is mainly only for use by people extracting raw data
+    directly from ThermoML archives using another tool.
+
+    Parameters
+    ----------
+    raw_data_directory: str
+        The file path to the raw data directory.
+    """
+    counts_directory = get_data_filename('property_counts')
+    os.makedirs(counts_directory, exist_ok=True)
+
+    data_directory = get_data_filename('property_data')
+    os.makedirs(data_directory, exist_ok=True)
+
+    for data_path in glob.glob(os.path.join(raw_data_directory, '*.csv')):
+
+        print(f'Cleaning {data_path}.')
+        raw_data = pandas.read_csv(data_path)
+
+        if 'Uncertainty' in raw_data.columns:
+            raw_data.drop(columns="Uncertainty", inplace=True)
+
+        if 'Value' in raw_data.columns:
+            raw_data.drop(columns="Value", inplace=True)
+
+        raw_data = raw_data.drop_duplicates(['Temperature', 'Pressure', 'Substance', 'N_Components'])
+        property_name = os.path.splitext(os.path.basename(data_path))[0]
+
+        for index, data_type in enumerate(['pure', 'binary', 'ternary']):
+
+            data = raw_data.loc[raw_data['N_Components'] == index + 1]
+            print(f'Processing the {data_type} data.')
+
+            substance_counts = {}
+
+            column_names = ['Temperature', 'Pressure']
+
+            for component_index in range(index + 1):
+                column_names.append(f'Component {component_index + 1}')
+                column_names.append(f'Mole Fraction {component_index + 1}')
+
+            column_names.append('Source')
+
+            refactored_data = pandas.DataFrame(columns=column_names)
+
+            for _, data_row in data.iterrows():
+
+                refactored_row = {
+                    'Temperature': data_row['Temperature'],
+                    'Pressure': data_row['Pressure'],
+                    'Source': data_row['Source'],
+                }
+
+                substance_split = data_row['Substance'].split('|')
+
+                for component_index in range(index + 1):
+
+                    smiles = re.match('[^{]*', substance_split[component_index]).group(0)
+                    mole_fraction = re.search(r'{(.*)}', substance_split[component_index]).group(1)
+
+                    if smiles not in substance_counts:
+                        substance_counts[smiles] = 0
+
+                    substance_counts[smiles] += 1
+
+                    refactored_row[f'Component {component_index + 1}'] = smiles
+                    refactored_row[f'Mole Fraction {component_index + 1}'] = mole_fraction
+
+                refactored_data = refactored_data.append(refactored_row, ignore_index=True)
+
+            refactored_data.to_csv(os.path.join(data_directory, f'{property_name}_{data_type}.csv'), index=False)
+
+            with open(os.path.join(counts_directory, f'{property_name}_{data_type}.csv'), 'w') as file:
+
+                file.write(f'Smiles,Count\n')
+
+                for smiles, count in substance_counts.items():
+                    file.write(f'{smiles},{count}\n')
+
+            print(f'Finished processing the {data_type} data.')
+
+        print(f'Finished cleaning the {data_path} data.')
+
+
+def find_smirks_parameters(smiles_list):
+    """Finds those Van der Waal force field parameters which would
+    be assigned to a list of molecules defined by the proved
+    smiles patterns.
+
+    Parameters
+    ----------
+    smiles_list: list of str
+        The smiles patterns to assign the vdW force field parameters
+        to.
 
     Returns
     -------
-    quote : str
-        Compiled string including quote and optional attribution
+    dict of str and list of str
+        A dictionary with keys of vdW smirks patterns, and
+        values of lists of smiles patterns which would utilize
+        those vdW patterns.
     """
 
-    quote = "The code is but a canvas to our imagination."
-    if with_attribution:
-        quote += "\n\t- Adapted from Henry David Thoreau"
-    return quote
+    force_field = smirnoff.ForceField(get_data_filename('smirnoff99Frosst-1.0.9.offxml'))
+    vdw_handler = force_field.get_parameter_handler('vdW')
+
+    smiles_by_vdw_smirks = {}
+
+    # Initialize the array with all possible smirks pattern
+    # to make it easier to identify which are missing.
+    for vdw_parameter in vdw_handler.parameters:
+
+        if vdw_parameter.smirks in smiles_by_vdw_smirks:
+            continue
+
+        smiles_by_vdw_smirks[vdw_parameter.smirks] = []
+
+    # Populate the dictionary using the open force field toolkit.
+    for smiles in smiles_list:
+
+        molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+        topology = Topology.from_molecules([molecule])
+
+        assigned_parameters = force_field.label_molecules(topology)[0]
+        vdw_parameters = assigned_parameters['vdW']
+
+        for parameter in vdw_parameters.values():
+
+            smiles_by_vdw_smirks[parameter.smirks].append(smiles)
+
+    return smiles_by_vdw_smirks
+
+
+def analyse_functional_groups(smiles_list=None):
+    """Employs checkmol to determine which chemical moieties
+    are present within a list of smiles patterns.
+
+    Parameters
+    ----------
+    smiles_list: list of str, optional
+        The smiles patterns to examine. If no list
+        is provided, the data directory will be
+        scanned for all smirks patterns.
+
+    Returns
+    -------
+    dict of str and list of str
+        A dictionary with keys of smiles patterns, and values
+        of lists of matching chemical moiety descriptors.
+    """
+
+    # Make sure the checkmol utility has been installed separately.
+    if shutil.which('checkmol') is None:
+
+        raise FileNotFoundError('checkmol was not found on this machine. Visit '
+                                'http://merian.pch.univie.ac.at/~nhaider/cheminf/cmmm.html '
+                                'to obtain it.')
+
+    # Find a list of smiles from the data files if none
+    # is provided.
+    if smiles_list is None:
+
+        smiles_list = set()
+
+        counts_directory = get_data_filename('property_counts')
+
+        for counts_path in glob.glob(os.path.join(counts_directory, '*.csv')):
+
+            property_counts = pandas.read_csv(counts_path)
+
+            for smiles in property_counts['Smiles']:
+                smiles_list.add(smiles)
+
+    smiles_group_codes = {}
+    molecule_file_name = 'tmp.sdf'
+
+    for smiles in smiles_list:
+
+        molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+
+        # Save the smile pattern out as an SDF file, ready
+        # to use as input to checkmol.
+        with open(molecule_file_name, 'w') as file:
+            molecule.to_file(file, 'SDF')
+
+        # Execute checkmol.
+        result = subprocess.check_output(['checkmol', molecule_file_name],
+                                         stderr=subprocess.STDOUT).decode()
+
+        groups = []
+
+        # Turn the string output into a list of moieties.
+        if len(result) > 0:
+            groups = list(filter(None, result.replace('\n', '').split(';')))
+
+        smiles_group_codes[smiles] = groups
+
+    # Remove the temporary SDF file.
+    if os.path.isfile(molecule_file_name):
+        os.unlink(molecule_file_name)
+
+    return smiles_group_codes
+
+
+def smiles_to_png(directory, smiles):
+    """Creates a png image of the 2D representation of
+    a given smiles pattern.
+
+    Parameters
+    ----------
+    directory: str
+        The directory to save the smiles pattern in.
+    smiles: str
+        The smiles pattern to generate the png of.
+    """
+
+    off_molecule:Molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    oe_molecule = off_molecule.to_openeye()
+
+    oedepict.OEPrepareDepiction(oe_molecule)
+
+    options = oedepict.OE2DMolDisplayOptions(256, 256, oedepict.OEScale_AutoScale)
+
+    display = oedepict.OE2DMolDisplay(oe_molecule, options)
+    oedepict.OERenderMolecule(os.path.join(directory, f'{smiles}.png'), display)
+
+
+def find_common_smiles_patterns(*properties_of_interest, save_structure_pngs=True):
+    """Find the set of smiles patterns which are common to multiple
+    property data sets (and with different numbers of components).
+
+    Parameters
+    ----------
+    properties_of_interest: list of tuple of str and int
+        A list of descriptors of the property data sets to
+        find the common smiles patterns between. The tuple
+        should be of the form (property_name, number_of_components)
+    save_structure_pngs: bool
+        If true, a png image of the 2D representation of
+        each of the common smiles pattern is saved to a
+        figures directory.
+
+    Returns
+    -------
+    set of str
+        The smiles patterns which are common to all specified
+        data sets.
+    pandas.DataFrame
+        A data from describing how many data points of each property
+        there is for each common smiles pattern. The data from will
+        have columns:
+
+        Smiles,Pure/Binary/Ternary PropertyName, ..., Pure/Binary/Ternary PropertyName
+    """
+
+    assert len(properties_of_interest) > 0
+
+    data_directory = get_data_filename('property_data')
+
+    data_sets = {}
+    data_set_smiles = {}
+
+    components_to_string = {1: 'pure', 2: 'binary', 3: 'ternary'}
+
+    for property_name, number_of_components in properties_of_interest:
+
+        if number_of_components > 3:
+            raise ValueError('Only properties with up to three components are supported')
+
+        component_string = components_to_string[number_of_components]
+
+        if property_name not in data_sets:
+            data_sets[property_name] = {}
+            data_set_smiles[property_name] = {}
+
+        # Load in the data set for this property.
+        data_sets[property_name][number_of_components] = pandas.read_csv(
+            os.path.join(data_directory, f'{property_name}_{component_string}.csv'))
+
+        # Find all unique smiles in the data set.
+        data_set_smiles[property_name][number_of_components] = set()
+
+        for index in range(number_of_components):
+
+            for smiles in data_sets[property_name][number_of_components][f'Component {index + 1}']:
+
+                # Exclude any salt pairs.
+                if '.' in smiles:
+                    continue
+
+                data_set_smiles[property_name][number_of_components].add(smiles)
+
+    # Find all of the smiles which are common to the requested
+    # data sets.
+    common_smiles = None
+
+    for property_name, number_of_components in properties_of_interest:
+
+        if common_smiles is None:
+
+            common_smiles = data_set_smiles[property_name][number_of_components]
+            continue
+
+        common_smiles = common_smiles.intersection(data_set_smiles[property_name][number_of_components])
+
+    print(f'The combined sets have {len(common_smiles)} molecules in common.')
+
+    # Create png representations of the molecules if requested.
+    if save_structure_pngs:
+        os.makedirs('figures', exist_ok=True)
+
+        for smiles in common_smiles:
+            smiles_to_png('figures', smiles)
+
+    # Collate the data counts into a pandas data frame.
+    column_names = ['Smiles']
+
+    # Set up the columns.
+    for property_name, number_of_components in properties_of_interest:
+        component_string = components_to_string[number_of_components]
+        column_names.append(f'{component_string.capitalize()} {property_name.capitalize()}')
+
+    data_counts = pandas.DataFrame(columns=column_names)
+
+    # Add the row entries.
+    for smiles in common_smiles:
+
+        row = {'Smiles': smiles}
+
+        for property_name, number_of_components in properties_of_interest:
+            component_string = components_to_string[number_of_components]
+
+            data_set = data_sets[property_name][number_of_components]
+
+            matching_data = []
+
+            if number_of_components == 1:
+                matching_data = data_set.loc[data_set['Component 1'] == smiles]
+            elif number_of_components == 2:
+                matching_data = data_set.loc[(data_set['Component 1'] == smiles) |
+                                             (data_set['Component 2'] == smiles)]
+            elif number_of_components == 3:
+                matching_data = data_set.loc[(data_set['Component 1'] == smiles) |
+                                             (data_set['Component 2'] == smiles) |
+                                             (data_set['Component 3'] == smiles)]
+
+            row[f'{component_string.capitalize()} {property_name.capitalize()}'] = len(matching_data)
+
+        data_counts = data_counts.append(row, ignore_index=True)
+
+    return common_smiles, data_counts
+
+
+def find_overlapping_properties():
+
+    data_directory = get_data_filename('property_data')
+
+    # Load in the data sets of
+    pure_densities = pandas.read_csv(os.path.join(data_directory, 'Density_pure.csv'))
+    pure_density_smiles = set([smiles for smiles in pure_densities['Component 1']])
+
+    binary_densities = pandas.read_csv(os.path.join(data_directory, 'Density_binary.csv'))
+    binary_density_smiles = [smiles for smiles in binary_densities['Component 1']]
+    binary_density_smiles.extend([smiles for smiles in binary_densities['Component 2']])
+    binary_density_smiles = set(binary_density_smiles)
+
+    pure_dielectrics = pandas.read_csv(os.path.join(data_directory, 'DielectricConstant_pure.csv'))
+    pure_dielectric_smiles = set([smiles for smiles in pure_dielectrics['Component 1']])
+
+    binary_enthalpy_of_mixing = pandas.read_csv(os.path.join(data_directory, 'EnthalpyOfMixing_binary.csv'))
+    binary_enthalpy_of_mixing_smiles = [smiles for smiles in binary_enthalpy_of_mixing['Component 1']]
+    binary_enthalpy_of_mixing_smiles.extend([smiles for smiles in binary_enthalpy_of_mixing['Component 2']])
+    binary_enthalpy_of_mixing_smiles = set(binary_enthalpy_of_mixing_smiles)
+
+    pure_vapour_pressure = pandas.read_csv(os.path.join(data_directory, 'VaporPressure_pure.csv'))
+    pure_vapour_pressure_smiles = set([smiles for smiles in pure_vapour_pressure['Component 1']])
+
+    pure_enthalpy_of_vapourisation = pandas.read_csv(os.path.join(data_directory, 'EnthalpyOfVapourisation_pure.csv'))
+    pure_enthalpy_of_vapourisation_smiles = set([smiles for smiles in pure_enthalpy_of_vapourisation['Component 1']])
+
+    # intersection = pure_density_smiles.intersection(binary_density_smiles)
+    # intersection = intersection.intersection(binary_enthalpy_of_mixing_smiles)
+    # intersection = intersection.intersection(pure_dielectric_smiles)
+    # intersection = intersection.intersection(pure_vapour_pressure_smiles)
+    # intersection = intersection.intersection(pure_enthalpy_of_vapourisation_smiles)
+
+    # intersection = pure_density_smiles.intersection(pure_vapour_pressure_smiles)
+    # intersection = pure_density_smiles.intersection(pure_enthalpy_of_vapourisation_smiles)
+
+    intersection = pure_enthalpy_of_vapourisation_smiles
+
+    final_smiles = set()
+
+    for smiles in intersection:
+
+        # Exclude any salt pairs.
+        if '.' in smiles:
+            continue
+
+        final_smiles.add(smiles)
+
+    print(f'Found {len(final_smiles)} molecules with properties across the board.')
+
+    os.makedirs('figures', exist_ok=True)
+
+    for smiles in final_smiles:
+        smiles_to_png('figures', smiles)
+
+    all_used_parameters = find_smirks_parameters(final_smiles)
+
+    for smirks in all_used_parameters:
+
+        if len(all_used_parameters[smirks]) > 0:
+            continue
+
+        print(f'No parameters found for {smirks}')
+
+    all_functional_groups = analyse_functional_groups(final_smiles)
+
+    with open('all_used_parameters.json', 'w') as file:
+        json.dump(all_used_parameters, file, sort_keys=True, indent=2, separators=(',', ': '))
+
+    with open('all_functional_groups.json', 'w') as file:
+        json.dump(all_functional_groups, file, sort_keys=True, indent=2, separators=(',', ': '))
+
+    print('Smiles,Pure,Density,Binary Density,Pure Dielectric,'
+          'Binary Enthalpy of Mixing,Pure Vapour Pressure, Pure Enthalpy of Vapourisation')
+
+    for smiles in final_smiles:
+
+        matching_pure_densities = pure_densities.loc[pure_densities['Component 1'] == smiles]
+        matching_binary_densities = binary_densities.loc[(binary_densities['Component 1'] == smiles) |
+                                                         (binary_densities['Component 2'] == smiles)]
+
+        matching_pure_dielectrics = pure_dielectrics.loc[pure_dielectrics['Component 1'] == smiles]
+
+        matching_binary_enthalpies_of_mixing = binary_enthalpy_of_mixing.loc[
+            (binary_enthalpy_of_mixing['Component 1'] == smiles) |
+            (binary_enthalpy_of_mixing['Component 2'] == smiles)
+        ]
+
+        matching_pure_vapour_pressure = pure_vapour_pressure.loc[pure_vapour_pressure['Component 1'] == smiles]
+
+        matching_enthalpy_of_vapouristion = pure_enthalpy_of_vapourisation.loc[
+            pure_enthalpy_of_vapourisation['Component 1'] == smiles]
+
+        print(f'{smiles},'
+              f'{len(matching_pure_densities)},'
+              f'{len(matching_binary_densities)},'
+              f'{len(matching_pure_dielectrics)},'
+              f'{len(matching_binary_enthalpies_of_mixing)},'
+              f'{len(matching_pure_vapour_pressure)},'
+              f'{len(matching_enthalpy_of_vapouristion)}')
+
+    print('Finished.')
+
+
+def main():
+    """The main function which will perform the
+    data curation."""
+
+    # Hide the overly verbose 'missing sterochemistry' toolkit logging.
+    logger = logging.getLogger()
+    logger.setLevel(logging.ERROR)
+
+    # Find the set of smiles common to both the pure density and
+    # pure vapour pressure data sets.
+    # common_smiles, data_counts = find_overlapping_properties_new(
+    #     ('Density', 1),
+    #     ('VaporPressure', 1)
+    # )
+
+    # Find the set of smiles common to both the pure density and
+    # pure enthalpy of vapourisation data sets.
+    # common_smiles, data_counts = find_overlapping_properties_new(
+    #     ('Density', 1),
+    #     ('VaporPressure', 1)
+    # )
+
+    # Find the set of smiles common to both the pure and binary density,
+    # the pure static dielectric constant, the binary enthalpy of mixing,
+    # and the vapour pressure data sets.
+    common_smiles, data_counts = find_common_smiles_patterns(
+        ('Density', 1),
+        ('Density', 2),
+        ('DielectricConstant', 1),
+        ('EnthalpyOfMixing', 2),
+        ('VaporPressure', 1),
+        save_structure_pngs=False
+    )
+
+    data_counts.to_csv('data_counts.csv')
+
+    # Find all of the vdw parameters which would be assigned to the common
+    # smiles patterns.
+    used_vdw_parameters = find_smirks_parameters(common_smiles)
+
+    # Print information about those vdw parameters for which
+    # no matched smiles patterns were found.
+    for smirks in used_vdw_parameters:
+
+        if len(used_vdw_parameters[smirks]) > 0:
+            continue
+
+        print(f'No VdW parameters found for {smirks}.')
+
+    # Find all of the chemical moieties present in each of the
+    # common smiles patterns.
+    # chemical_moieties = analyse_functional_groups(common_smiles)
 
 
 if __name__ == "__main__":
-    # Do something if this file is invoked on its own
-    print(canvas())
+    main()

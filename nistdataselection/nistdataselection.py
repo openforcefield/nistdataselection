@@ -2,13 +2,11 @@
 Records the tools and decisions used to select NIST data for curation.
 """
 import glob
-import json
+import logging
 import os
 import re
 import shutil
 import subprocess
-
-import logging
 
 import pandas
 from openeye import oedepict
@@ -392,110 +390,6 @@ def find_common_smiles_patterns(*properties_of_interest, save_structure_pngs=Tru
     return common_smiles, data_counts
 
 
-def find_overlapping_properties():
-
-    data_directory = get_data_filename('property_data')
-
-    # Load in the data sets of
-    pure_densities = pandas.read_csv(os.path.join(data_directory, 'Density_pure.csv'))
-    pure_density_smiles = set([smiles for smiles in pure_densities['Component 1']])
-
-    binary_densities = pandas.read_csv(os.path.join(data_directory, 'Density_binary.csv'))
-    binary_density_smiles = [smiles for smiles in binary_densities['Component 1']]
-    binary_density_smiles.extend([smiles for smiles in binary_densities['Component 2']])
-    binary_density_smiles = set(binary_density_smiles)
-
-    pure_dielectrics = pandas.read_csv(os.path.join(data_directory, 'DielectricConstant_pure.csv'))
-    pure_dielectric_smiles = set([smiles for smiles in pure_dielectrics['Component 1']])
-
-    binary_enthalpy_of_mixing = pandas.read_csv(os.path.join(data_directory, 'EnthalpyOfMixing_binary.csv'))
-    binary_enthalpy_of_mixing_smiles = [smiles for smiles in binary_enthalpy_of_mixing['Component 1']]
-    binary_enthalpy_of_mixing_smiles.extend([smiles for smiles in binary_enthalpy_of_mixing['Component 2']])
-    binary_enthalpy_of_mixing_smiles = set(binary_enthalpy_of_mixing_smiles)
-
-    pure_vapour_pressure = pandas.read_csv(os.path.join(data_directory, 'VaporPressure_pure.csv'))
-    pure_vapour_pressure_smiles = set([smiles for smiles in pure_vapour_pressure['Component 1']])
-
-    pure_enthalpy_of_vapourisation = pandas.read_csv(os.path.join(data_directory, 'EnthalpyOfVapourisation_pure.csv'))
-    pure_enthalpy_of_vapourisation_smiles = set([smiles for smiles in pure_enthalpy_of_vapourisation['Component 1']])
-
-    # intersection = pure_density_smiles.intersection(binary_density_smiles)
-    # intersection = intersection.intersection(binary_enthalpy_of_mixing_smiles)
-    # intersection = intersection.intersection(pure_dielectric_smiles)
-    # intersection = intersection.intersection(pure_vapour_pressure_smiles)
-    # intersection = intersection.intersection(pure_enthalpy_of_vapourisation_smiles)
-
-    # intersection = pure_density_smiles.intersection(pure_vapour_pressure_smiles)
-    # intersection = pure_density_smiles.intersection(pure_enthalpy_of_vapourisation_smiles)
-
-    intersection = pure_enthalpy_of_vapourisation_smiles
-
-    final_smiles = set()
-
-    for smiles in intersection:
-
-        # Exclude any salt pairs.
-        if '.' in smiles:
-            continue
-
-        final_smiles.add(smiles)
-
-    print(f'Found {len(final_smiles)} molecules with properties across the board.')
-
-    os.makedirs('figures', exist_ok=True)
-
-    for smiles in final_smiles:
-        smiles_to_png('figures', smiles)
-
-    all_used_parameters = find_smirks_parameters(final_smiles)
-
-    for smirks in all_used_parameters:
-
-        if len(all_used_parameters[smirks]) > 0:
-            continue
-
-        print(f'No parameters found for {smirks}')
-
-    all_functional_groups = analyse_functional_groups(final_smiles)
-
-    with open('all_used_parameters.json', 'w') as file:
-        json.dump(all_used_parameters, file, sort_keys=True, indent=2, separators=(',', ': '))
-
-    with open('all_functional_groups.json', 'w') as file:
-        json.dump(all_functional_groups, file, sort_keys=True, indent=2, separators=(',', ': '))
-
-    print('Smiles,Pure,Density,Binary Density,Pure Dielectric,'
-          'Binary Enthalpy of Mixing,Pure Vapour Pressure, Pure Enthalpy of Vapourisation')
-
-    for smiles in final_smiles:
-
-        matching_pure_densities = pure_densities.loc[pure_densities['Component 1'] == smiles]
-        matching_binary_densities = binary_densities.loc[(binary_densities['Component 1'] == smiles) |
-                                                         (binary_densities['Component 2'] == smiles)]
-
-        matching_pure_dielectrics = pure_dielectrics.loc[pure_dielectrics['Component 1'] == smiles]
-
-        matching_binary_enthalpies_of_mixing = binary_enthalpy_of_mixing.loc[
-            (binary_enthalpy_of_mixing['Component 1'] == smiles) |
-            (binary_enthalpy_of_mixing['Component 2'] == smiles)
-        ]
-
-        matching_pure_vapour_pressure = pure_vapour_pressure.loc[pure_vapour_pressure['Component 1'] == smiles]
-
-        matching_enthalpy_of_vapouristion = pure_enthalpy_of_vapourisation.loc[
-            pure_enthalpy_of_vapourisation['Component 1'] == smiles]
-
-        print(f'{smiles},'
-              f'{len(matching_pure_densities)},'
-              f'{len(matching_binary_densities)},'
-              f'{len(matching_pure_dielectrics)},'
-              f'{len(matching_binary_enthalpies_of_mixing)},'
-              f'{len(matching_pure_vapour_pressure)},'
-              f'{len(matching_enthalpy_of_vapouristion)}')
-
-    print('Finished.')
-
-
 def main():
     """The main function which will perform the
     data curation."""
@@ -515,7 +409,7 @@ def main():
     # pure enthalpy of vapourisation data sets.
     # common_smiles, data_counts = find_overlapping_properties_new(
     #     ('Density', 1),
-    #     ('VaporPressure', 1)
+    #     ('EnthalpyOfVapourisation', 1)
     # )
 
     # Find the set of smiles common to both the pure and binary density,

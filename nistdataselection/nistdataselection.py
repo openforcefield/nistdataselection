@@ -7,6 +7,9 @@ import os
 import re
 import shutil
 import subprocess
+from collections import defaultdict
+
+import matplotlib.pyplot as plt
 
 import pandas
 from openeye import oedepict
@@ -121,53 +124,90 @@ def cleanup_raw_data(raw_data_directory):
         print(f'Finished cleaning the {data_path} data.')
 
 
-def find_smirks_parameters(smiles_list):
-    """Finds those Van der Waal force field parameters which would
-    be assigned to a list of molecules defined by the proved
-    smiles patterns.
+def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
+    """Finds those force field parameters with a given tag which
+    would be assigned to a specified set of molecules defined by
+    the their smiles patterns.
 
     Parameters
     ----------
-    smiles_list: list of str
-        The smiles patterns to assign the vdW force field parameters
+    parameter_tag: str
+        The tag of the force field parameters to find.
+    smiles_patterns: str
+        The smiles patterns to assign the force field parameters
         to.
 
     Returns
     -------
     dict of str and list of str
-        A dictionary with keys of vdW smirks patterns, and
+        A dictionary with keys of parameter smirks patterns, and
         values of lists of smiles patterns which would utilize
-        those vdW patterns.
+        those parameters.
     """
 
     force_field = smirnoff.ForceField(get_data_filename('smirnoff99Frosst-1.0.9.offxml'))
-    vdw_handler = force_field.get_parameter_handler('vdW')
+    parameter_handler = force_field.get_parameter_handler(parameter_tag)
 
-    smiles_by_vdw_smirks = {}
+    smiles_by_parameter_smirks = {}
 
     # Initialize the array with all possible smirks pattern
     # to make it easier to identify which are missing.
-    for vdw_parameter in vdw_handler.parameters:
+    for parameter in parameter_handler.parameters:
 
-        if vdw_parameter.smirks in smiles_by_vdw_smirks:
+        if parameter.smirks in smiles_by_parameter_smirks:
             continue
 
-        smiles_by_vdw_smirks[vdw_parameter.smirks] = []
+        smiles_by_parameter_smirks[parameter.smirks] = set()
 
     # Populate the dictionary using the open force field toolkit.
-    for smiles in smiles_list:
+    for smiles in smiles_patterns:
 
         molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
         topology = Topology.from_molecules([molecule])
 
         assigned_parameters = force_field.label_molecules(topology)[0]
-        vdw_parameters = assigned_parameters['vdW']
+        parameters_with_tag = assigned_parameters[parameter_tag]
 
-        for parameter in vdw_parameters.values():
+        for parameter in parameters_with_tag.values():
+            smiles_by_parameter_smirks[parameter.smirks].add(smiles)
 
-            smiles_by_vdw_smirks[parameter.smirks].append(smiles)
+    return smiles_by_parameter_smirks
 
-    return smiles_by_vdw_smirks
+
+def count_parameters_per_molecule(parameter_tag='vdW', *smiles_patterns):
+    """Returns the frequency that a certain number of parameters with a given
+     tag (e.g. 'vdW') get assigned to a list of molecules defined by their
+     smiles patterns.
+
+    Parameters
+    ----------
+    parameter_tag: str
+        The parameter tag.
+    smiles_patterns: str
+        The smiles patterns which define the list of molecules.
+
+    Returns
+    -------
+    dict of int and int
+        The counted frequencies.
+    """
+
+    smiles_by_parameter_smirks = find_smirks_parameters(parameter_tag, *smiles_patterns)
+
+    parameter_smirks_by_smiles = defaultdict(list)
+
+    for smirks_pattern in smiles_by_parameter_smirks:
+        for smiles_pattern in smiles_by_parameter_smirks[smirks_pattern]:
+            parameter_smirks_by_smiles[smiles_pattern].append(smirks_pattern)
+
+    counts = defaultdict(int)
+
+    for smiles_pattern in parameter_smirks_by_smiles:
+
+        number_of_parameters = len(parameter_smirks_by_smiles[smiles_pattern])
+        counts[number_of_parameters] += 1
+
+    return counts
 
 
 def analyse_functional_groups(smiles_list=None):
@@ -253,7 +293,7 @@ def smiles_to_png(directory, smiles):
         The smiles pattern to generate the png of.
     """
 
-    off_molecule:Molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    off_molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
     oe_molecule = off_molecule.to_openeye()
 
     oedepict.OEPrepareDepiction(oe_molecule)
@@ -400,14 +440,66 @@ def main():
 
     # Find the set of smiles common to both the pure density and
     # pure vapour pressure data sets.
-    # common_smiles, data_counts = find_overlapping_properties_new(
-    #     ('Density', 1),
-    #     ('VaporPressure', 1)
-    # )
+    common_smiles, data_counts = find_common_smiles_patterns(
+        ('Density', 1),
+        # ('EnthalpyOfVapourisation', 1),
+        # ('VaporPressure', 1),
+        save_structure_pngs=False
+    )
+
+    # Count the frequencies of smirks applied to pure systems.
+    # vdw_parameters_per_pure_substance = count_parameters_per_molecule('vdW', *common_smiles)
+    # torsion_parameters_per_pure_substance = count_parameters_per_molecule('ProperTorsions', *common_smiles)
+    #
+    # plt.title('VdW Parameters per Pure Substance')
+    # plt.bar(list(vdw_parameters_per_pure_substance.keys()),
+    #         list(vdw_parameters_per_pure_substance.values()))
+    # plt.show()
+    # plt.title('Torsion Parameters per Pure Substance')
+    # plt.bar(list(torsion_parameters_per_pure_substance.keys()),
+    #         list(torsion_parameters_per_pure_substance.values()))
+    # plt.show()
+    #
+    # print(f'VdW_Pure={vdw_parameters_per_pure_substance} '
+    #       f'ProperTorsions_Pure={torsion_parameters_per_pure_substance}')
+
+    # Count the frequencies of smirks applied to binary systems.
+    # data_directory = get_data_filename('property_data')
+    # enthalpy_of_mixing_data_set = pandas.read_csv(os.path.join(data_directory, f'EnthalpyOfMixing_binary.csv'))
+    #
+    # vdw_parameters_per_binary_substance = defaultdict(int)
+    # torsion_parameters_per_binary_substance = defaultdict(int)
+    #
+    # unique_binary_pairs = set()
+    #
+    # for _, row in enthalpy_of_mixing_data_set.iterrows():
+    #     unique_binary_pairs.add((row['Component 1'], row['Component 2']))
+    #
+    # for smiles_0, smiles_1 in unique_binary_pairs:
+    #
+    #     smiles_by_vdw_smirks = find_smirks_parameters('vdW', smiles_0, smiles_1)
+    #     total_vdw = len([1 for smirks in smiles_by_vdw_smirks if len(smiles_by_vdw_smirks[smirks]) > 0])
+    #     vdw_parameters_per_binary_substance[total_vdw] += 1
+    #
+    #     smiles_by_torsion_smirks = find_smirks_parameters('ProperTorsions', smiles_0, smiles_1)
+    #     total_torsion = len([1 for smirks in smiles_by_torsion_smirks if len(smiles_by_torsion_smirks[smirks]) > 0])
+    #     torsion_parameters_per_binary_substance[total_torsion] += 1
+    #
+    # plt.title('VdW Parameters per Binary Substance')
+    # plt.bar(list(vdw_parameters_per_binary_substance.keys()),
+    #         list(vdw_parameters_per_binary_substance.values()))
+    # plt.show()
+    # plt.title('Torsion Parameters per Binary Substance')
+    # plt.bar(list(torsion_parameters_per_binary_substance.keys()),
+    #         list(torsion_parameters_per_binary_substance.values()))
+    # plt.show()
+    #
+    # print(f'VdW_Binary={vdw_parameters_per_binary_substance} '
+    #       f'ProperTorsions_Binary={torsion_parameters_per_binary_substance}')
 
     # Find the set of smiles common to both the pure density and
     # pure enthalpy of vapourisation data sets.
-    # common_smiles, data_counts = find_overlapping_properties_new(
+    # common_smiles, data_counts = find_common_smiles_patterns(
     #     ('Density', 1),
     #     ('EnthalpyOfVapourisation', 1)
     # )
@@ -415,29 +507,36 @@ def main():
     # Find the set of smiles common to both the pure and binary density,
     # the pure static dielectric constant, the binary enthalpy of mixing,
     # and the vapour pressure data sets.
-    common_smiles, data_counts = find_common_smiles_patterns(
-        ('Density', 1),
-        ('Density', 2),
-        ('DielectricConstant', 1),
-        ('EnthalpyOfMixing', 2),
-        ('VaporPressure', 1),
-        save_structure_pngs=False
-    )
+    # common_smiles, data_counts = find_common_smiles_patterns(
+    #     ('Density', 1),
+    #     ('Density', 2),
+    #     ('DielectricConstant', 1),
+    #     ('EnthalpyOfMixing', 2),
+    #     ('VaporPressure', 1),
+    #     save_structure_pngs=False
+    # )
 
-    data_counts.to_csv('data_counts.csv')
-
+    # data_counts.to_csv('data_counts.csv')
+    #
     # Find all of the vdw parameters which would be assigned to the common
     # smiles patterns.
-    used_vdw_parameters = find_smirks_parameters(common_smiles)
+    used_vdw_parameters = find_smirks_parameters('vdW', *common_smiles)
 
     # Print information about those vdw parameters for which
     # no matched smiles patterns were found.
     for smirks in used_vdw_parameters:
 
+        if len(used_vdw_parameters[smirks]) == 0:
+            continue
+
+        print(f'{smirks} was exercised.')
+
+    for smirks in used_vdw_parameters:
+
         if len(used_vdw_parameters[smirks]) > 0:
             continue
 
-        print(f'No VdW parameters found for {smirks}.')
+        print(f'{smirks} was not exercised.')
 
     # Find all of the chemical moieties present in each of the
     # common smiles patterns.

@@ -16,6 +16,7 @@ dependencies:
     # Main Requirements
   - pandas
   - openforcefield
+  - matplotlib
 
     # Commercial
   - openeye-toolkits

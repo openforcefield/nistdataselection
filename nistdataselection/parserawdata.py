@@ -72,7 +72,7 @@ def setup_parallel_backend(backend_type=BackendType.Local,
         if lsf_worker_commands is None:
             lsf_worker_commands = []
 
-        calculation_backend = DaskLSFBackend(minimum_number_of_workers=0,
+        calculation_backend = DaskLSFBackend(minimum_number_of_workers=1,
                                              maximum_number_of_workers=number_of_workers,
                                              resources_per_worker=queue_resources,
                                              queue_name=lsf_queue,
@@ -80,6 +80,8 @@ def setup_parallel_backend(backend_type=BackendType.Local,
                                              adaptive_interval='1000ms')
 
     calculation_backend.start()
+
+    logging.info(calculation_backend._cluster.job_script())
 
     return calculation_backend
 

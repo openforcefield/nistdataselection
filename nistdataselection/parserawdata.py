@@ -74,15 +74,12 @@ def setup_parallel_backend(backend_type=BackendType.Local,
 
         calculation_backend = DaskLSFBackend(minimum_number_of_workers=1,
                                              maximum_number_of_workers=number_of_workers,
-                                             default_memory_unit=unit.mega * unit.byte,
                                              resources_per_worker=queue_resources,
                                              queue_name=lsf_queue,
                                              setup_script_commands=lsf_worker_commands,
                                              adaptive_interval='1000ms')
 
     calculation_backend.start()
-
-    logging.info(calculation_backend._cluster.job_script())
 
     return calculation_backend
 
@@ -118,11 +115,6 @@ def parse_thermoml_archives(file_paths, retain_values=False,
         each key is the type of property stored in the csv file
         pointed to by the value.
     """
-
-    import faulthandler
-
-    if not faulthandler.is_enabled():
-        faulthandler.enable()
 
     data_set_paths = {}
 
@@ -451,13 +443,18 @@ def main():
                                              compute_backend=compute_backend)
 
     # Save the data frames to disk.
-    output_directory = 'all_properties'
+    output_directory = 'property_data'
     os.makedirs(output_directory, exist_ok=True)
 
     for property_type in data_frames:
 
         data_frame = data_frames[property_type]
-        data_frame.to_csv(os.path.join(output_directory, f'{property_type}.csv'))
+
+        # Save one file for each composition type.
+        for index, data_type in enumerate(['pure', 'binary', 'ternary']):
+
+            data_subset = data_frame.loc[data_frame['Number Of Components'] == index + 1]
+            data_subset.to_csv(os.path.join(output_directory, f'{property_type}_{data_type}.csv'))
 
     # Close down all of the compute workers.
     compute_backend.stop()

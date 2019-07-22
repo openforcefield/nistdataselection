@@ -118,8 +118,8 @@ def parse_thermoml_archives(file_paths, retain_values=False,
 
     import faulthandler
 
-    fault_file = open(f'{str(uuid.uuid4())}.fault', 'w')
-    faulthandler.enable(fault_file)
+    if not faulthandler.is_enabled():
+        faulthandler.enable()
 
     data_set_paths = {}
 
@@ -188,9 +188,6 @@ def parse_thermoml_archives(file_paths, retain_values=False,
 
         formatted_exception = traceback.format_exception(None, e, e.__traceback__)
         logging.info(f'An uncaught exception was raised: {formatted_exception}')
-
-    faulthandler.disable()
-    fault_file.close()
 
     return data_set_paths
 

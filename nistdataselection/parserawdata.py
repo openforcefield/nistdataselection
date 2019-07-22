@@ -115,68 +115,77 @@ def parse_thermoml_archives(file_paths, retain_values=False,
         each key is the type of property stored in the csv file
         pointed to by the value.
     """
-    from propertyestimator.datasets import registered_thermoml_properties
 
-    property_data_sets = {}
+    try:
+        from propertyestimator.datasets import registered_thermoml_properties
 
-    for thermoml_name in registered_thermoml_properties:
+        property_data_sets = {}
 
-        property_type = registered_thermoml_properties[thermoml_name].class_type.__name__
-        property_data_sets[property_type] = PhysicalPropertyDataSet()
+        for thermoml_name in registered_thermoml_properties:
 
-    # We make sure to wrap each of the 'error prone' calls in this method
-    # in try-catch blocks to stop workers from being killed.
-    for file_path in file_paths:
+            property_type = registered_thermoml_properties[thermoml_name].class_type.__name__
+            property_data_sets[property_type] = PhysicalPropertyDataSet()
 
-        logging.info(f'Loading ThermoML archive from: {file_path}')
+        # We make sure to wrap each of the 'error prone' calls in this method
+        # in try-catch blocks to stop workers from being killed.
+        for file_path in file_paths:
 
-        try:
-            data_set = ThermoMLDataSet.from_file(file_path)
+            logging.info(f'Loading ThermoML archive from: {file_path}')
 
-        except Exception as e:
+            try:
+                data_set = ThermoMLDataSet.from_file(file_path)
 
-            formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-            logging.info(f'An exception was raised when loading {file_path}: {formatted_exception}')
+            except Exception as e:
 
-            continue
+                formatted_exception = traceback.format_exception(None, e, e.__traceback__)
+                logging.info(f'An exception was raised when loading {file_path}: {formatted_exception}')
 
-        # A data set will be none if no 'valid' properties were found
-        # in the archive file.
-        if data_set is None:
-            continue
+                continue
 
-        for substance_id in data_set.properties:
+            # A data set will be none if no 'valid' properties were found
+            # in the archive file.
+            if data_set is None:
+                continue
 
-            for physical_property in data_set.properties[substance_id]:
+            for substance_id in data_set.properties:
 
-                property_type = physical_property.__class__.__name__
+                for physical_property in data_set.properties[substance_id]:
 
-                if substance_id not in property_data_sets[property_type].properties:
-                    property_data_sets[property_type].properties[substance_id] = []
+                    property_type = physical_property.__class__.__name__
 
-                property_data_sets[property_type].properties[substance_id].append(physical_property)
+                    if substance_id not in property_data_sets[property_type].properties:
+                        property_data_sets[property_type].properties[substance_id] = []
 
-    unique_id = str(uuid.uuid4()).replace('-', '')
-    data_set_paths = {}
+                    property_data_sets[property_type].properties[substance_id].append(physical_property)
 
-    for property_type in property_data_sets:
+        unique_id = str(uuid.uuid4()).replace('-', '')
+        data_set_paths = {}
 
-        file_path = os.path.join(directory, f'{property_type}_{unique_id}.csv')
-        data_set_paths[property_type] = file_path
+        for property_type in property_data_sets:
 
-        try:
-            data_set_to_csv(property_data_sets[property_type], file_path,
-                            retain_values, retain_uncertainties)
+            file_path = os.path.join(directory, f'{property_type}_{unique_id}.csv')
+            data_set_paths[property_type] = file_path
 
-        except Exception as e:
+            try:
+                data_set_to_csv(property_data_sets[property_type], file_path,
+                                retain_values, retain_uncertainties)
 
-            formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-            logging.info(f'An exception was raised when saving the csv file of {property_type}'
-                         f'properties to {file_path}: {formatted_exception}')
+            except Exception as e:
 
-            continue
+                formatted_exception = traceback.format_exception(None, e, e.__traceback__)
+                logging.info(f'An exception was raised when saving the csv file of {property_type}'
+                             f'properties to {file_path}: {formatted_exception}')
 
-    return data_set_paths
+                continue
+
+        return data_set_paths
+
+    except Exception as e:
+
+        formatted_exception = traceback.format_exception(None, e, e.__traceback__)
+        logging.info(f'An uncaught exception was raised: {formatted_exception}')
+
+        return []
 
 
 def data_set_to_csv(data_set, file_path, retain_values=False, retain_uncertainties=False):

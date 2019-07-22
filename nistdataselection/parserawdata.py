@@ -66,7 +66,7 @@ def setup_parallel_backend(backend_type=BackendType.Local,
     elif backend_type == BackendType.LSF:
 
         queue_resources = QueueWorkerResources(number_of_threads=1,
-                                               per_thread_memory_limit=8 * (unit.giga * unit.byte),
+                                               per_thread_memory_limit=12 * (unit.giga * unit.byte),
                                                wallclock_time_limit="01:30")
 
         if lsf_worker_commands is None:
@@ -77,7 +77,8 @@ def setup_parallel_backend(backend_type=BackendType.Local,
                                              resources_per_worker=queue_resources,
                                              queue_name=lsf_queue,
                                              setup_script_commands=lsf_worker_commands,
-                                             adaptive_interval='1000ms')
+                                             adaptive_interval='1000ms',
+                                             disable_nanny_process=False)
 
     calculation_backend.start()
 

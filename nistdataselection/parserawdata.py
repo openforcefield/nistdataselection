@@ -116,6 +116,13 @@ def parse_thermoml_archives(file_paths, retain_values=False,
         pointed to by the value.
     """
 
+    import faulthandler
+
+    fault_file = open(f'{str(uuid.uuid4())}.fault', 'w')
+    faulthandler.enable(fault_file)
+
+    data_set_paths = {}
+
     try:
         from propertyestimator.datasets import registered_thermoml_properties
 
@@ -159,7 +166,6 @@ def parse_thermoml_archives(file_paths, retain_values=False,
                     property_data_sets[property_type].properties[substance_id].append(physical_property)
 
         unique_id = str(uuid.uuid4()).replace('-', '')
-        data_set_paths = {}
 
         for property_type in property_data_sets:
 
@@ -178,14 +184,15 @@ def parse_thermoml_archives(file_paths, retain_values=False,
 
                 continue
 
-        return data_set_paths
-
     except Exception as e:
 
         formatted_exception = traceback.format_exception(None, e, e.__traceback__)
         logging.info(f'An uncaught exception was raised: {formatted_exception}')
 
-        return []
+    faulthandler.disable()
+    fault_file.close()
+
+    return data_set_paths
 
 
 def data_set_to_csv(data_set, file_path, retain_values=False, retain_uncertainties=False):
@@ -422,21 +429,22 @@ def main():
 
     # Create the backend which will distribute the extraction of data across
     # multiple threads / nodes.
-    compute_backend = setup_parallel_backend(backend_type=BackendType.Local,
-                                             number_of_workers=4)
+    # compute_backend = setup_parallel_backend(backend_type=BackendType.Local,
+    #                                          number_of_workers=4)
 
     # The below will optionally distribute the data extraction over nodes
     # accessible through an LSF queueing system.
-    #
-    # worker_script_commands = [
-    #     f'export OE_LICENSE="{os.path.join(home_directory, "oe_license.txt")}"',
-    #     f'. {os.path.join(home_directory, "miniconda3/etc/profile.d/conda.sh")}',
-    #     f'conda activate nistdataselection',
-    # ]
-    #
-    # compute_backend = setup_parallel_backend(backend_type=BackendType.LSF,
-    #                                          number_of_workers=20,
-    #                                          lsf_worker_commands=worker_script_commands)
+    worker_script_commands = [
+        f'export OE_LICENSE="{os.path.join(home_directory, "oe_license.txt")}"',
+        f'. {os.path.join(home_directory, "miniconda3/etc/profile.d/conda.sh")}',
+        f'conda activate nistdataselection',
+    ]
+
+    logging.info(f'Worker extra script commands: {worker_script_commands}')
+
+    compute_backend = setup_parallel_backend(backend_type=BackendType.LSF,
+                                             number_of_workers=20,
+                                             lsf_worker_commands=worker_script_commands)
 
     # Extract the data from the archives
     data_frames = extract_data_from_archives(archive_file_paths=archive_paths,

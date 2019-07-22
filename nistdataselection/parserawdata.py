@@ -77,8 +77,7 @@ def setup_parallel_backend(backend_type=BackendType.Local,
                                              resources_per_worker=queue_resources,
                                              queue_name=lsf_queue,
                                              setup_script_commands=lsf_worker_commands,
-                                             adaptive_interval='1000ms',
-                                             disable_nanny_process=False)
+                                             adaptive_interval='1000ms')
 
     calculation_backend.start()
 

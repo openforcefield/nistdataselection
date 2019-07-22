@@ -74,6 +74,7 @@ def setup_parallel_backend(backend_type=BackendType.Local,
 
         calculation_backend = DaskLSFBackend(minimum_number_of_workers=1,
                                              maximum_number_of_workers=number_of_workers,
+                                             default_memory_unit=unit.mega * unit.byte,
                                              resources_per_worker=queue_resources,
                                              queue_name=lsf_queue,
                                              setup_script_commands=lsf_worker_commands,

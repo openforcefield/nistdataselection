@@ -18,7 +18,7 @@ from propertyestimator.substances import Substance
 from simtk import unit
 
 from propertyestimator.backends import QueueWorkerResources, DaskLSFBackend, DaskLocalClusterBackend
-from propertyestimator.datasets import registered_thermoml_properties, ThermoMLDataSet, PhysicalPropertyDataSet
+from propertyestimator.datasets import ThermoMLDataSet, PhysicalPropertyDataSet
 from propertyestimator.utils import setup_timestamp_logging
 
 
@@ -115,6 +115,7 @@ def parse_thermoml_archives(file_paths, retain_values=False,
         each key is the type of property stored in the csv file
         pointed to by the value.
     """
+    from propertyestimator.datasets import registered_thermoml_properties
 
     property_data_sets = {}
 
@@ -315,6 +316,7 @@ def extract_data_from_archives(archive_file_paths, compute_backend, files_per_wo
         A dictionary of pandas data frames which contain
         the unfiltered extracted data.
     """
+    from propertyestimator.datasets import registered_thermoml_properties
 
     # Create a working directory to store temporary files in.
     working_directory_path = 'working_directory'

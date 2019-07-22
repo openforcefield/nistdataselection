@@ -9,8 +9,6 @@ import shutil
 import subprocess
 from collections import defaultdict
 
-import matplotlib.pyplot as plt
-
 import pandas
 from openeye import oedepict
 from openforcefield.topology import Molecule, Topology
@@ -441,8 +439,8 @@ def main():
     # Find the set of smiles common to both the pure density and
     # pure vapour pressure data sets.
     common_smiles, data_counts = find_common_smiles_patterns(
-        ('Density', 1),
-        # ('EnthalpyOfVapourisation', 1),
+        # ('Density', 1),
+        ('EnthalpyOfVapourisation', 1),
         # ('VaporPressure', 1),
         save_structure_pngs=False
     )

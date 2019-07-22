@@ -63,7 +63,7 @@ def setup_parallel_backend(backend_type=BackendType.Local,
     if backend_type == BackendType.Local:
         calculation_backend = DaskLocalClusterBackend(number_of_workers=number_of_workers)
 
-    elif backend_type == BackendType.Lilac:
+    elif backend_type == BackendType.LSF:
 
         queue_resources = QueueWorkerResources(number_of_threads=1,
                                                per_thread_memory_limit=8 * (unit.giga * unit.byte),

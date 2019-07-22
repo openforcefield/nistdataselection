@@ -299,7 +299,7 @@ def data_set_to_csv(data_set, file_path, retain_values=False, retain_uncertainti
     data_frame.to_csv(file_path, index=False)
 
 
-def extract_data_from_archives(archive_file_paths, compute_backend, files_per_worker=200,
+def extract_data_from_archives(archive_file_paths, compute_backend, files_per_worker=20,
                                delete_temporary_files=True):
     """Uses the compute backend to extract the data contained in
     a set of ThermoML xml data files, and then merges this data into

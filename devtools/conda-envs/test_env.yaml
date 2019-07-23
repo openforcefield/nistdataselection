@@ -16,6 +16,7 @@ dependencies:
     # Main Requirements
   - pandas
   - openforcefield
+  - smirnoff99frosst
   - matplotlib
 
     # Commercial

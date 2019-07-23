@@ -85,8 +85,16 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
             phase = PropertyPhase(row['Phase'])
 
-            value = None if 'Value' not in row else string_to_quantity(row['Value'])
-            uncertainty = None if 'Uncertainty' not in row else string_to_quantity(row['Uncertainty'])
+            value = None
+            uncertainty = None
+
+            if 'Value' in row:
+                value_string = row['Value'].replace('None', 'dimensionless')
+                value = string_to_quantity(value_string)
+
+            if 'Uncertainty' in row:
+                uncertainty_string = row['Uncertainty'].replace('None', 'dimensionless')
+                uncertainty = string_to_quantity(uncertainty_string)
 
             source = MeasurementSource(reference=row['Source'])
             sources.add(source)

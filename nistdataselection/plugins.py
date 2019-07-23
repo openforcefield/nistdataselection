@@ -50,12 +50,6 @@ class MolarEnthalpyOfDilution(PhysicalProperty):
     pass
 
 
-@register_thermoml_property('Molar enthalpy of vaporization or sublimation, kJ/mol',
-                            supported_phases=PropertyPhase.Liquid | PropertyPhase.Gas)
-class EnthalpyOfVapourisation(PhysicalProperty):
-    pass
-
-
 @register_thermoml_property('Molar enthalpy of mixing with solvent, kJ/mol',
                             supported_phases=PropertyPhase.Liquid.Gas)
 class EnthalpyOfMixingWithSolvent(PhysicalProperty):

@@ -234,8 +234,8 @@ class PandasDataSet(PhysicalPropertyDataSet):
                     data_row[f'Component {index + 1}'] = components[index][0]
                     data_row[f'Mole Fraction {index + 1}'] = components[index][1]
 
-                data_row['Value'] = value,
-                data_row['Uncertainty'] = uncertainty,
+                data_row['Value'] = value
+                data_row['Uncertainty'] = uncertainty
                 data_row['Source'] = source
 
                 data_rows.append(data_row)

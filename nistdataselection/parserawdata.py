@@ -227,7 +227,8 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, files_per_w
     return full_data_frames
 
 
-def parse_raw_data(directory, output_directory='property_data'):
+def parse_raw_data(directory, output_directory='property_data', backend_type=BackendType.Local,
+                   number_of_workers=4, files_per_worker=50, conda_environment='nistdataselection'):
     """Extracts all of the physical property data from a collection of
     ThermoML xml archives in a specified directory.
 
@@ -238,6 +239,17 @@ def parse_raw_data(directory, output_directory='property_data'):
     output_directory: str
         The path to a directory in which to store the extracted data
         files.
+    backend_type: BackendType
+        The type of backend to use when distributing the data extraction.
+    number_of_workers: int
+        The number of workers to distribute the extraction over.
+    files_per_worker: int
+        The number of files each worker should process at once. This
+        should be lowered if segmentation faults ( / core dumps) are
+        observed.
+    conda_environment: str
+        The name of the conda environment in which this package is installed.
+        This only needs to be provided when using the LSF backend.
     """
 
     # Set up verbose logging.
@@ -249,26 +261,33 @@ def parse_raw_data(directory, output_directory='property_data'):
 
     # Create the backend which will distribute the extraction of data across
     # multiple threads / nodes.
-    compute_backend = setup_parallel_backend(backend_type=BackendType.Local,
-                                             number_of_workers=4)
+    if backend_type == BackendType.Local:
 
-    # The below will optionally distribute the data extraction over nodes
-    # accessible through an LSF queueing system.
-    # worker_script_commands = [
-    #     f'export OE_LICENSE="{os.path.join(home_directory, "oe_license.txt")}"',
-    #     f'. {os.path.join(home_directory, "miniconda3/etc/profile.d/conda.sh")}',
-    #     f'conda activate nistdataselection',
-    # ]
-    #
-    # logging.info(f'Worker extra script commands: {worker_script_commands}')
-    #
-    # compute_backend = setup_parallel_backend(backend_type=BackendType.LSF,
-    #                                          number_of_workers=20,
-    #                                          lsf_worker_commands=worker_script_commands)
+        compute_backend = setup_parallel_backend(backend_type=BackendType.Local,
+                                                 number_of_workers=number_of_workers)
+
+    else:
+
+        # The below will optionally distribute the data extraction over nodes
+        # accessible through an LSF queueing system.
+        home_directory = os.path.expanduser("~")
+
+        worker_script_commands = [
+            f'export OE_LICENSE="{os.path.join(home_directory, "oe_license.txt")}"',
+            f'. {os.path.join(home_directory, "miniconda3/etc/profile.d/conda.sh")}',
+            f'conda activate {conda_environment}',
+        ]
+
+        logging.info(f'Worker extra script commands: {worker_script_commands}')
+
+        compute_backend = setup_parallel_backend(backend_type=BackendType.LSF,
+                                                 number_of_workers=number_of_workers,
+                                                 lsf_worker_commands=worker_script_commands)
 
     # Extract the data from the archives
     data_frames = _extract_data_from_archives(archive_file_paths=archive_paths,
-                                              compute_backend=compute_backend)
+                                              compute_backend=compute_backend,
+                                              files_per_worker=files_per_worker)
 
     # Save the data frames to disk.
     os.makedirs(output_directory, exist_ok=True)

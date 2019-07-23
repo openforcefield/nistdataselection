@@ -126,7 +126,8 @@ def _parse_thermoml_archives(file_paths, retain_values=False,
     return data_set_paths
 
 
-def _extract_data_from_archives(archive_file_paths, compute_backend, files_per_worker=50,
+def _extract_data_from_archives(archive_file_paths, compute_backend, retain_values=False,
+                                retain_uncertainties=False, files_per_worker=50,
                                 delete_temporary_files=True):
     """Uses the compute backend to extract the data contained in
     a set of ThermoML xml data files, and then merges this data into
@@ -138,6 +139,12 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, files_per_w
         The list of file paths to extract data from.
     compute_backend: PropertyEstimatorBackend
         The backend to distribute the data extraction over.
+    retain_values: bool
+        If False, all values for the measured properties will
+        be stripped from the final data set.
+    retain_uncertainties: bool
+        If False, all uncertainties in measured property values will
+        be stripped from the final data set.
     files_per_worker: int
         The number of files to process on each compute worker
         at any one time. The file list is split into batches of
@@ -180,8 +187,8 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, files_per_w
 
         calculation_future = compute_backend.submit_task(_parse_thermoml_archives,
                                                          worker_file_paths,
-                                                         False,
-                                                         False,
+                                                         retain_values,
+                                                         retain_uncertainties,
                                                          working_directory_path)
 
         calculation_futures.append(calculation_future)
@@ -227,7 +234,8 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, files_per_w
     return full_data_frames
 
 
-def parse_raw_data(directory, output_directory='property_data', backend_type=BackendType.Local,
+def parse_raw_data(directory, output_directory='property_data', retain_values=False,
+                   retain_uncertainties=False, backend_type=BackendType.Local,
                    number_of_workers=4, files_per_worker=50, conda_environment='nistdataselection'):
     """Extracts all of the physical property data from a collection of
     ThermoML xml archives in a specified directory.
@@ -239,6 +247,12 @@ def parse_raw_data(directory, output_directory='property_data', backend_type=Bac
     output_directory: str
         The path to a directory in which to store the extracted data
         files.
+    retain_values: bool
+        If False, all values for the measured properties will
+        be stripped from the final data set.
+    retain_uncertainties: bool
+        If False, all uncertainties in measured property values will
+        be stripped from the final data set.
     backend_type: BackendType
         The type of backend to use when distributing the data extraction.
     number_of_workers: int
@@ -286,6 +300,8 @@ def parse_raw_data(directory, output_directory='property_data', backend_type=Bac
 
     # Extract the data from the archives
     data_frames = _extract_data_from_archives(archive_file_paths=archive_paths,
+                                              retain_values=retain_values,
+                                              retain_uncertainties=retain_uncertainties,
                                               compute_backend=compute_backend,
                                               files_per_worker=files_per_worker)
 

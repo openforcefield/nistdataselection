@@ -521,7 +521,7 @@ def remove_duplicates(data_set):
 
             # Partition the properties by state.
             temperature = physical_property.thermodynamic_state.temperature.value_in_unit(unit.kelvin)
-            pressure = physical_property.thermodynamic_state.temperature.value_in_unit(unit.kilopascal)
+            pressure = physical_property.thermodynamic_state.pressure.value_in_unit(unit.kilopascal)
 
             state_tuple = (f'{temperature:.2f}', f'{pressure:.3f}')
 

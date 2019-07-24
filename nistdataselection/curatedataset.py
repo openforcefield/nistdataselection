@@ -155,8 +155,6 @@ def _find_common_smiles_patterns(*data_sets):
 
         data_set_smiles.append(smiles)
 
-    print(data_set_smiles)
-
     # Find all of the smiles which are common to the requested
     # data sets.
     common_smiles = None
@@ -170,7 +168,6 @@ def _find_common_smiles_patterns(*data_sets):
 
         common_smiles = common_smiles.intersection(smiles_set)
 
-    logging.info(f'The combined sets have {len(common_smiles)} molecules in common.')
     return common_smiles
 
 
@@ -423,37 +420,152 @@ def curate_data_set(property_data_directory):
                          f'dielectric properties had values less than 10.0 and were removed.')
 
         data_sets[(property_type, substance_type)] = data_set
-        logging.info(f'Finished loading the {substance_type} {property_type} data set.')
+        logging.info(f'Finished loading the {substance_type} {property_type.__name__} data set.')
 
         file_name = f'{property_type.__name__}_{str(substance_type.value)}.csv'
         file_path = os.path.join(filtered_data_sets_directory, file_name)
 
         PandasDataSet.to_pandas_csv(data_set, file_path)
 
-    # Find those compounds for which there is data for all of the properties of
-    # interest.
+    # Select the minimum set of molecules which (if possible) simultaneously have
+    # data for all three properties, and exercise the largest number of vdW
+    # parameters.
     #
-    # TODO: Refactor the following to stepwise allow compounds common across all
-    #       properties -> compounds common across some properties -> compounds
-    #       not common across any properties until all smiles patterns are matched,
-    #       or adding new compounds does not increase the SMIRKS coverage.
+    # If such a set doesn't cover all vdW parameters, we then expand the set with
+    # molecules which partially meet the above criteria, but only have data for
+    # enthalpies of vaporization and densities.
     #
-    common_smiles = _find_common_smiles_patterns(
-        *[data_sets[property_tuple] for property_tuple in properties_of_interest]
-    )
+    # If again coverage isn't met, the above is repeated but relaxing the conditions
+    # to molecules which have data for both densities and dielectrics, then
+    # molecules which only have data for enthalpies of vaporisation, and finally
+    # molecules which only have data for densities.
+    chosen_smiles = set()
+    all_exercised_smirks = set()
 
-    used_vdw_parameters = _find_smirks_parameters('vdW', *common_smiles)
+    # Define the order of preference for which data molecules should have,
+    # as explained above.
+    #
+    # TODO: Ideally this should be expanded to try to ensure that each
+    #       smirks is at least exercised by one molecule from each property
+    #       data set.
+    overlapping_property_order = [
+        [
+            # Ideally we want molecules for which we have data for
+            # all three properties of interest.
+            (Density, SubstanceType.Pure),
+            (DielectricConstant, SubstanceType.Pure),
+            (EnthalpyOfVaporization, SubstanceType.Pure)
+        ],
+        [
+            # If that isn't possible, we'd like molecules for which we
+            # have at least densities and enthalpies of vaporization...
+            (Density, SubstanceType.Pure),
+            (EnthalpyOfVaporization, SubstanceType.Pure)
+        ],
+        [
+            # or molecules for which we have at least densities and
+            # dielectric constant..
+            (Density, SubstanceType.Pure),
+            (DielectricConstant, SubstanceType.Pure),
+        ],
+        [
+            # or enthalpy data..
+            (EnthalpyOfVaporization, SubstanceType.Pure)
+        ],
+        [
+            # or density data..
+            (Density, SubstanceType.Pure),
+        ]
+    ]
 
-    for smirks in used_vdw_parameters:
+    for overlapping_properties in overlapping_property_order:
 
-        if len(used_vdw_parameters[smirks]) == 0:
+        # Find those compounds for which there is data for all of the properties of
+        # interest.
+        common_smiles = _find_common_smiles_patterns(
+            *[data_sets[property_tuple] for property_tuple in overlapping_properties]
+        )
+
+        smiles_per_vdw_smirks = _find_smirks_parameters('vdW', *common_smiles)
+
+        unexercised_smirks_per_smiles = defaultdict(set)
+
+        # Construct a dictionary of those vdW smirks patterns which
+        # haven't yet been exercised by the `chosen_smiles` set.
+        for smirks, smiles_set in smiles_per_vdw_smirks.items():
+
+            # The smiles set may be None in cases where no molecules
+            # exercised a particular smirks pattern.
+            if smiles_set is None:
+                continue
+
+            # Don't consider vdW smirks which have already been exercised
+            # by the currently chosen set
+            if smirks in all_exercised_smirks:
+                continue
+
+            for smiles in smiles_set:
+
+                # We don't need to consider molecules we have already chosen.
+                if smiles in chosen_smiles:
+                    continue
+
+                unexercised_smirks_per_smiles[smiles].add(smirks)
+
+        # Sort the dictionary keys so that molecules which will exercise the most
+        # vdW parameters appear first.
+        sorted_smiles = []
+
+        for key, value in sorted(unexercised_smirks_per_smiles.items(),
+                                 key=lambda x: len(x[1]), reverse=True):
+
+            sorted_smiles.append(key)
+
+        while len(sorted_smiles) > 0:
+
+            # Extract the first molecule which exercises the most smirks
+            # patterns at once and add it to the chosen set.
+            smiles = sorted_smiles.pop(0)
+            exercised_smirks = unexercised_smirks_per_smiles.pop(smiles)
+
+            chosen_smiles.add(smiles)
+            all_exercised_smirks.update(exercised_smirks)
+
+            # Update the dictionary to reflect that a number of
+            # smirks patterns have now been exercised.
+            for remaining_smiles in unexercised_smirks_per_smiles:
+
+                unexercised_smirks_per_smiles[remaining_smiles] = unexercised_smirks_per_smiles[
+                    remaining_smiles].difference(exercised_smirks)
+
+            # Remove empty dictionary entries
+            unexercised_smirks_per_smiles = {smiles: smirks_set for smiles, smirks_set in
+                                             unexercised_smirks_per_smiles.items() if len(smirks_set) > 0}
+
+            # Re-sort the smiles list.
+            resorted_smiles = []
+
+            for key, value in sorted(unexercised_smirks_per_smiles.items(), key=lambda x: len(x[1]), reverse=True):
+                resorted_smiles.append(key)
+
+            sorted_smiles = resorted_smiles
+
+        print(chosen_smiles, all_exercised_smirks)
+
+    # Print information about those vdw parameters for which
+    # no matched smiles patterns were found.
+    all_vdw_smirks = set(_find_smirks_parameters('vdW').keys())
+
+    for smirks in all_vdw_smirks:
+
+        if smirks not in all_exercised_smirks:
             continue
 
         print(f'{smirks} was exercised.')
 
-    for smirks in used_vdw_parameters:
+    for smirks in all_vdw_smirks:
 
-        if len(used_vdw_parameters[smirks]) > 0:
+        if smirks in all_exercised_smirks:
             continue
 
         print(f'{smirks} was not exercised.')

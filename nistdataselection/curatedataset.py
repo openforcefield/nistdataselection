@@ -15,6 +15,7 @@ import pandas
 from openeye import oedepict
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines import smirnoff
+from openforcefield.utils import UndefinedStereochemistryError
 from propertyestimator.datasets import PhysicalPropertyDataSet
 from propertyestimator.properties import Density, DielectricConstant, EnthalpyOfVaporization
 from propertyestimator.utils import setup_timestamp_logging
@@ -160,7 +161,7 @@ def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
         those parameters.
     """
 
-    force_field = smirnoff.ForceField(get_data_filename('smirnoff99Frosst-1.0.9.offxml'))
+    force_field = smirnoff.ForceField('smirnoff99Frosst-1.0.9.offxml')
     parameter_handler = force_field.get_parameter_handler(parameter_tag)
 
     smiles_by_parameter_smirks = {}
@@ -177,7 +178,12 @@ def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
     # Populate the dictionary using the open force field toolkit.
     for smiles in smiles_patterns:
 
-        molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+        try:
+            molecule = Molecule.from_smiles(smiles)
+        except UndefinedStereochemistryError:
+            # Skip molecules with undefined stereochemistry.
+            continue
+
         topology = Topology.from_molecules([molecule])
 
         assigned_parameters = force_field.label_molecules(topology)[0]
@@ -319,139 +325,75 @@ def smiles_to_png(directory, smiles):
     oedepict.OERenderMolecule(os.path.join(directory, f'{smiles}.png'), display)
 
 
-def find_common_smiles_patterns(*properties_of_interest):
+def find_common_smiles_patterns(*data_sets):
     """Find the set of smiles patterns which are common to multiple
-    property data sets (and with different numbers of components).
+    property data sets.
 
     Parameters
     ----------
-    properties_of_interest: list of tuple of str and int
-        A list of descriptors of the property data sets to
-        find the common smiles patterns between. The tuple
-        should be of the form (property_name, SubstanceType)
+    data_sets: *PhysicalPropertyDataSet
+        The data sets to find the common smiles patterns between.
 
     Returns
     -------
     set of str
         The smiles patterns which are common to all specified
         data sets.
-    pandas.DataFrame
-        A data from describing how many data points of each property
-        there is for each common smiles pattern. The data from will
-        have columns:
-
-        Smiles,Pure/Binary/Ternary PropertyName, ..., Pure/Binary/Ternary PropertyName
     """
 
-    assert len(properties_of_interest) > 0
+    assert len(data_sets) > 0
 
-    substance_type_to_int = {
-        SubstanceType.Pure: 1,
-        SubstanceType.Binary: 2,
-        SubstanceType.Ternary: 3
-    }
+    data_set_smiles = []
 
-    data_directory = get_data_filename('property_data')
+    for index, data_set in enumerate(data_sets):
 
-    data_sets = {}
-    data_set_smiles = {}
-
-    components_to_string = {1: 'pure', 2: 'binary', 3: 'ternary'}
-
-    for property_name, number_of_components in properties_of_interest:
-
-        if number_of_components > 3:
-            raise ValueError('Only properties with up to three components are supported')
-
-        component_string = components_to_string[number_of_components]
-
-        if property_name not in data_sets:
-            data_sets[property_name] = {}
-            data_set_smiles[property_name] = {}
-
-        # Load in the data set for this property.
-        data_sets[property_name][number_of_components] = pandas.read_csv(
-            os.path.join(data_directory, f'{property_name}_{component_string}.csv'))
+        smiles = set()
 
         # Find all unique smiles in the data set.
-        data_set_smiles[property_name][number_of_components] = set()
+        for substance_id in data_set.properties:
 
-        for index in range(number_of_components):
+            if len(data_set.properties[substance_id]) == 0:
+                continue
 
-            for smiles in data_sets[property_name][number_of_components][f'Component {index + 1}']:
+            substance = data_set.properties[substance_id][0].substance
 
-                # Exclude any salt pairs.
-                if '.' in smiles:
-                    continue
+            for component in substance.components:
+                smiles.add(component.smiles)
 
-                data_set_smiles[property_name][number_of_components].add(smiles)
+        data_set_smiles.append(smiles)
+
+    print(data_set_smiles)
 
     # Find all of the smiles which are common to the requested
     # data sets.
     common_smiles = None
 
-    for property_name, number_of_components in properties_of_interest:
+    for smiles_set in data_set_smiles:
 
         if common_smiles is None:
 
-            common_smiles = data_set_smiles[property_name][number_of_components]
+            common_smiles = smiles_set
             continue
 
-        common_smiles = common_smiles.intersection(data_set_smiles[property_name][number_of_components])
+        common_smiles = common_smiles.intersection(smiles_set)
 
-    print(f'The combined sets have {len(common_smiles)} molecules in common.')
-
-    # Collate the data counts into a pandas data frame.
-    column_names = ['Smiles']
-
-    # Set up the columns.
-    for property_name, number_of_components in properties_of_interest:
-        component_string = components_to_string[number_of_components]
-        column_names.append(f'{component_string.capitalize()} {property_name.capitalize()}')
-
-    data_counts = pandas.DataFrame(columns=column_names)
-
-    # Add the row entries.
-    for smiles in common_smiles:
-
-        row = {'Smiles': smiles}
-
-        for property_name, number_of_components in properties_of_interest:
-            component_string = components_to_string[number_of_components]
-
-            data_set = data_sets[property_name][number_of_components]
-
-            matching_data = []
-
-            if number_of_components == 1:
-                matching_data = data_set.loc[data_set['Component 1'] == smiles]
-            elif number_of_components == 2:
-                matching_data = data_set.loc[(data_set['Component 1'] == smiles) |
-                                             (data_set['Component 2'] == smiles)]
-            elif number_of_components == 3:
-                matching_data = data_set.loc[(data_set['Component 1'] == smiles) |
-                                             (data_set['Component 2'] == smiles) |
-                                             (data_set['Component 3'] == smiles)]
-
-            row[f'{component_string.capitalize()} {property_name.capitalize()}'] = len(matching_data)
-
-        data_counts = data_counts.append(row, ignore_index=True)
-
-    return common_smiles, data_counts
+    logging.info(f'The combined sets have {len(common_smiles)} molecules in common.')
+    return common_smiles
 
 
-def load_data_set(directory, properties_to_load):
-    """
+def load_data_set(directory, property_type, substance_type):
+    """Loads a data set of measured physical properties of a specific
+    type.
 
     Parameters
     ----------
     directory: str
         The path which contains the data csv files generated
         by the `parse_raw_data` method.
-    properties_to_load: list of tuple
-        A list of the properties to load from the data collection,
-        where each entry is a tuple of the property of interest,
-        and the substance type.
+    property_type: type of PhysicalProperty
+        The property of interest.
+    substance_type: SubstanceType
+        The substance type of interest.
 
     Returns
     -------
@@ -461,23 +403,18 @@ def load_data_set(directory, properties_to_load):
 
     assert os.path.isdir(directory)
 
-    full_data_set = PhysicalPropertyDataSet()
+    # Try to load in the pandas data file.
+    file_name = f'{property_type.__name__}_{str(substance_type.value)}.csv'
+    file_path = os.path.join(directory, file_name)
 
-    for property_type, substance_type in properties_to_load:
+    if not os.path.isfile(file_path):
 
-        # Try to load in the pandas data file.
-        file_name = f'{property_type.__name__}_{str(substance_type.value)}.csv'
-        file_path = os.path.join(directory, file_name)
+        raise ValueError(f'No data file could be found for '
+                         f'{substance_type} {property_type}s at {file_path}')
 
-        if not os.path.isfile(file_path):
+    data_set = PandasDataSet.from_pandas_csv(file_path, property_type)
 
-            raise ValueError(f'No data file could be found for '
-                             f'{substance_type} {property_type}s at {file_path}')
-
-        data_set = PandasDataSet.from_pandas_csv(file_path, property_type)
-        full_data_set.merge(data_set)
-
-    return full_data_set
+    return data_set
 
 
 def remove_duplicates(data_set):
@@ -521,9 +458,15 @@ def remove_duplicates(data_set):
 
             # Partition the properties by state.
             temperature = physical_property.thermodynamic_state.temperature.value_in_unit(unit.kelvin)
-            pressure = physical_property.thermodynamic_state.pressure.value_in_unit(unit.kilopascal)
 
-            state_tuple = (f'{temperature:.2f}', f'{pressure:.3f}')
+            if physical_property.thermodynamic_state.pressure is None:
+
+                state_tuple = (f'{temperature:.2f}', f'None')
+
+            else:
+
+                pressure = physical_property.thermodynamic_state.pressure.value_in_unit(unit.kilopascal)
+                state_tuple = (f'{temperature:.2f}', f'{pressure:.3f}')
 
             if state_tuple not in properties_by_substance[substance_id][property_type]:
 
@@ -624,14 +567,6 @@ def main():
         (EnthalpyOfVaporization, SubstanceType.Pure)
     ]
 
-    # Load the full data sets from the processed data files, and
-    # remove any duplicate properties according to `remove_duplicates`.
-    logging.info('Loading data sets.')
-
-    data_set = load_data_set(property_data_directory, properties_of_interest)
-    # Remove any duplicate properties.
-    data_set = remove_duplicates(data_set)
-
     # Define the ranges of temperatures and pressures of interest.
     # Here we choose a range of temperatures which are biologically
     # relevant (15 C - 45 C) and pressures which are close to ambient.
@@ -642,37 +577,61 @@ def main():
     # those elements for which smirnoff99Frosst has parameters for.
     allowed_elements = ['H', 'N', 'C', 'O', 'S', 'P', 'F', 'Cl', 'Br', 'I', 'Na', 'K', 'Ca']
 
-    # Apply the high level filters.
-    current_number_of_properties = data_set.number_of_properties
+    # Load and apply basic filters to the data sets of interest.
+    data_sets = {}
 
-    logging.info('Filtering data sets.')
-    data_set.filter_by_temperature(min_temperature=temperature_range[0],
-                                   max_temperature=temperature_range[1])
+    filtered_data_sets_directory = 'filtered_data_sets'
+    os.makedirs(filtered_data_sets_directory, exist_ok=True)
 
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties were outside of the temperature range and were removed.')
-    current_number_of_properties = data_set.number_of_properties
+    for property_type, substance_type in properties_of_interest:
 
-    data_set.filter_by_pressure(min_pressure=pressure_range[0],
-                                max_pressure=pressure_range[1])
+        # Load the full data sets from the processed data files, and
+        # remove any duplicate properties according to `remove_duplicates`.
+        logging.info(f'Loading the {substance_type.value} {property_type.__name__} data set.')
 
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties were outside of the pressure range and were removed.')
-    current_number_of_properties = data_set.number_of_properties
+        data_set = load_data_set(property_data_directory, property_type, substance_type)
+        data_set = remove_duplicates(data_set)
 
-    data_set.filter_by_elements(*allowed_elements)
+        # Apply the high level filters.
+        current_number_of_properties = data_set.number_of_properties
 
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties contained unwanted elements and were removed.')
-    current_number_of_properties = data_set.number_of_properties
+        data_set.filter_by_temperature(min_temperature=temperature_range[0],
+                                       max_temperature=temperature_range[1])
 
-    logging.info(f'The filtered data set contains {data_set.number_of_properties} properties.')
+        logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
+                     f'properties were outside of the temperature range and were removed.')
+        current_number_of_properties = data_set.number_of_properties
 
-    # Filter out any measured dielectric constants which are too low.
-    filter_dielectric_constants(data_set, 10.0 * unit.dimensionless)
+        data_set.filter_by_pressure(min_pressure=pressure_range[0],
+                                    max_pressure=pressure_range[1])
 
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'dielectric properties had values less than 10.0 and were removed.')
+        logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
+                     f'properties were outside of the pressure range and were removed.')
+        current_number_of_properties = data_set.number_of_properties
+
+        data_set.filter_by_elements(*allowed_elements)
+
+        logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
+                     f'properties contained unwanted elements and were removed.')
+        current_number_of_properties = data_set.number_of_properties
+
+        logging.info(f'The filtered data set contains {data_set.number_of_properties} properties.')
+
+        if property_type == DielectricConstant:
+
+            # Filter out any measured dielectric constants which are too low.
+            filter_dielectric_constants(data_set, 10.0 * unit.dimensionless)
+
+            logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
+                         f'dielectric properties had values less than 10.0 and were removed.')
+
+        data_sets[(property_type, substance_type)] = data_set
+        logging.info(f'Finished loading the {substance_type} {property_type} data set.')
+
+        file_name = f'{property_type.__name__}_{str(substance_type.value)}.csv'
+        file_path = os.path.join(filtered_data_sets_directory, file_name)
+
+        PandasDataSet.to_pandas_csv(data_set, file_path)
 
     # Find those compounds for which there is data for all of the properties of
     # interest.
@@ -682,9 +641,25 @@ def main():
     #       not common across any properties until all smiles patterns are matched,
     #       or adding new compounds does not increase the SMIRKS coverage.
     #
-    # common_smiles, data_counts = find_common_smiles_patterns(
-    #     *properties_of_interest
-    # )
+    common_smiles = find_common_smiles_patterns(
+        *[data_sets[property_tuple] for property_tuple in properties_of_interest]
+    )
+
+    used_vdw_parameters = find_smirks_parameters('vdW', *common_smiles)
+
+    for smirks in used_vdw_parameters:
+
+        if len(used_vdw_parameters[smirks]) == 0:
+            continue
+
+        print(f'{smirks} was exercised.')
+
+    for smirks in used_vdw_parameters:
+
+        if len(used_vdw_parameters[smirks]) > 0:
+            continue
+
+        print(f'{smirks} was not exercised.')
 
     # # Hide the overly verbose 'missing sterochemistry' toolkit logging.
     # logger = logging.getLogger()

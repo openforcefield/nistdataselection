@@ -2,6 +2,7 @@
 A utility for going between `propertyestimator.datasets.PhysicalPropertyDataSet
 objects and `pandas.DataFrame` objects.
 """
+import math
 
 import pandas
 from openforcefield.utils import quantity_to_string, string_to_quantity
@@ -79,9 +80,16 @@ class PandasDataSet(PhysicalPropertyDataSet):
             if substance.identifier not in return_value._properties:
                 return_value.properties[substance.identifier] = []
 
+            pressure = row['Pressure (kPa)']
+
+            if math.isnan(pressure):
+                pressure = None
+            else:
+                pressure *= unit.kilopascal
+
             # Parse the state
             thermodynamic_state = ThermodynamicState(temperature=row['Temperature (K)'] * unit.kelvin,
-                                                     pressure=row['Pressure (kPa)'] * unit.kilopascal)
+                                                     pressure=pressure)
 
             phase = PropertyPhase(row['Phase'])
 

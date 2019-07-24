@@ -525,20 +525,34 @@ def remove_duplicates(data_set):
 
             state_tuple = (f'{temperature:.2f}', f'{pressure:.3f}')
 
-            if state_tuple not in properties_by_substance[substance_id]:
+            if state_tuple not in properties_by_substance[substance_id][property_type]:
 
                 # Handle the easy case where this is the first time a
                 # property at this state has been observed.
-                properties_by_substance[substance_id][state_tuple] = physical_property
+                properties_by_substance[substance_id][property_type][state_tuple] = physical_property
                 continue
 
-            existing_property = properties_by_substance[substance_id][state_tuple]
+            existing_property = properties_by_substance[substance_id][property_type][state_tuple]
 
             existing_uncertainty = (math.inf if existing_property.uncertainty is None else
                                     existing_property.uncertainty)
 
             current_uncertainty = (math.inf if physical_property.uncertainty is None else
                                    physical_property.uncertainty)
+
+            base_unit = None
+
+            if isinstance(existing_uncertainty, unit.Quantity):
+                base_unit = existing_uncertainty.unit
+
+            elif isinstance(current_uncertainty, unit.Quantity):
+                base_unit = current_uncertainty.unit
+
+            if base_unit is not None and isinstance(existing_uncertainty, unit.Quantity):
+                existing_uncertainty = existing_uncertainty.value_in_unit(base_unit)
+
+            if base_unit is not None and isinstance(current_uncertainty, unit.Quantity):
+                current_uncertainty = current_uncertainty.value_in_unit(base_unit)
 
             if (math.isinf(existing_uncertainty) and math.isinf(current_uncertainty) or
                 existing_uncertainty < current_uncertainty):
@@ -547,7 +561,7 @@ def remove_duplicates(data_set):
                 # a lower uncertainty keep that one.
                 continue
 
-            properties_by_substance[substance_id][state_tuple] = physical_property
+            properties_by_substance[substance_id][property_type][state_tuple] = physical_property
 
     # Rebuild the data set with only unique properties.
     unique_data_set = PhysicalPropertyDataSet()
@@ -562,9 +576,9 @@ def remove_duplicates(data_set):
             for state_tuple in properties_by_substance[substance_id][property_type]:
 
                 unique_data_set.properties[substance_id].append(
-                    unique_data_set.properties[substance_id][property_type][state_tuple])
+                    properties_by_substance[substance_id][property_type][state_tuple])
 
-    logging.info(f'{unique_data_set.number_of_properties - data_set.number_of_properties} '
+    logging.info(f'{data_set.number_of_properties - unique_data_set.number_of_properties} '
                  f'duplicate properties were removed.')
 
     return unique_data_set
@@ -588,7 +602,7 @@ def filter_dielectric_constants(data_set, minimum_value):
         if not isinstance(physical_property, DielectricConstant):
             return True
 
-        return physical_property.value < minimum_value
+        return physical_property.value >= minimum_value
 
     data_set.filter_by_function(filter_function)
 
@@ -629,30 +643,36 @@ def main():
     allowed_elements = ['H', 'N', 'C', 'O', 'S', 'P', 'F', 'Cl', 'Br', 'I', 'Na', 'K', 'Ca']
 
     # Apply the high level filters.
-    unfiltered_number_of_properties = data_set.number_of_properties
+    current_number_of_properties = data_set.number_of_properties
 
     logging.info('Filtering data sets.')
     data_set.filter_by_temperature(min_temperature=temperature_range[0],
                                    max_temperature=temperature_range[1])
 
-    logging.info(f'{data_set.number_of_properties - unfiltered_number_of_properties} '
+    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
                  f'properties were outside of the temperature range and were removed.')
+    current_number_of_properties = data_set.number_of_properties
 
     data_set.filter_by_pressure(min_pressure=pressure_range[0],
                                 max_pressure=pressure_range[1])
 
-    logging.info(f'{data_set.number_of_properties - unfiltered_number_of_properties} '
+    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
                  f'properties were outside of the pressure range and were removed.')
+    current_number_of_properties = data_set.number_of_properties
 
     data_set.filter_by_elements(*allowed_elements)
 
-    logging.info(f'{data_set.number_of_properties - unfiltered_number_of_properties} '
+    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
                  f'properties contained unwanted elements and were removed.')
+    current_number_of_properties = data_set.number_of_properties
 
     logging.info(f'The filtered data set contains {data_set.number_of_properties} properties.')
 
     # Filter out any measured dielectric constants which are too low.
     filter_dielectric_constants(data_set, 10.0 * unit.dimensionless)
+
+    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
+                 f'dielectric properties had values less than 10.0 and were removed.')
 
     # Find those compounds for which there is data for all of the properties of
     # interest.
@@ -665,7 +685,6 @@ def main():
     # common_smiles, data_counts = find_common_smiles_patterns(
     #     *properties_of_interest
     # )
-
 
     # # Hide the overly verbose 'missing sterochemistry' toolkit logging.
     # logger = logging.getLogger()

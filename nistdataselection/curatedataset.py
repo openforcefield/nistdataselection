@@ -400,7 +400,7 @@ def _filter_ionic_liquids(data_set):
 
         for component in physical_property.substance.components:
 
-            if '.' in component.smiles and ('+' in component.smiles or '-' in component.smiles):
+            if '.' in component.smiles:
                 return False
 
         return True
@@ -716,7 +716,9 @@ def _create_molecule_images(chosen_smiles, directory):
 
     for smiles in chosen_smiles:
 
-        file_path = os.path.join(directory, f'{smiles}.png')
+        file_name = smiles.replace('/', '').replace('\\', '')
+        file_path = os.path.join(directory, f'{file_name}.png')
+
         smiles_to_png(smiles, file_path)
 
 

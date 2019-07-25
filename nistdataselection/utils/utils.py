@@ -133,6 +133,7 @@ def smiles_to_png(smiles, file_path):
 
     off_molecule = Molecule.from_smiles(smiles)
     oe_molecule = off_molecule.to_openeye()
+    oe_molecule.SetTitle(off_molecule.to_smiles())
 
     oedepict.OEPrepareDepiction(oe_molecule)
 

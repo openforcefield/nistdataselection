@@ -3,12 +3,12 @@ Records the tools and decisions used to select NIST data for curation.
 """
 import logging
 import math
-import numpy
 import os
 import re
 from collections import defaultdict
 from enum import Enum
 
+import numpy
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines import smirnoff
 from openforcefield.utils import UndefinedStereochemistryError
@@ -386,9 +386,35 @@ def _filter_dielectric_constants(data_set, minimum_value):
     data_set.filter_by_function(filter_function)
 
 
+def _filter_ionic_liquids(data_set):
+    """Filters out ionic liquids.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    """
+
+    def filter_function(physical_property):
+
+        for component in physical_property.substance.components:
+
+            if '.' in component.smiles and ('+' in component.smiles or '-' in component.smiles):
+                return False
+
+        return True
+
+    data_set.filter_by_function(filter_function)
+
+
 def _extract_min_max_median_temperature_set(data_set):
     """For a given data set, this method filters out all but the
     data measured at the minimum, median, and maximum temperatures.
+
+    Notes
+    -----
+    This method should *only* be used on data sets which
+    contain a single type of property for now.
 
     Parameters
     ----------
@@ -403,74 +429,32 @@ def _extract_min_max_median_temperature_set(data_set):
 
     filtered_set = PandasDataSet()
 
-    # for substance_id in data_set.properties:
-    #
-    #     temperatures = []
-    #
-    #     for physical_property in enumerate(data_set.properties[substance_id]):
-    #         temperatures.append(physical_property.thermodynamic_state.temperature.value_in_unit(unit.kelvin))
-    #
-    #     temperatures = numpy.array(temperatures)
-    #
-    #     minimum_temperature_index = numpy.argmin(temperatures)
-    #     median_temperature_index = numpy.argsort(temperatures)[len(temperatures) // 2]
-    #     maximum_temperature_index = numpy.argmax(temperatures)
-    #
-    #     temperatures.sort()
-    #
-    #     median_index = math.floor(len(temperatures) / 2)
-    #
-    #     min_index = 0
-    #     max_index = len(temperatures) - 1
-    #
-    #     lower_range = temperatures[median_index][0] - temperatures[min_index][0]
-    #
-    #     while lower_range > temperature_cutoff and min_index < median_index:
-    #
-    #         min_index += 1
-    #         lower_range = temperatures[median_index][0] - temperatures[min_index][0]
-    #
-    #     upper_range = temperatures[max_index][0] - temperatures[median_index][0]
-    #
-    #     while upper_range > temperature_cutoff and max_index > median_index:
-    #
-    #         max_index -= 1
-    #         upper_range = temperatures[max_index][0] - temperatures[median_index][0]
-    #
-    #     indices_to_include = []
-    #     indices_to_include.extend(temperatures[median_index][1])
-    #
-    #     if lower_range < temperature_cutoff:
-    #         indices_to_include.extend(temperatures[min_index][1])
-    #
-    #     if upper_range < temperature_cutoff:
-    #         indices_to_include.extend(temperatures[max_index][1])
-    #
-    #     # Remove duplicate indices
-    #     indices_to_include = list(dict.fromkeys(indices_to_include))
-    #
-    #     filtered_set.properties[substance_id] = [self._properties[substance_id][index] for
-    #                                              index in indices_to_include]
-    #
-    #     remaining_indices = [index for index in range(len(self._properties[substance_id]))
-    #                          if index not in indices_to_include]
-    #
-    #     remaining_set.properties[substance_id] = [self._properties[substance_id][index] for
-    #                                               index in remaining_indices]
-    #
-    #     assert (len(filtered_set.properties[substance_id]) + len(remaining_set.properties[substance_id]) ==
-    #             len(self._properties[substance_id]))
-    #
-    #     assert len(filtered_set.properties[substance_id]) % 2 == 0
-    #     assert len(remaining_set.properties[substance_id]) % 2 == 0
-    #
-    #     assert len(self._properties[substance_id]) % 2 == 0
-    #
-    #     if len(filtered_set.properties[substance_id]) == 0:
-    #         filtered_set.properties.pop(substance_id)
-    #
-    #     if len(remaining_set.properties[substance_id]) == 0:
-    #         remaining_set.properties.pop(substance_id)
+    for substance_id in data_set.properties:
+
+        temperatures = []
+
+        for physical_property in data_set.properties[substance_id]:
+            temperatures.append(physical_property.thermodynamic_state.temperature.value_in_unit(unit.kelvin))
+
+        if len(temperatures) <= 0:
+            continue
+
+        temperatures = numpy.array(temperatures)
+
+        filtered_set.properties[substance_id] = []
+
+        minimum_temperature_index = numpy.argmin(temperatures)
+        median_temperature_index = numpy.argsort(temperatures)[len(temperatures) // 2]
+        maximum_temperature_index = numpy.argmax(temperatures)
+
+        temperature_set = set()
+
+        temperature_set.add(minimum_temperature_index)
+        temperature_set.add(median_temperature_index)
+        temperature_set.add(maximum_temperature_index)
+
+        for index in set(temperature_set):
+            filtered_set.properties[substance_id].append(data_set.properties[substance_id][index])
 
     return filtered_set
 
@@ -513,34 +497,34 @@ def _choose_molecule_set(data_sets, properties_of_interest):
     # Define the order of preference for which data molecules should have,
     # as explained above.
     property_order = [
-        # [
-        #     # Ideally we want molecules for which we have data for
-        #     # all three properties of interest.
-        #     (Density, SubstanceType.Pure),
-        #     (DielectricConstant, SubstanceType.Pure),
-        #     (EnthalpyOfVaporization, SubstanceType.Pure)
-        # ],
-        # [
-        #     # If that isn't possible, we'd like molecules for which we
-        #     # have at least densities and enthalpies of vaporization...
-        #     (Density, SubstanceType.Pure),
-        #     (EnthalpyOfVaporization, SubstanceType.Pure)
-        # ],
-        # [
-        #     # and molecules for which we have at least densities and
-        #     # dielectric constant
-        #     (Density, SubstanceType.Pure),
-        #     (DielectricConstant, SubstanceType.Pure),
-        # ],
+        [
+            # Ideally we want molecules for which we have data for
+            # all three properties of interest.
+            (Density, SubstanceType.Pure),
+            (DielectricConstant, SubstanceType.Pure),
+            (EnthalpyOfVaporization, SubstanceType.Pure)
+        ],
+        [
+            # If that isn't possible, we'd like molecules for which we
+            # have at least densities and enthalpies of vaporization...
+            (Density, SubstanceType.Pure),
+            (EnthalpyOfVaporization, SubstanceType.Pure)
+        ],
+        [
+            # and molecules for which we have at least densities and
+            # dielectric constant
+            (Density, SubstanceType.Pure),
+            (DielectricConstant, SubstanceType.Pure),
+        ],
         [
             # Finally, fall back to molecules for which the is only
             # data for the enthalpy of vaporisation...
             (EnthalpyOfVaporization, SubstanceType.Pure)
         ],
-        # [
-        #     # or the density.
-        #     (Density, SubstanceType.Pure),
-        # ]
+        [
+            # or the density.
+            (Density, SubstanceType.Pure),
+        ]
         # TODO: Do we want to fit against molecules for which we ONLY
         #       have the dielectric constant?
     ]
@@ -722,8 +706,8 @@ def curate_data_set(property_data_directory):
     # Define the properties which we are interested in curating data for,
     # as well as the types of data we are interested in.
     properties_of_interest = [
-        # (Density, SubstanceType.Pure),
-        # (DielectricConstant, SubstanceType.Pure),
+        (Density, SubstanceType.Pure),
+        (DielectricConstant, SubstanceType.Pure),
         (EnthalpyOfVaporization, SubstanceType.Pure)
     ]
 
@@ -735,11 +719,15 @@ def curate_data_set(property_data_directory):
 
     # Define the elements that we are interested in. Here we only allow
     # those elements for which smirnoff99Frosst has parameters for.
-    allowed_elements = ['H', 'N', 'C', 'O', 'S', 'P', 'F', 'Cl', 'Br', 'I', 'Na', 'K', 'Ca']
+    allowed_elements = ['H', 'N', 'C', 'O', 'S', 'P', 'F',
+                        'Cl', 'Br', 'I', 'Na', 'K', 'Ca']
 
     # Define a minimum dielectric constant threshold so as not to try
     # try to reproduce values which cannot be simulated with accuracy.
     minimum_dielectric_value = 10.0 * unit.dimensionless
+
+    # Define whether or not to allow ionic liquids.
+    allow_ionic_liquids = False
 
     # Load and apply basic filters to the data sets of interest.
     data_sets = {}
@@ -763,6 +751,14 @@ def curate_data_set(property_data_directory):
                               pressure_range,
                               allowed_elements)
 
+        # Extract only data points which are either at the extremes,
+        # or in the middle of the temperature range.
+        data_set = _extract_min_max_median_temperature_set(data_set)
+
+        # Optionally filter by ionic liquids.
+        if allow_ionic_liquids is False:
+            _filter_ionic_liquids(data_set)
+
         # Additionally filter out any measured dielectric constants which are too low
         # and may be difficult to simulate.
         if property_type == DielectricConstant:
@@ -772,7 +768,8 @@ def curate_data_set(property_data_directory):
             _filter_dielectric_constants(data_set, minimum_dielectric_value)
 
             logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                         f'dielectric properties had values less than 10.0 and were removed.')
+                         f'dielectric properties had values less than {minimum_dielectric_value} '
+                         f'and were removed.')
 
         data_sets[(property_type, substance_type)] = data_set
 
@@ -782,9 +779,29 @@ def curate_data_set(property_data_directory):
     # the vdW parameters which will be optimised against the
     # properties of interest.
     chosen_smiles = _choose_molecule_set(data_sets, properties_of_interest)
+    logging.info(f'Chosen smiles: {" ".join(chosen_smiles.keys())}')
 
     # Print the chosen molecule set and the corresponding data to the terminal.
     _print_chosen_set(chosen_smiles, data_sets, properties_of_interest)
+
+    # Merge the multiple property data sets into a single object
+    final_data_set = PhysicalPropertyDataSet()
+
+    # TODO: Migrate to the PhysicalPropertyDataSet class.
+    def filter_by_smiles(physical_property):
+        for component in physical_property.substance.components:
+            if component.smiles in chosen_smiles:
+                continue
+            return False
+        return True
+
+    for data_set in data_sets.values():
+        data_set.filter_by_function(filter_by_smiles)
+        final_data_set.merge(data_set)
+
+    # Save the final data set in a form consumable by force balance.
+    with open('curated_data_set.json', 'w') as file:
+        file.write(final_data_set.json())
 
 
 def _main():

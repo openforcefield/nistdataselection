@@ -72,7 +72,7 @@ def _find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
     # Populate the dictionary using the open force field toolkit.
     for smiles in smiles_patterns:
 
-        if smiles not in _cached_smirks_parameters:
+        if smiles not in _cached_smirks_parameters or parameter_tag not in _cached_smirks_parameters[smiles]:
 
             try:
                 molecule = Molecule.from_smiles(smiles)
@@ -81,12 +81,21 @@ def _find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
                 continue
 
             topology = Topology.from_molecules([molecule])
-            _cached_smirks_parameters[smiles] = force_field.label_molecules(topology)[0]
+
+            if smiles not in _cached_smirks_parameters:
+                _cached_smirks_parameters[smiles] = {}
+
+            if parameter_tag not in _cached_smirks_parameters[smiles]:
+                _cached_smirks_parameters[smiles][parameter_tag] = []
+
+            _cached_smirks_parameters[smiles][parameter_tag] = [
+                parameter.smirks for parameter in force_field.label_molecules(topology)[0][parameter_tag].values()
+            ]
 
         parameters_with_tag = _cached_smirks_parameters[smiles][parameter_tag]
 
-        for parameter in parameters_with_tag.values():
-            smiles_by_parameter_smirks[parameter.smirks].add(smiles)
+        for smirks in parameters_with_tag:
+            smiles_by_parameter_smirks[smirks].add(smiles)
 
     return smiles_by_parameter_smirks
 
@@ -575,13 +584,37 @@ def _choose_molecule_set(data_sets, properties_of_interest):
 
                 unexercised_smirks_per_smiles[smiles].add(smirks)
 
-        # Sort the dictionary keys so that molecules which will exercise the most
-        # vdW parameters appear first.
+        # We sort the dictionary so that molecules which will exercise the most
+        # vdW parameters appear first. For molecules which exercise the same number
+        # of parameters, we rank smaller molecules higher than larger ones.
         sorted_smiles = []
+        printed_list = []
+
+        def sorting_function(key_value_pair):
+
+            smiles, vdw_smirks = key_value_pair
+
+            number_of_vdw_smirks = len(vdw_smirks)
+
+            # Determine the number of represented by this smiles pattern.
+            # We prefer smaller molecules as they will be quicker to simulate
+            # and their properties should converge faster (compared to larger,
+            # more flexible molecule with more degrees of freedom to sample).
+            molecule = Molecule.from_smiles(smiles)
+            number_of_atoms = molecule.n_atoms
+
+            # Return the tuple to sort by, prioritising the number of
+            # exercised smirks, and then the inverse number of atoms. The
+            # inverse number of atoms is used as the dictionary is being
+            # reverse sorted.
+            return number_of_vdw_smirks, number_of_atoms
 
         for key, value in sorted(unexercised_smirks_per_smiles.items(),
-                                 key=lambda x: len(x[1]), reverse=True):
+                                 key=sorting_function, reverse=True):
             sorted_smiles.append(key)
+
+            molecule = Molecule.from_smiles(key)
+            printed_list.append((key, len(value), 1.0 / molecule.n_atoms))
 
         while len(sorted_smiles) > 0:
 
@@ -607,10 +640,10 @@ def _choose_molecule_set(data_sets, properties_of_interest):
             unexercised_smirks_per_smiles = {smiles: smirks_set for smiles, smirks_set in
                                              unexercised_smirks_per_smiles.items() if len(smirks_set) > 0}
 
-            # Re-sort the smiles list.
+            # Re-sort the smiles list by the same criteria as above.
             resorted_smiles = []
 
-            for key, value in sorted(unexercised_smirks_per_smiles.items(), key=lambda x: len(x[1]), reverse=True):
+            for key, value in sorted(unexercised_smirks_per_smiles.items(), key=sorting_function, reverse=True):
                 resorted_smiles.append(key)
 
             sorted_smiles = resorted_smiles
@@ -853,9 +886,29 @@ def _main():
     # home_directory = os.path.expanduser("~")
     # data_directory = os.path.join(home_directory, 'property_data')
 
+    import json
+
+    # Check to see if we have already cached which vdW smirks will be
+    # assigned to which molecules. This can significantly speed up this
+    # script on multiple runs.
+    cached_smirks_file_name = 'cached_smirks_parameters.json'
+
+    try:
+
+        with open(cached_smirks_file_name) as file:
+            _cached_smirks_parameters.update(json.load(file))
+
+    except (json.JSONDecodeError, FileNotFoundError):
+        pass
+
     data_directory = 'data_sets'
 
     curate_data_set(data_directory)
+
+    # Cache the smirks which will be assigned to the different molecules
+    # to speed up future runs.
+    with open(cached_smirks_file_name, 'w') as file:
+        json.dump(_cached_smirks_parameters, file)
 
 
 if __name__ == '__main__':

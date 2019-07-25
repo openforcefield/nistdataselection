@@ -607,7 +607,7 @@ def _choose_molecule_set(data_sets, properties_of_interest):
             # exercised smirks, and then the inverse number of atoms. The
             # inverse number of atoms is used as the dictionary is being
             # reverse sorted.
-            return number_of_vdw_smirks, number_of_atoms
+            return number_of_vdw_smirks, 1.0 / number_of_atoms
 
         for key, value in sorted(unexercised_smirks_per_smiles.items(),
                                  key=sorting_function, reverse=True):

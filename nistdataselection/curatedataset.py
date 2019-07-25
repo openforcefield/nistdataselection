@@ -768,9 +768,6 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # Load and apply basic filters to the data sets of interest.
     data_sets = {}
 
-    filtered_data_sets_directory = 'filtered_data_sets'
-    os.makedirs(filtered_data_sets_directory, exist_ok=True)
-
     for property_type, substance_type in properties_of_interest:
 
         # Load the full data sets from the processed data files, and

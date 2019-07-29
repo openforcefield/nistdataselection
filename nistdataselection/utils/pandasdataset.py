@@ -2,6 +2,7 @@
 A utility for going between `propertyestimator.datasets.PhysicalPropertyDataSet
 objects and `pandas.DataFrame` objects.
 """
+import math
 
 import pandas
 from openforcefield.utils import quantity_to_string, string_to_quantity
@@ -79,14 +80,29 @@ class PandasDataSet(PhysicalPropertyDataSet):
             if substance.identifier not in return_value._properties:
                 return_value.properties[substance.identifier] = []
 
+            pressure = row['Pressure (kPa)']
+
+            if math.isnan(pressure):
+                pressure = None
+            else:
+                pressure *= unit.kilopascal
+
             # Parse the state
             thermodynamic_state = ThermodynamicState(temperature=row['Temperature (K)'] * unit.kelvin,
-                                                     pressure=row['Pressure (kPa)'] * unit.kilopascal)
+                                                     pressure=pressure)
 
             phase = PropertyPhase(row['Phase'])
 
-            value = None if 'Value' not in row else string_to_quantity(row['Value'])
-            uncertainty = None if 'Uncertainty' not in row else string_to_quantity(row['Uncertainty'])
+            value = None
+            uncertainty = None
+
+            if 'Value' in row:
+                value_string = row['Value'].replace('None', 'dimensionless')
+                value = string_to_quantity(value_string)
+
+            if 'Uncertainty' in row:
+                uncertainty_string = row['Uncertainty'].replace('None', 'dimensionless')
+                uncertainty = string_to_quantity(uncertainty_string)
 
             source = MeasurementSource(reference=row['Source'])
             sources.add(source)
@@ -234,8 +250,8 @@ class PandasDataSet(PhysicalPropertyDataSet):
                     data_row[f'Component {index + 1}'] = components[index][0]
                     data_row[f'Mole Fraction {index + 1}'] = components[index][1]
 
-                data_row['Value'] = value,
-                data_row['Uncertainty'] = uncertainty,
+                data_row['Value'] = value
+                data_row['Uncertainty'] = uncertainty
                 data_row['Source'] = source
 
                 data_rows.append(data_row)

@@ -1,5 +1,8 @@
 """Utilities to help with processing the NIST data sets.
 """
+import shutil
+import subprocess
+import tempfile
 from enum import Enum
 
 from propertyestimator.backends import DaskLocalClusterBackend, QueueWorkerResources, DaskLSFBackend
@@ -66,3 +69,75 @@ def setup_parallel_backend(backend_type=BackendType.Local,
     calculation_backend.start()
 
     return calculation_backend
+
+
+def analyse_functional_groups(smiles):
+    """Employs checkmol to determine which chemical moieties
+    are encoded by a given smiles pattern.
+
+    Parameters
+    ----------
+    smiles: str
+        The smiles pattern to examine.
+
+    Returns
+    -------
+    list of str, optional
+        A list of matching chemical moiety descriptors. If
+        checkmol did not execute correctly, returns None.
+    """
+    from openforcefield.topology import Molecule
+
+    # Make sure the checkmol utility has been installed separately.
+    if shutil.which('checkmol') is None:
+
+        raise FileNotFoundError('checkmol was not found on this machine. Visit '
+                                'http://merian.pch.univie.ac.at/~nhaider/cheminf/cmmm.html '
+                                'to obtain it.')
+
+    molecule = Molecule.from_smiles(smiles)
+
+    # Save the smile pattern out as an SDF file, ready
+    # to use as input to checkmol.
+    with tempfile.NamedTemporaryFile() as file:
+
+        molecule.to_file(file, 'SDF')
+
+        # Execute checkmol.
+        result = subprocess.check_output(['checkmol', file.name],
+                                         stderr=subprocess.STDOUT).decode()
+
+    groups = None
+
+    # Turn the string output into a list of moieties.
+    if len(result) > 0:
+        groups = list(filter(None, result.replace('\n', '').split(';')))
+
+    return groups
+
+
+def smiles_to_png(smiles, file_path):
+    """Creates a png image of the 2D representation of
+    a given smiles pattern.
+
+    Parameters
+    ----------
+    smiles: str
+        The smiles pattern to generate the png of.
+    file_path: str
+        The path of the output png file.
+    """
+
+    from openeye import oedepict
+    from openforcefield.topology import Molecule
+
+    off_molecule = Molecule.from_smiles(smiles)
+    oe_molecule = off_molecule.to_openeye()
+    oe_molecule.SetTitle(off_molecule.to_smiles())
+
+    oedepict.OEPrepareDepiction(oe_molecule)
+
+    options = oedepict.OE2DMolDisplayOptions(256, 256, oedepict.OEScale_AutoScale)
+
+    display = oedepict.OE2DMolDisplay(oe_molecule, options)
+    oedepict.OERenderMolecule(file_path, display)

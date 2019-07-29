@@ -844,6 +844,18 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
 
         logging.info(f'Finished loading the {substance_type} {property_type.__name__} data set.')
 
+    # Due to ambiguity about at which pressure the enthalpy of vaporisation
+    # was collected (no pressure is recorded in any of the ThermoML archives,
+    # a decision was made to assume a pressure of 1 atm.
+    for property_type, substance_type in data_sets:
+
+        if not property_type == EnthalpyOfVaporization:
+            continue
+
+        for substance_id in data_sets[(property_type, substance_type)].properties:
+            for physical_property in data_sets[(property_type, substance_type)].properties[substance_id]:
+                physical_property.thermodynamic_state.pressure = 1.0 * unit.atmosphere
+
     # Choose a set of molecules which give a good coverage of
     # the vdW parameters which will be optimised against the
     # properties of interest.

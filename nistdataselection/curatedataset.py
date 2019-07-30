@@ -540,10 +540,10 @@ def _choose_molecule_set(data_sets, properties_of_interest):
             # data for the enthalpy of vaporisation...
             (EnthalpyOfVaporization, SubstanceType.Pure)
         ],
-        # [
-        #     # or the density.
-        #     (Density, SubstanceType.Pure),
-        # ]
+        [
+            # or the density.
+            (Density, SubstanceType.Pure),
+        ]
         # TODO: Do we want to fit against molecules for which we ONLY
         #       have the dielectric constant?
     ]

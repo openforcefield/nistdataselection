@@ -133,11 +133,11 @@ def smiles_to_png(smiles, file_path):
 
     off_molecule = Molecule.from_smiles(smiles)
     oe_molecule = off_molecule.to_openeye()
-    oe_molecule.SetTitle(off_molecule.to_smiles())
+    # oe_molecule.SetTitle(off_molecule.to_smiles())
 
     oedepict.OEPrepareDepiction(oe_molecule)
 
-    options = oedepict.OE2DMolDisplayOptions(256, 256, oedepict.OEScale_AutoScale)
+    options = oedepict.OE2DMolDisplayOptions(200, 200, oedepict.OEScale_AutoScale)
 
     display = oedepict.OE2DMolDisplay(oe_molecule, options)
     oedepict.OERenderMolecule(file_path, display)

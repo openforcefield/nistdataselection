@@ -1,10 +1,12 @@
 """
 Records the tools and decisions used to select NIST data for curation.
 """
+import functools
 import logging
 import math
 import os
 import re
+import sys
 from collections import defaultdict
 from enum import Enum
 
@@ -12,9 +14,13 @@ import numpy
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines import smirnoff
 from openforcefield.utils import UndefinedStereochemistryError
+from propertyestimator.client import PropertyEstimatorOptions
 from propertyestimator.datasets import PhysicalPropertyDataSet
+from propertyestimator.layers import SimulationLayer
 from propertyestimator.properties import Density, DielectricConstant, EnthalpyOfVaporization
+from propertyestimator.protocols.groups import ConditionalGroup
 from propertyestimator.utils import setup_timestamp_logging
+from propertyestimator.workflow import WorkflowOptions
 from simtk import unit
 from tabulate import tabulate
 
@@ -544,8 +550,6 @@ def _choose_molecule_set(data_sets, properties_of_interest):
             # or the density.
             (Density, SubstanceType.Pure),
         ]
-        # TODO: Do we want to fit against molecules for which we ONLY
-        #       have the dielectric constant?
     ]
 
     for property_list in property_order:
@@ -699,7 +703,203 @@ def _choose_molecule_set(data_sets, properties_of_interest):
     return chosen_smiles
 
 
-def _create_report(report_type, file_path, chosen_smiles, data_sets, properties_of_interest,
+def _choose_data_points(data_set, properties_of_interest, target_state_points):
+    """The method attempts to find a small set of data points for each
+    property which are clustered around the set of conditions specified
+    in the `target_state_points` input array.
+
+    The points will be chosen so as to try and maximise the number of
+    properties measured at the same condition (e.g. ideally we would
+    have a data point for each property at T=298.15 and p=1atm) as this
+    will maximise the chances that we can extract all properties from a
+    single simulation.
+
+    Warnings
+    --------
+    Currently this method will only work with pure properties of interest.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to choose data points from.
+    properties_of_interest: list of tuple of type and SubstanceType
+        A list of the properties which are of interest to optimise against.
+    target_state_points: list of tuple of simtk.Unit.Quantity and simtk.Unit.Quantity
+        A list of the state points for which we would ideally have data
+        points for. The tuple should be of the form (temperature, pressure)
+
+    Returns
+    -------
+    PhysicalPropertyDataSet
+        A data set which contains the chosen data points.
+    """
+
+    return_data_set = PhysicalPropertyDataSet()
+
+    def state_distance(target_state_point, state_tuple):
+        """Defines a metric for how close a measured data point
+        (`state_tuple`) is to a state point of interest (`target_state_point`).
+
+        Currently this a tuple of the form (|difference in pressure|, |difference
+        in temperature|), i.e., deviations from the target pressure are first
+        prioritised, followed by deviations from the target temperature.
+
+        Parameters
+        ----------
+        target_state_point: tuple of simtk.unit.Quantity and simtk.unit.Quantity
+            A tuple containing a pressure and temperature of interest of
+            the form (pressure, temperature).
+
+        state_tuple: tuple of float and float
+            The measured state point, of the form (pressure in kPa, temperature in K).
+
+        Returns
+        -------
+        tuple of float and float
+            A tuple of the form (|difference in pressure|, |difference in temperature|)
+        """
+
+        pressure, temperature = state_tuple
+
+        distance_tuple = ((target_state_point[1].value_in_unit(unit.kilopascal) - pressure) ** 2,
+                          (target_state_point[0].value_in_unit(unit.kelvin) - temperature) ** 2)
+
+        return distance_tuple
+
+    for substance_id in data_set.properties:
+
+        return_data_set.properties[substance_id] = []
+
+        clustered_state_points = defaultdict(list)
+
+        property_types_by_state = defaultdict(set)
+        properties_by_state = defaultdict(list)
+
+        # We first cluster data points around the closest target state
+        # according to the `state_distance` metric.
+        for physical_property in data_set.properties[substance_id]:
+
+            temperature = physical_property.thermodynamic_state.temperature.value_in_unit(unit.kelvin)
+            pressure = physical_property.thermodynamic_state.pressure.value_in_unit(unit.kilopascal)
+
+            state_tuple = (round(pressure, 3), round(temperature, 2))
+
+            closest_cluster_index = -1
+            shortest_cluster_distance = sys.float_info.max
+
+            for cluster_index, target_state_point in enumerate(target_state_points):
+
+                distance = math.sqrt((target_state_point[0].value_in_unit(unit.kelvin) - temperature) ** 2 +
+                                     (target_state_point[1].value_in_unit(unit.kilopascal) - pressure) ** 2)
+
+                if distance >= shortest_cluster_distance:
+                    continue
+
+                closest_cluster_index = cluster_index
+                shortest_cluster_distance = distance
+
+            if state_tuple not in clustered_state_points[closest_cluster_index]:
+                clustered_state_points[closest_cluster_index].append(state_tuple)
+
+            # Keep a track of which properties (and types of properties) we
+            # have for each of the measured state points.
+            property_types_by_state[state_tuple].add(type(physical_property))
+            properties_by_state[state_tuple].append(physical_property)
+
+        for cluster_index, target_state_point in enumerate(target_state_points):
+
+            # For each cluster, we try to find the state points for which we have
+            # measured the most types of properties (i.e. prioritise states
+            # for which we have a density, dielectric and enthalpy measurement
+            # over those for which we only have a density measurement). We
+            # continue to choose state points until either we have coverage
+            # of all properties at the state of interest, or we have considered
+            # all possible data points.
+            properties_to_cover = set(property_tuple[0] for property_tuple in properties_of_interest)
+
+            clustered_states = clustered_state_points[cluster_index]
+            clustered_states = list(sorted(clustered_states, key=functools.partial(state_distance, target_state_point)))
+
+            chosen_states = set()
+
+            # Iteratively consider state points which have all data points, down
+            # to state points for which we only have single property measurements.
+            for target_number_of_properties in reversed(range(1, len(properties_to_cover) + 1)):
+
+                for clustered_state in clustered_states:
+
+                    property_types_at_state = property_types_by_state[clustered_state]
+
+                    if len(property_types_at_state) != target_number_of_properties:
+                        continue
+
+                    if len(properties_to_cover.intersection(property_types_at_state)) == 0:
+                        continue
+
+                    chosen_states.add(clustered_state)
+
+                    properties_to_cover = properties_to_cover.symmetric_difference(
+                        properties_to_cover.intersection(property_types_at_state))
+
+            # Add the properties which were measured at the chosen state points
+            # to the returned data set.
+            for chosen_state in chosen_states:
+                return_data_set.properties[substance_id].extend(properties_by_state[chosen_state])
+
+    return return_data_set
+
+
+def _estimate_required_simulations(properties_of_interest, data_set):
+    """Estimate how many simulations the property estimator
+    will try and run to estimate the given data set of properties.
+
+    Parameters
+    ----------
+    properties_of_interest: list of tuple of type and SubstanceType
+        A list of the property types which are of interest to optimise against.
+    data_set: PhysicalPropertyDataSet
+        The data set containing the data set of properties of interest.
+
+    Returns
+    -------
+    int
+        The estimated number of simulations required.
+    """
+
+    data_set = PhysicalPropertyDataSet.parse_json(data_set.json())
+
+    options = PropertyEstimatorOptions()
+    calculation_layer = 'SimulationLayer'
+
+    for property_type, _ in properties_of_interest:
+
+        options.workflow_options[property_type.__name__] = {calculation_layer: WorkflowOptions()}
+
+        default_schema = property_type.get_default_workflow_schema(calculation_layer, WorkflowOptions())
+        options.workflow_schemas[property_type.__name__] = {calculation_layer: default_schema}
+
+    properties = []
+
+    for substance_id in data_set.properties:
+        properties.extend(data_set.properties[substance_id])
+
+    workflow_graph = SimulationLayer._build_workflow_graph('', properties, '', [], options)
+
+    number_of_simulations = 0
+
+    for protocol_id in workflow_graph._protocols_by_id:
+
+        protocol = workflow_graph._protocols_by_id[protocol_id]
+
+        if not isinstance(protocol, ConditionalGroup):
+            continue
+
+        number_of_simulations += 1
+
+    return number_of_simulations
+
+
+def _create_report(report_type, file_path, chosen_smiles, properties_of_interest,
                    final_data_set):
     """Create a formated report about the chosen data, and optionally
     save it to file.
@@ -713,23 +913,20 @@ def _create_report(report_type, file_path, chosen_smiles, data_sets, properties_
     chosen_smiles: dict of str and set of str
         The smile patterns of the chosen molecules, and the
         vdW smirks patterns they exercise.
-    data_sets: dict of tuple of type and SubstanceType and PhysicalPropertyDataSet
-        The data sets containing the properties of interest.
     properties_of_interest: list of tuple of type and SubstanceType
         The properties of interest.
     final_data_set: PhysicalPropertyDataSet
         The complete, curated data set.
     """
     if report_type == ReportType.PlainText:
-        _create_report_plain_text(file_path, chosen_smiles, data_sets, properties_of_interest, final_data_set)
+        _create_report_plain_text(file_path, chosen_smiles, properties_of_interest, final_data_set)
     elif report_type == ReportType.LateX:
-        _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_interest, final_data_set)
+        _create_report_latex(file_path, chosen_smiles, properties_of_interest, final_data_set)
     else:
         raise NotImplementedError()
 
 
-def _create_report_plain_text(file_path, chosen_smiles, data_sets, properties_of_interest,
-                   final_data_set):
+def _create_report_plain_text(file_path, chosen_smiles, properties_of_interest, final_data_set):
     """Create a plain text report about the chosen data.
 
     Parameters
@@ -739,8 +936,6 @@ def _create_report_plain_text(file_path, chosen_smiles, data_sets, properties_of
     chosen_smiles: dict of str and set of str
         The smile patterns of the chosen molecules, and the
         vdW smirks patterns they exercise.
-    data_sets: dict of tuple of type and SubstanceType and PhysicalPropertyDataSet
-        The data sets containing the properties of interest.
     properties_of_interest: list of tuple of type and SubstanceType
         The properties of interest.
     final_data_set: PhysicalPropertyDataSet
@@ -767,14 +962,26 @@ def _create_report_plain_text(file_path, chosen_smiles, data_sets, properties_of
 
             for property_type, substance_type in properties_of_interest:
 
+                def filter_by_substance_type(physical_property):
+
+                    substance_type_to_int = {
+                        SubstanceType.Pure: 1,
+                        SubstanceType.Binary: 2,
+                        SubstanceType.Ternary: 3,
+                    }
+
+                    return substance_type_to_int[substance_type] == len(physical_property.substance.components)
+
+                copied_data_set = PhysicalPropertyDataSet.parse_json(final_data_set.json())
+                copied_data_set.filter_by_property_types(property_type)
+                copied_data_set.filter_by_function(filter_by_substance_type)
+
                 property_name = ' '.join(re.sub('([A-Z][a-z]+)', r' \1',
                                                 re.sub('([A-Z]+)', r' \1', property_type.__name__)).split())
 
                 file.write(f'\n{str(substance_type.value).upper()} {property_name.upper()} Data\n')
 
-                data_set = data_sets[(property_type, substance_type)]
-
-                pandas_data_frame = PandasDataSet.to_pandas_data_frame(data_set)
+                pandas_data_frame = PandasDataSet.to_pandas_data_frame(copied_data_set)
                 pandas_data_frame = pandas_data_frame.loc[pandas_data_frame['Component 1'] == smiles_pattern]
 
                 pandas_data_frame = pandas_data_frame[['Temperature (K)', 'Pressure (kPa)', 'Source']]
@@ -788,8 +995,7 @@ def _create_report_plain_text(file_path, chosen_smiles, data_sets, properties_of
         file.write('\n')
 
 
-def _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_interest,
-                   final_data_set):
+def _create_report_latex(file_path, chosen_smiles, properties_of_interest, final_data_set):
     """Create a LaTeX formated report about the chosen data.
 
     Parameters
@@ -799,8 +1005,6 @@ def _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_inte
     chosen_smiles: dict of str and set of str
         The smile patterns of the chosen molecules, and the
         vdW smirks patterns they exercise.
-    data_sets: dict of tuple of type and SubstanceType and PhysicalPropertyDataSet
-        The data sets containing the properties of interest.
     properties_of_interest: list of tuple of type and SubstanceType
         The properties of interest.
     """
@@ -808,6 +1012,8 @@ def _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_inte
     # Save images of the chosen molecules
     os.makedirs('images', exist_ok=True)
     _create_molecule_images(list(chosen_smiles.keys()), 'images')
+
+    required_simulations = _estimate_required_simulations(properties_of_interest, final_data_set)
 
     header_template = [
         '\\documentclass{article}',
@@ -817,6 +1023,7 @@ def _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_inte
         '\\usepackage{graphicx}',
         '\\usepackage{array}',
         '\\usepackage[export]{adjustbox}',
+        '\\usepackage{parskip}',
         '',
         '\\usepackage{url}',
         '\\urlstyle{same}',
@@ -829,7 +1036,9 @@ def _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_inte
         '\\end{center}',
         '',
         f'A total of {final_data_set.number_of_properties} data points covering '
-        f'{len(final_data_set.properties)} unique molecules are to be optimized against.',
+        f'{len(final_data_set.properties)} unique molecules are to be optimized against. '
+        f'This will require approximately {required_simulations} unique simulation to be '
+        f'performed.',
         ''
     ]
 
@@ -863,7 +1072,19 @@ def _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_inte
 
         for property_type, substance_type in properties_of_interest:
 
-            data_set = data_sets[(property_type, substance_type)]
+            def filter_by_substance_type(physical_property):
+
+                substance_type_to_int = {
+                    SubstanceType.Pure: 1,
+                    SubstanceType.Binary: 2,
+                    SubstanceType.Ternary: 3,
+                }
+
+                return substance_type_to_int[substance_type] == len(physical_property.substance.components)
+
+            data_set = PhysicalPropertyDataSet.parse_json(final_data_set.json())
+            data_set.filter_by_property_types(property_type)
+            data_set.filter_by_function(filter_by_substance_type)
 
             pandas_data_frame = PandasDataSet.to_pandas_data_frame(data_set)
             pandas_data_frame = pandas_data_frame.loc[pandas_data_frame['Component 1'] == smiles_pattern]
@@ -872,9 +1093,7 @@ def _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_inte
                 continue
 
             pandas_data_frame = pandas_data_frame[['Temperature (K)', 'Pressure (kPa)', 'Source']]
-
-            pandas_data_frame.sort_values('Temperature (K)')
-            pandas_data_frame.sort_values('Pressure (kPa)')
+            pandas_data_frame = pandas_data_frame.sort_values(['Pressure (kPa)', 'Temperature (K)'])
 
             property_name = ' '.join(re.sub('([A-Z][a-z]+)', r' \1',
                                             re.sub('([A-Z]+)', r' \1', property_type.__name__)).split())
@@ -952,6 +1171,13 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     temperature_range = (288.15 * unit.kelvin, 318.15 * unit.kelvin)
     pressure_range = (0.95 * unit.atmosphere, 1.05 * unit.atmosphere)
 
+    # Specify more exactly those state points which would be of interest
+    # to fit against
+    target_state_points = [
+        (298.15 * unit.kelvin, 101.325 * unit.kilopascal),
+        (318.15 * unit.kelvin, 101.325 * unit.kilopascal)
+    ]
+
     # Define the elements that we are interested in. Here we only allow
     # those elements for which smirnoff99Frosst has parameters for.
     allowed_elements = ['H', 'N', 'C', 'O', 'S', 'P', 'F',
@@ -986,7 +1212,7 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
         # Extract only data points which are either at the extremes,
         # or in the middle of the temperature range. This should yield
         # at most three data points per property per molecule.
-        data_set = _extract_min_max_median_temperature_set(data_set)
+        # data_set = _extract_min_max_median_temperature_set(data_set)
 
         # Optionally filter by ionic liquids.
         if allow_ionic_liquids is False:
@@ -1029,24 +1255,22 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # Merge the multiple property data sets into a single object
     final_data_set = PhysicalPropertyDataSet()
 
-    # TODO: Migrate to the PhysicalPropertyDataSet class.
-    def filter_by_smiles(physical_property_to_filter):
-        for component in physical_property_to_filter.substance.components:
-            if component.smiles in chosen_smiles:
-                continue
-            return False
-        return True
-
     for data_set in data_sets.values():
-        data_set.filter_by_function(filter_by_smiles)
         final_data_set.merge(data_set)
+
+    final_data_set.filter_by_smiles(*chosen_smiles)
+
+    # Finally, choose only a minimal set of data points from the full
+    # filtered set which are concentrated on the state points specified
+    # by the `target_state_points` array.
+    final_data_set = _choose_data_points(final_data_set, properties_of_interest, target_state_points)
 
     # Save the final data set in a form consumable by force balance.
     with open(output_data_set_path, 'w') as file:
         file.write(final_data_set.json())
 
     # Print the chosen molecule set and the corresponding data to the terminal.
-    _create_report(report_type, report_path, chosen_smiles, data_sets,
+    _create_report(report_type, report_path, chosen_smiles,
                    properties_of_interest, final_data_set)
 
 

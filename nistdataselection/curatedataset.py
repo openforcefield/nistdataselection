@@ -22,6 +22,15 @@ from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import smiles_to_png
 
 
+class ReportType(Enum):
+    """An enum which records how information about the
+    chosen set (e.g. which properties do we have which
+    data for) should be presented.
+    """
+    LateX = 'LateX'
+    PlainText = 'PlainText'
+
+
 class SubstanceType(Enum):
     """An enum which encodes the names used for substances
     with different numbers of components.
@@ -531,10 +540,10 @@ def _choose_molecule_set(data_sets, properties_of_interest):
             # data for the enthalpy of vaporisation...
             (EnthalpyOfVaporization, SubstanceType.Pure)
         ],
-        [
-            # or the density.
-            (Density, SubstanceType.Pure),
-        ]
+        # [
+        #     # or the density.
+        #     (Density, SubstanceType.Pure),
+        # ]
         # TODO: Do we want to fit against molecules for which we ONLY
         #       have the dielectric constant?
     ]
@@ -690,11 +699,103 @@ def _choose_molecule_set(data_sets, properties_of_interest):
     return chosen_smiles
 
 
-def _print_chosen_set(chosen_smiles, data_sets, properties_of_interest):
-    """Print the chosen data to the terminal.
+def _create_report(report_type, file_path, chosen_smiles, data_sets, properties_of_interest,
+                   final_data_set):
+    """Create a formated report about the chosen data, and optionally
+    save it to file.
 
     Parameters
     ----------
+    report_type: ReportType
+        The format in which to print the report.
+    file_path: str
+        The location to save the report to.
+    chosen_smiles: dict of str and set of str
+        The smile patterns of the chosen molecules, and the
+        vdW smirks patterns they exercise.
+    data_sets: dict of tuple of type and SubstanceType and PhysicalPropertyDataSet
+        The data sets containing the properties of interest.
+    properties_of_interest: list of tuple of type and SubstanceType
+        The properties of interest.
+    final_data_set: PhysicalPropertyDataSet
+        The complete, curated data set.
+    """
+    if report_type == ReportType.PlainText:
+        _create_report_plain_text(file_path, chosen_smiles, data_sets, properties_of_interest, final_data_set)
+    elif report_type == ReportType.LateX:
+        _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_interest, final_data_set)
+    else:
+        raise NotImplementedError()
+
+
+def _create_report_plain_text(file_path, chosen_smiles, data_sets, properties_of_interest,
+                   final_data_set):
+    """Create a plain text report about the chosen data.
+
+    Parameters
+    ----------
+    file_path: str
+        The location to save the report to.
+    chosen_smiles: dict of str and set of str
+        The smile patterns of the chosen molecules, and the
+        vdW smirks patterns they exercise.
+    data_sets: dict of tuple of type and SubstanceType and PhysicalPropertyDataSet
+        The data sets containing the properties of interest.
+    properties_of_interest: list of tuple of type and SubstanceType
+        The properties of interest.
+    final_data_set: PhysicalPropertyDataSet
+        The complete, curated data set.
+
+    Returns
+    -------
+    str
+        The create report.
+    """
+
+    with open(file_path, 'w') as file:
+
+        file.write('\n')
+        file.write(f'A total of {final_data_set.number_of_properties} data points are to '
+                   f'be optimized against.\n')
+
+        # Print information about the chosen set
+        for smiles_pattern in chosen_smiles:
+
+            file.write(''.join(['-'] * 120))
+            file.write(f'\nSMILES: {smiles_pattern}\n')
+            file.write(f'VDW SMIRKS EXERCISED: {" ".join(chosen_smiles[smiles_pattern])}')
+
+            for property_type, substance_type in properties_of_interest:
+
+                property_name = ' '.join(re.sub('([A-Z][a-z]+)', r' \1',
+                                                re.sub('([A-Z]+)', r' \1', property_type.__name__)).split())
+
+                file.write(f'\n{str(substance_type.value).upper()} {property_name.upper()} Data\n')
+
+                data_set = data_sets[(property_type, substance_type)]
+
+                pandas_data_frame = PandasDataSet.to_pandas_data_frame(data_set)
+                pandas_data_frame = pandas_data_frame.loc[pandas_data_frame['Component 1'] == smiles_pattern]
+
+                pandas_data_frame = pandas_data_frame[['Temperature (K)', 'Pressure (kPa)', 'Source']]
+
+                pandas_data_frame.sort_values('Temperature (K)')
+                pandas_data_frame.sort_values('Pressure (kPa)')
+
+                file.write(tabulate(pandas_data_frame, headers='keys', tablefmt='psql', showindex=False))
+
+        file.write(''.join(['-'] * 120))
+        file.write('\n')
+
+
+def _create_report_latex(file_path, chosen_smiles, data_sets, properties_of_interest,
+                   final_data_set):
+    """Create a LaTeX formated report about the chosen data.
+
+    Parameters
+    ----------
+    file_path: str
+        The location to save the report to.
     chosen_smiles: dict of str and set of str
         The smile patterns of the chosen molecules, and the
         vdW smirks patterns they exercise.
@@ -703,35 +804,97 @@ def _print_chosen_set(chosen_smiles, data_sets, properties_of_interest):
     properties_of_interest: list of tuple of type and SubstanceType
         The properties of interest.
     """
-    print('\n')
+
+    # Save images of the chosen molecules
+    os.makedirs('images', exist_ok=True)
+    _create_molecule_images(list(chosen_smiles.keys()), 'images')
+
+    header_template = [
+        '\\documentclass{article}',
+        '\\usepackage[margin=3cm]{geometry}',
+        '',
+        '\\usepackage[utf8]{inputenc}',
+        '\\usepackage{graphicx}',
+        '\\usepackage{array}',
+        '\\usepackage[export]{adjustbox}',
+        '',
+        '\\usepackage{url}',
+        '\\urlstyle{same}',
+        '',
+        '\\begin{document}',
+        '',
+        '\\begin{center}',
+        '    \\LARGE{Chosen Data Set} \\\\ \\vspace{.2cm}',
+        '    \\large{\\url{https://github.com/openforcefield/nistdataselection}}',
+        '\\end{center}',
+        '',
+        f'A total of {final_data_set.number_of_properties} data points covering '
+        f'{len(final_data_set.properties)} unique molecules are to be optimized against.',
+        ''
+    ]
+
+    row_templates = []
+
     # Print information about the chosen set
     for smiles_pattern in chosen_smiles:
 
-        print(''.join(['-'] * 120))
-        print(f'\nSMILES: {smiles_pattern}\n')
-        print(f'VDW SMIRKS EXERCISED: {" ".join(chosen_smiles[smiles_pattern])}')
+        exercised_smirks = []
+
+        for smirks in chosen_smiles[smiles_pattern]:
+            exercised_smirks.append(f'\\item {{{smirks}}}'.replace('#', '\\#'))
+
+        safe_smiles_pattern = smiles_pattern.replace("#", "\\#")
+
+        row_template = [
+            '\\hrulefill',
+            '',
+            '\\vspace{.3cm}',
+            '\\begin{center}',
+            f'    \\large{{\\textbf{{{safe_smiles_pattern}}}}}',
+            '\\end{center}'
+            '\\vspace{.3cm}',
+            '',
+            '\\begin{tabular}{ m{5cm} m{9cm} }',
+            '    {Structure} & {SMIRKS Exercised} \\\\',
+            f'    {{\\catcode`\\#=12 \\includegraphics{{{"./images/" + smiles_pattern + ".png"}}}}} & '
+            f'\\begin{{itemize}} {" ".join(exercised_smirks)} \\end{{itemize}} \\\\',
+            '\\end{tabular}'
+        ]
 
         for property_type, substance_type in properties_of_interest:
-
-            property_name = ' '.join(re.sub('([A-Z][a-z]+)', r' \1',
-                                            re.sub('([A-Z]+)', r' \1', property_type.__name__)).split())
-
-            print(f'\n{str(substance_type.value).upper()} {property_name.upper()} Data\n')
 
             data_set = data_sets[(property_type, substance_type)]
 
             pandas_data_frame = PandasDataSet.to_pandas_data_frame(data_set)
             pandas_data_frame = pandas_data_frame.loc[pandas_data_frame['Component 1'] == smiles_pattern]
 
+            if pandas_data_frame.shape[0] == 0:
+                continue
+
             pandas_data_frame = pandas_data_frame[['Temperature (K)', 'Pressure (kPa)', 'Source']]
 
             pandas_data_frame.sort_values('Temperature (K)')
             pandas_data_frame.sort_values('Pressure (kPa)')
 
-            print(tabulate(pandas_data_frame, headers='keys', tablefmt='psql', showindex=False))
+            property_name = ' '.join(re.sub('([A-Z][a-z]+)', r' \1',
+                                            re.sub('([A-Z]+)', r' \1', property_type.__name__)).split())
 
-    print(''.join(['-'] * 120))
-    print('\n')
+            row_template.append(f'\n{str(substance_type.value).title()} {property_name.title()} Data\n')
+            row_template.append('\\vspace{.3cm}\n')
+            row_template.append(tabulate(pandas_data_frame, headers='keys', tablefmt='latex', showindex=False))
+            row_template.append('\\vspace{.3cm}\n')
+
+        row_templates.append('\n'.join(row_template))
+
+    end_template = '\\end{document}\n'
+
+    with open(file_path, 'w') as file:
+
+        file.write('\n'.join(header_template))
+        file.write('\n')
+        file.write('\n'.join(row_templates))
+        file.write('\n')
+        file.write(end_template)
 
 
 def _create_molecule_images(chosen_smiles, directory):
@@ -756,7 +919,7 @@ def _create_molecule_images(chosen_smiles, directory):
 
 
 def curate_data_set(property_data_directory, output_data_set_path='curated_data_set.json',
-                    output_image_directory='images'):
+                    report_type=ReportType.LateX, report_path='report.tex'):
     """The main function which will perform the
     data curation.
 
@@ -767,9 +930,10 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
         date sets generated by `parserawdata`.
     output_data_set_path: str
         The path to save the curated data set to.
-    output_image_directory: str, optional
-        If not None, this directory will be created and populated
-        with images of the 2D structure of each of the chosen molecules.
+    report_type: ReportType
+        The type of report to create.
+    report_path: str
+        The path pointing to where to store the report.
     """
 
     setup_timestamp_logging()
@@ -862,15 +1026,12 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     chosen_smiles = _choose_molecule_set(data_sets, properties_of_interest)
     logging.info(f'Chosen smiles: {" ".join(chosen_smiles.keys())}')
 
-    # Print the chosen molecule set and the corresponding data to the terminal.
-    _print_chosen_set(chosen_smiles, data_sets, properties_of_interest)
-
     # Merge the multiple property data sets into a single object
     final_data_set = PhysicalPropertyDataSet()
 
     # TODO: Migrate to the PhysicalPropertyDataSet class.
-    def filter_by_smiles(physical_property):
-        for component in physical_property.substance.components:
+    def filter_by_smiles(physical_property_to_filter):
+        for component in physical_property_to_filter.substance.components:
             if component.smiles in chosen_smiles:
                 continue
             return False
@@ -884,9 +1045,9 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     with open(output_data_set_path, 'w') as file:
         file.write(final_data_set.json())
 
-    # Optionally save images of the chosen molecules
-    if output_image_directory is not None:
-        _create_molecule_images(list(chosen_smiles.keys()), output_image_directory)
+    # Print the chosen molecule set and the corresponding data to the terminal.
+    _create_report(report_type, report_path, chosen_smiles, data_sets,
+                   properties_of_interest, final_data_set)
 
 
 def _main():

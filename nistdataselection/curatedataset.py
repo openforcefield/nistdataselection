@@ -550,8 +550,6 @@ def _choose_molecule_set(data_sets, properties_of_interest):
             # or the density.
             (Density, SubstanceType.Pure),
         ]
-        # TODO: Do we want to fit against molecules for which we ONLY
-        #       have the dielectric constant?
     ]
 
     for property_list in property_order:
@@ -742,7 +740,7 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
         """Defines a metric for how close a measured data point
         (`state_tuple`) is to a state point of interest (`target_state_point`).
 
-        Currently this a tuple of the form (\difference in pressure|, |difference
+        Currently this a tuple of the form (|difference in pressure|, |difference
         in temperature|), i.e., deviations from the target pressure are first
         prioritised, followed by deviations from the target temperature.
 
@@ -758,7 +756,7 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
         Returns
         -------
         tuple of float and float
-            A tuple of the form (\difference in pressure|, |difference in temperature|)
+            A tuple of the form (|difference in pressure|, |difference in temperature|)
         """
 
         pressure, temperature = state_tuple

@@ -5,13 +5,38 @@ import subprocess
 import tempfile
 from enum import Enum
 
-from propertyestimator.backends import DaskLocalClusterBackend, QueueWorkerResources, DaskLSFBackend
-from simtk import unit
+from openforcefield.topology import Molecule, Topology
+from openforcefield.typing.engines.smirnoff import ForceField
+from openforcefield.utils import UndefinedStereochemistryError
+from propertyestimator import unit
+from propertyestimator.backends import DaskLocalCluster, QueueWorkerResources, DaskLSFBackend
 
 
 class BackendType(Enum):
     Local = 'Local'
     LSF = 'LSF'
+
+
+class SubstanceType(Enum):
+    """An enum which encodes the names used for substances
+    with different numbers of components.
+    """
+    Pure = 'pure'
+    Binary = 'binary'
+    Ternary = 'ternary'
+
+
+substance_type_to_int = {
+    SubstanceType.Pure: 1,
+    SubstanceType.Binary: 2,
+    SubstanceType.Ternary: 3,
+}
+
+int_to_substance_type = {
+    1: SubstanceType.Pure,
+    2: SubstanceType.Binary,
+    3: SubstanceType.Ternary,
+}
 
 
 def setup_parallel_backend(backend_type=BackendType.Local,
@@ -48,12 +73,12 @@ def setup_parallel_backend(backend_type=BackendType.Local,
     calculation_backend = None
 
     if backend_type == BackendType.Local:
-        calculation_backend = DaskLocalClusterBackend(number_of_workers=number_of_workers)
+        calculation_backend = DaskLocalCluster(number_of_workers=number_of_workers)
 
     elif backend_type == BackendType.LSF:
 
         queue_resources = QueueWorkerResources(number_of_threads=1,
-                                               per_thread_memory_limit=12 * (unit.giga * unit.byte),
+                                               per_thread_memory_limit=12 * unit.gigabyte,
                                                wallclock_time_limit="01:30")
 
         if lsf_worker_commands is None:
@@ -141,3 +166,72 @@ def smiles_to_png(smiles, file_path):
 
     display = oedepict.OE2DMolDisplay(oe_molecule, options)
     oedepict.OERenderMolecule(file_path, display)
+
+
+cached_smirks_parameters = {}
+
+
+def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
+    """Finds those force field parameters with a given tag which
+    would be assigned to a specified set of molecules defined by
+    the their smiles patterns.
+
+    Parameters
+    ----------
+    parameter_tag: str
+        The tag of the force field parameters to find.
+    smiles_patterns: str
+        The smiles patterns to assign the force field parameters
+        to.
+
+    Returns
+    -------
+    dict of str and list of str
+        A dictionary with keys of parameter smirks patterns, and
+        values of lists of smiles patterns which would utilize
+        those parameters.
+    """
+
+    force_field = ForceField('smirnoff99Frosst-1.0.9.offxml')
+    parameter_handler = force_field.get_parameter_handler(parameter_tag)
+
+    smiles_by_parameter_smirks = {}
+
+    # Initialize the array with all possible smirks pattern
+    # to make it easier to identify which are missing.
+    for parameter in parameter_handler.parameters:
+
+        if parameter.smirks in smiles_by_parameter_smirks:
+            continue
+
+        smiles_by_parameter_smirks[parameter.smirks] = set()
+
+    # Populate the dictionary using the open force field toolkit.
+    for smiles in smiles_patterns:
+
+        if smiles not in cached_smirks_parameters or parameter_tag not in cached_smirks_parameters[smiles]:
+
+            try:
+                molecule = Molecule.from_smiles(smiles)
+            except UndefinedStereochemistryError:
+                # Skip molecules with undefined stereochemistry.
+                continue
+
+            topology = Topology.from_molecules([molecule])
+
+            if smiles not in cached_smirks_parameters:
+                cached_smirks_parameters[smiles] = {}
+
+            if parameter_tag not in cached_smirks_parameters[smiles]:
+                cached_smirks_parameters[smiles][parameter_tag] = []
+
+            cached_smirks_parameters[smiles][parameter_tag] = [
+                parameter.smirks for parameter in force_field.label_molecules(topology)[0][parameter_tag].values()
+            ]
+
+        parameters_with_tag = cached_smirks_parameters[smiles][parameter_tag]
+
+        for smirks in parameters_with_tag:
+            smiles_by_parameter_smirks[smirks].add(smiles)
+
+    return smiles_by_parameter_smirks

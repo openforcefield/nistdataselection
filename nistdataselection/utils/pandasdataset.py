@@ -5,12 +5,11 @@ objects and `pandas.DataFrame` objects.
 import math
 
 import pandas
-from openforcefield.utils import quantity_to_string, string_to_quantity
+from propertyestimator import unit
 from propertyestimator.datasets import PhysicalPropertyDataSet
 from propertyestimator.properties import PropertyPhase, PhysicalProperty, MeasurementSource
 from propertyestimator.substances import Substance
 from propertyestimator.thermodynamics import ThermodynamicState
-from simtk import unit
 
 
 class PandasDataSet(PhysicalPropertyDataSet):
@@ -98,11 +97,11 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
             if 'Value' in row:
                 value_string = row['Value'].replace('None', 'dimensionless')
-                value = string_to_quantity(value_string)
+                value = unit(value_string)
 
             if 'Uncertainty' in row:
                 uncertainty_string = row['Uncertainty'].replace('None', 'dimensionless')
-                uncertainty = string_to_quantity(uncertainty_string)
+                uncertainty = unit(uncertainty_string)
 
             source = MeasurementSource(reference=row['Source'])
             sources.add(source)
@@ -203,11 +202,11 @@ class PandasDataSet(PhysicalPropertyDataSet):
                                      'object')
 
                 # Extract the measured state.
-                temperature = physical_property.thermodynamic_state.temperature.value_in_unit(unit.kelvin)
+                temperature = physical_property.thermodynamic_state.temperature.to(unit.kelvin).magnitude
                 pressure = None
 
                 if physical_property.thermodynamic_state.pressure is not None:
-                    pressure = physical_property.thermodynamic_state.pressure.value_in_unit(unit.kilopascal)
+                    pressure = physical_property.thermodynamic_state.pressure.to(unit.kilopascal).magnitude
 
                 phase = physical_property.phase
 
@@ -226,11 +225,11 @@ class PandasDataSet(PhysicalPropertyDataSet):
                 # Extract the value data as a string.
                 # noinspection PyTypeChecker
                 value = (None if physical_property.value is None else
-                         quantity_to_string(physical_property.value))
+                         str(physical_property.value))
 
                 # noinspection PyTypeChecker
                 uncertainty = (None if physical_property.uncertainty is None else
-                               quantity_to_string(physical_property.uncertainty))
+                               str(physical_property.uncertainty))
 
                 # Extract the data source.
                 source = physical_property.source.reference

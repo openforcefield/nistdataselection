@@ -10,13 +10,15 @@ from collections import defaultdict
 
 import numpy
 from openforcefield.topology import Molecule
+from openforcefield.utils import UndefinedStereochemistryError
 from propertyestimator import unit
 from propertyestimator.datasets import PhysicalPropertyDataSet
 from propertyestimator.properties import Density, DielectricConstant, EnthalpyOfVaporization
 from propertyestimator.utils import setup_timestamp_logging
 
 from nistdataselection.utils import PandasDataSet
-from nistdataselection.utils.utils import SubstanceType, find_smirks_parameters, cached_smirks_parameters
+from nistdataselection.utils.utils import SubstanceType, find_smirks_parameters, cached_smirks_parameters, \
+    int_to_substance_type
 
 
 def _find_common_smiles_patterns(*data_sets):
@@ -253,6 +255,13 @@ def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_e
     logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
                  f'properties contained unwanted elements and were removed.')
 
+    # Make sure to only include molecules which don't have a net charge.
+    current_number_of_properties = data_set.number_of_properties
+
+    _filter_non_zero_charge(data_set)
+    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
+                 f'properties contained charged molecules.')
+
     logging.info(f'The filtered data set contains {data_set.number_of_properties} properties.')
 
 
@@ -294,6 +303,31 @@ def _filter_ionic_liquids(data_set):
 
             if '.' in component.smiles:
                 return False
+
+        return True
+
+    data_set.filter_by_function(filter_function)
+
+
+def _filter_non_zero_charge(data_set):
+    """Filters out any molecules which have a net charge.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    """
+
+    def filter_function(physical_property):
+
+        for component in physical_property.substance.components:
+
+            try:
+                molecule = Molecule.from_smiles(component.smiles)
+            except UndefinedStereochemistryError:
+                return False
+
+            return sum([atom.formal_charge for atom in molecule.atoms]) == 0
 
         return True
 
@@ -394,13 +428,13 @@ def _choose_molecule_set(data_sets, properties_of_interest, desired_properties_p
     # Define the order of preference for which data molecules should have,
     # as explained above.
     property_order = [
-        [
-            # Ideally we want molecules for which we have data for
-            # all three properties of interest.
-            (Density, SubstanceType.Pure),
-            (DielectricConstant, SubstanceType.Pure),
-            (EnthalpyOfVaporization, SubstanceType.Pure)
-        ],
+        # [
+        #     # Ideally we want molecules for which we have data for
+        #     # all three properties of interest.
+        #     (Density, SubstanceType.Pure),
+        #     (DielectricConstant, SubstanceType.Pure),
+        #     (EnthalpyOfVaporization, SubstanceType.Pure)
+        # ],
         [
             # If that isn't possible, we'd like molecules for which we
             # have at least densities and enthalpies of vaporization...
@@ -418,10 +452,10 @@ def _choose_molecule_set(data_sets, properties_of_interest, desired_properties_p
             # data for the enthalpy of vaporisation...
             (EnthalpyOfVaporization, SubstanceType.Pure)
         ],
-        # [
-        #     # or the density.
-        #     (Density, SubstanceType.Pure),
-        # ]
+        [
+            # or the density.
+            (Density, SubstanceType.Pure),
+        ]
     ]
 
     for property_list in property_order:
@@ -723,7 +757,7 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # as well as the types of data we are interested in.
     properties_of_interest = [
         (Density, SubstanceType.Pure),
-        (DielectricConstant, SubstanceType.Pure),
+        # (DielectricConstant, SubstanceType.Pure),
         (EnthalpyOfVaporization, SubstanceType.Pure)
     ]
 
@@ -741,9 +775,17 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     ]
 
     # Define the elements that we are interested in. Here we only allow
-    # those elements for which smirnoff99Frosst has parameters for.
-    allowed_elements = ['H', 'N', 'C', 'O', 'S', 'P', 'F',
-                        'Cl', 'Br', 'I', 'Na', 'K', 'Ca']
+    # a subset of those elements for which smirnoff99Frosst has parameters
+    # for.
+    allowed_elements = ['H', 'N', 'C', 'O', 'S', 'F',
+                        'Cl', 'Br', 'I']
+
+    # Define the desired minimum number of data points per type of property
+    # per smirks to be exercised.
+    minimum_data_points_per_property_per_smirks = 2
+
+    # Define the minimum number of data points for a smirks to be exercised.
+    minimum_total_data_points_per_smirks = 5
 
     # Define a minimum dielectric constant threshold so as not to try
     # try to reproduce values which cannot be simulated with accuracy.
@@ -811,7 +853,9 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # Choose a set of molecules which give a good coverage of
     # the vdW parameters which will be optimised against the
     # properties of interest.
-    chosen_smiles = _choose_molecule_set(data_sets, properties_of_interest)
+    chosen_smiles = _choose_molecule_set(data_sets, properties_of_interest,
+                                         minimum_data_points_per_property_per_smirks)
+
     logging.info(f'Chosen smiles: {" ".join(chosen_smiles.keys())}')
 
     # Merge the multiple property data sets into a single object
@@ -826,6 +870,69 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # filtered set which are concentrated on the state points specified
     # by the `target_state_points` array.
     final_data_set = _choose_data_points(final_data_set, properties_of_interest, target_state_points)
+
+    # Determine which smirks are actually exercised by the minimum number
+    # of data points
+    exercised_smirks = defaultdict(lambda: defaultdict(int))
+
+    for smiles in chosen_smiles:
+
+        number_of_data_points = defaultdict(int)
+
+        for substance_id in final_data_set.properties:
+
+            if len(final_data_set.properties[substance_id]) == 0:
+                continue
+
+            substance = final_data_set.properties[substance_id][0].substance
+            substance_type = int_to_substance_type[substance.number_of_components]
+
+            contains_smiles = False
+
+            for component in substance.components:
+
+                if component.smiles != smiles:
+                    continue
+
+                contains_smiles = True
+
+            if not contains_smiles:
+                continue
+
+            for physical_property in final_data_set.properties[substance_id]:
+                property_type = type(physical_property)
+                number_of_data_points[(property_type, substance_type)] += 1
+
+        for smirks in chosen_smiles[smiles]:
+
+            for property_tuple in number_of_data_points:
+                exercised_smirks[smirks][property_tuple] += number_of_data_points[property_tuple]
+
+    smirks_with_minimum_data = set()
+
+    for smirks in exercised_smirks:
+
+        include_smirks = True
+
+        for property_tuple in exercised_smirks[smirks]:
+
+            if exercised_smirks[smirks][property_tuple] >= minimum_data_points_per_property_per_smirks:
+                continue
+
+            include_smirks = False
+            continue
+
+        if not include_smirks:
+            continue
+
+        total_data_points = sum(exercised_smirks[smirks].values())
+
+        if total_data_points < minimum_total_data_points_per_smirks:
+            continue
+
+        smirks_with_minimum_data.add(smirks)
+
+    logging.info(f'SMIRKS to be exercised: {smirks_with_minimum_data}')
 
     # Save the final data set in a form consumable by force balance.
     with open(output_data_set_path, 'w') as file:

@@ -9,12 +9,14 @@ import pandas
 from propertyestimator.client import PropertyEstimatorOptions
 from propertyestimator.datasets import PhysicalPropertyDataSet
 from propertyestimator.layers import SimulationLayer
-from propertyestimator.properties import Density, DielectricConstant, EnthalpyOfVaporization, MeasurementSource
+from propertyestimator.properties import Density, DielectricConstant, EnthalpyOfVaporization, MeasurementSource, \
+    EnthalpyOfMixing
 from propertyestimator.protocols.groups import ConditionalGroup
 from propertyestimator.utils import setup_timestamp_logging
 from propertyestimator.workflow import WorkflowOptions
 from tabulate import tabulate
 
+from nistdataselection.plugins import ExcessMolarVolume
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import smiles_to_png, cached_smirks_parameters, find_smirks_parameters, \
     int_to_substance_type, substance_type_to_int
@@ -95,6 +97,8 @@ def _property_tuple_to_latex_symbol(property_type, substance_type):
         Density: r'$\rho$',
         DielectricConstant: r'$\epsilon_0$',
         EnthalpyOfVaporization: r'$\Delta H_{vap}$',
+        EnthalpyOfMixing: r'$H_{mix}$',
+        ExcessMolarVolume: r'$\rho_{excess}$',
     }
 
     return f'{str(substance_type.value).title()} {property_type_to_symbol[property_type]}'
@@ -288,11 +292,13 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
     with open(data_set_path) as file:
         data_set = PhysicalPropertyDataSet.parse_json(file.read())
 
+    all_substances = set()
     all_smiles = set()
+
     all_property_types = set()
 
-    data_count_per_smiles = defaultdict(lambda: defaultdict(int))
-    data_per_smiles = defaultdict(lambda: defaultdict(list))
+    data_count_per_substance = defaultdict(lambda: defaultdict(int))
+    data_per_substance = defaultdict(lambda: defaultdict(list))
 
     number_of_substances = len(data_set.properties)
 
@@ -307,25 +313,36 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
             property_type_tuple = (type(physical_property), substance_type)
 
             all_property_types.add(property_type_tuple)
+            all_substances.add(physical_property.substance)
 
             for component in physical_property.substance.components:
-
                 all_smiles.add(component.smiles)
-                data_count_per_smiles[component.smiles][property_type_tuple] += 1
 
-                data_per_smiles[component.smiles][property_type_tuple].append(physical_property)
+            data_count_per_substance[physical_property.substance][property_type_tuple] += 1
+            data_per_substance[physical_property.substance][property_type_tuple].append(physical_property)
 
-    all_vdw_smirks_patterns = [smirks for smirks in find_smirks_parameters().keys()]
+    all_vdw_smirks_patterns = [smirks for smirks in find_smirks_parameters('vdW').keys()]
     exercised_vdw_smirks_patterns = find_smirks_parameters('vdW', *all_smiles)
 
+    # Invert the exercised_vdw_smirks_patterns dictionary.
+    vdw_smirks_patterns_by_smiles = defaultdict(list)
+
+    for smirks in exercised_vdw_smirks_patterns:
+        for smiles in exercised_vdw_smirks_patterns[smirks]:
+            vdw_smirks_patterns_by_smiles[smiles].append(smirks)
+
+    # Count the number of data points per smirks pattern.
     data_points_per_vdw_smirks = defaultdict(lambda: defaultdict(int))
 
-    for smirks in all_vdw_smirks_patterns:
-        for smiles in exercised_vdw_smirks_patterns[smirks]:
-            for data_tuple in data_count_per_smiles[smiles]:
-                data_points_per_vdw_smirks[smirks][data_tuple] += 1
+    for substance in data_count_per_substance:
+        for component in substance.components:
 
-    number_of_simulations = _estimate_required_simulations(all_property_types, data_set)
+            for smirks in vdw_smirks_patterns_by_smiles[component.smiles]:
+                for data_tuple in data_count_per_substance[substance]:
+
+                    data_points_per_vdw_smirks[smirks][data_tuple] += 1
+
+    number_of_simulations = 0  # _estimate_required_simulations(all_property_types, data_set)
 
     _create_molecule_images(all_smiles, 'images')
 

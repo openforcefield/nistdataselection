@@ -13,12 +13,12 @@ from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
 from propertyestimator import unit
 from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.properties import Density, DielectricConstant, EnthalpyOfVaporization
+from propertyestimator.properties import DielectricConstant, EnthalpyOfVaporization, EnthalpyOfMixing
 from propertyestimator.utils import setup_timestamp_logging
 
+from nistdataselection.plugins import ExcessMolarVolume
 from nistdataselection.utils import PandasDataSet
-from nistdataselection.utils.utils import SubstanceType, find_smirks_parameters, cached_smirks_parameters, \
-    int_to_substance_type
+from nistdataselection.utils.utils import SubstanceType, find_smirks_parameters, cached_smirks_parameters
 
 
 def _find_common_smiles_patterns(*data_sets):
@@ -220,19 +220,21 @@ def _remove_duplicates(data_set):
     return unique_data_set
 
 
-def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_elements):
-    """
+def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_elements, smiles_to_exclude):
+    """Applies a set of global curation filters to the data set
 
     Parameters
     ----------
-    data_set
-    temperature_range
-    pressure_range
-    allowed_elements
-
-    Returns
-    -------
-
+    data_set: PhysicalPropertyDataSet
+        The data set to filter.
+    temperature_range: tuple of unit.Quantity and unit.Quantity
+        The minimum and maximum temperatures.
+    pressure_range: tuple of unit.Quantity and unit.Quantity
+        The minimum and maximum pressures.
+    allowed_elements: list of str
+        A list of the allowed chemical elements.
+    smiles_to_exclude: list of str
+        A list of the smiles patterns to exclude.
     """
 
     current_number_of_properties = data_set.number_of_properties
@@ -263,6 +265,36 @@ def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_e
                  f'properties contained charged molecules.')
 
     logging.info(f'The filtered data set contains {data_set.number_of_properties} properties.')
+
+    # Exclude any excluded smiles patterns.
+    current_number_of_properties = data_set.number_of_properties
+
+    _filter_excluded_smiles(data_set, smiles_to_exclude)
+    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
+                 f'properties were measured for excluded smiles patterns.')
+
+
+def _filter_excluded_smiles(data_set, smiles_to_exclude):
+    """Filters out data points measured for excluded smiles.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    smiles_to_exclude: list of str
+        The smiles patterns to exclude.
+    """
+
+    def filter_function(physical_property):
+
+        for component in physical_property.substance.components:
+
+            if component.smiles in smiles_to_exclude:
+                return False
+
+        return True
+
+    data_set.filter_by_function(filter_function)
 
 
 def _filter_dielectric_constants(data_set, minimum_value):
@@ -386,7 +418,7 @@ def _extract_min_max_median_temperature_set(data_set):
     return filtered_set
 
 
-def _choose_molecule_set(data_sets, properties_of_interest, desired_properties_per_smirks=2):
+def _choose_molecule_set(data_sets, properties_of_interest, property_order, desired_properties_per_smirks=2):
     """Selects the minimum set of molecules which (if possible) simultaneously have
     data for all three properties, and exercise the largest number of vdW
     parameters.
@@ -408,6 +440,10 @@ def _choose_molecule_set(data_sets, properties_of_interest, desired_properties_p
     properties_of_interest: list of tuple of type and SubstanceType
         A list of the properties which are of interest to optimise against.
 
+    property_order: list of list of tuple of type and SubstanceType
+        A list of lists of property types and substance types in the order
+        in which to prioritize them.
+
     desired_properties_per_smirks: int
         The number of each type of property which should
         ideally exercise each smirks pattern.
@@ -424,39 +460,6 @@ def _choose_molecule_set(data_sets, properties_of_interest, desired_properties_p
 
     for property_type, _ in properties_of_interest:
         smirks_exercised_per_property[property_type] = defaultdict(int)
-
-    # Define the order of preference for which data molecules should have,
-    # as explained above.
-    property_order = [
-        # [
-        #     # Ideally we want molecules for which we have data for
-        #     # all three properties of interest.
-        #     (Density, SubstanceType.Pure),
-        #     (DielectricConstant, SubstanceType.Pure),
-        #     (EnthalpyOfVaporization, SubstanceType.Pure)
-        # ],
-        [
-            # If that isn't possible, we'd like molecules for which we
-            # have at least densities and enthalpies of vaporization...
-            (Density, SubstanceType.Pure),
-            (EnthalpyOfVaporization, SubstanceType.Pure)
-        ],
-        # [
-        #     # and molecules for which we have at least densities and
-        #     # dielectric constant
-        #     (Density, SubstanceType.Pure),
-        #     (DielectricConstant, SubstanceType.Pure),
-        # ],
-        [
-            # Finally, fall back to molecules for which the is only
-            # data for the enthalpy of vaporisation...
-            (EnthalpyOfVaporization, SubstanceType.Pure)
-        ],
-        [
-            # or the density.
-            (Density, SubstanceType.Pure),
-        ]
-    ]
 
     for property_list in property_order:
 
@@ -609,9 +612,10 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
         The data set to choose data points from.
     properties_of_interest: list of tuple of type and SubstanceType
         A list of the properties which are of interest to optimise against.
-    target_state_points: list of tuple of simtk.Unit.Quantity and simtk.Unit.Quantity
+    target_state_points: list of tuple of simtk.Unit.Quantity and simtk.Unit.Quantity and tuple of float
         A list of the state points for which we would ideally have data
-        points for. The tuple should be of the form (temperature, pressure)
+        points for. The tuple should be of the form
+        (temperature, pressure, (mole fraction 0, ..., mole fraction N))
 
     Returns
     -------
@@ -644,16 +648,32 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
             A tuple of the form (|difference in pressure|, |difference in temperature|)
         """
 
-        pressure, temperature = state_tuple
+        pressure, temperature, mole_fractions = state_tuple
 
-        distance_tuple = ((target_state_point[1].to(unit.kilopascal).magnitude - pressure) ** 2,
+        mole_fraction_distances = [target_state_point[2][i] - mole_fractions[i] for i in range(len(mole_fractions))]
+        mole_fraction_distances_sqr = [i ** 2 for i in mole_fraction_distances]
+
+        mole_fraction_distance = sum(mole_fraction_distances_sqr)
+
+        distance_tuple = (mole_fraction_distance ** 2,
+                          (target_state_point[1].to(unit.kilopascal).magnitude - pressure) ** 2,
                           (target_state_point[0].to(unit.kelvin).magnitude - temperature) ** 2)
 
         return distance_tuple
 
+    properties_by_components = defaultdict(list)
+
     for substance_id in data_set.properties:
 
-        return_data_set.properties[substance_id] = []
+        if len(data_set.properties[substance_id]) == 0:
+            continue
+
+        substance = data_set.properties[substance_id][0].substance
+        component_tuple = tuple(sorted([component.smiles for component in substance.components]))
+
+        properties_by_components[component_tuple].extend(data_set.properties[substance_id])
+
+    for component_tuple in properties_by_components:
 
         clustered_state_points = defaultdict(list)
 
@@ -662,20 +682,22 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
 
         # We first cluster data points around the closest target state
         # according to the `state_distance` metric.
-        for physical_property in data_set.properties[substance_id]:
+        for physical_property in properties_by_components[component_tuple]:
 
             temperature = physical_property.thermodynamic_state.temperature.to(unit.kelvin).magnitude
             pressure = physical_property.thermodynamic_state.pressure.to(unit.kilopascal).magnitude
 
-            state_tuple = (round(pressure, 3), round(temperature, 2))
+            mole_fractions = tuple([next(iter(physical_property.substance.get_amounts(component))).value for
+                                    component in physical_property.substance.components])
+
+            state_tuple = (round(pressure, 3), round(temperature, 2), mole_fractions)
 
             closest_cluster_index = -1
             shortest_cluster_distance = sys.float_info.max
 
             for cluster_index, target_state_point in enumerate(target_state_points):
 
-                distance = math.sqrt((target_state_point[0].to(unit.kelvin).magnitude - temperature) ** 2 +
-                                     (target_state_point[1].to(unit.kilopascal).magnitude - pressure) ** 2)
+                distance = math.sqrt(sum(state_distance(target_state_point, state_tuple)))
 
                 if distance >= shortest_cluster_distance:
                     continue
@@ -729,12 +751,21 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
             # Add the properties which were measured at the chosen state points
             # to the returned data set.
             for chosen_state in chosen_states:
+
+                if len(properties_by_state[chosen_state]) == 0:
+                    continue
+
+                substance_id = properties_by_state[chosen_state][0].substance.identifier
+
+                if substance_id not in return_data_set.properties:
+                    return_data_set.properties[substance_id] = []
+
                 return_data_set.properties[substance_id].extend(properties_by_state[chosen_state])
 
     return return_data_set
 
 
-def curate_data_set(property_data_directory, output_data_set_path='curated_data_set.json'):
+def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data_set_path='curated_data_set.json'):
     """The main function which will perform the
     data curation.
 
@@ -743,6 +774,10 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     property_data_directory: str
         The directory which contains the processed pandas
         date sets generated by `parserawdata`.
+    smiles_to_exclude: list of str, optional
+        The smiles patterns to exclude from the data set. This
+        is useful for excluding smiles in the training set from the
+        testing set.
     output_data_set_path: str
         The path to save the curated data set to.
     report_type: ReportType
@@ -756,9 +791,23 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # Define the properties which we are interested in curating data for,
     # as well as the types of data we are interested in.
     properties_of_interest = [
-        (Density, SubstanceType.Pure),
-        # (DielectricConstant, SubstanceType.Pure),
-        (EnthalpyOfVaporization, SubstanceType.Pure)
+        (ExcessMolarVolume, SubstanceType.Binary),
+        # (EnthalpyOfMixing, SubstanceType.Binary)
+    ]
+
+    # Define the order of preference for which data molecules should have,
+    # as explained above.
+    property_order = [
+        # [
+        #     (ExcessMolarVolume, SubstanceType.Binary),
+        #     (EnthalpyOfMixing, SubstanceType.Binary)
+        # ],
+        # [
+        #     (EnthalpyOfMixing, SubstanceType.Binary)
+        # ],
+        [
+            (ExcessMolarVolume, SubstanceType.Binary),
+        ]
     ]
 
     # Define the ranges of temperatures and pressures of interest.
@@ -768,10 +817,11 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     pressure_range = (0.95 * unit.atmosphere, 1.05 * unit.atmosphere)
 
     # Specify more exactly those state points which would be of interest
-    # to fit against
+    # to fit against. These are currently tuples of temperature, pressure,
+    # and a tuple of the mole fractions of each of the components.
     target_state_points = [
-        (298.15 * unit.kelvin, 101.325 * unit.kilopascal),
-        (318.15 * unit.kelvin, 101.325 * unit.kilopascal)
+        (298.15 * unit.kelvin, 101.325 * unit.kilopascal, (0.25, 0.75)),
+        (298.15 * unit.kelvin, 101.325 * unit.kilopascal, (0.75, 0.25))
     ]
 
     # Define the elements that we are interested in. Here we only allow
@@ -783,9 +833,6 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # Define the desired minimum number of data points per type of property
     # per smirks to be exercised.
     minimum_data_points_per_property_per_smirks = 2
-
-    # Define the minimum number of data points for a smirks to be exercised.
-    minimum_total_data_points_per_smirks = 5
 
     # Define a minimum dielectric constant threshold so as not to try
     # try to reproduce values which cannot be simulated with accuracy.
@@ -811,12 +858,8 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
         _apply_global_filters(data_set,
                               temperature_range,
                               pressure_range,
-                              allowed_elements)
-
-        # Extract only data points which are either at the extremes,
-        # or in the middle of the temperature range. This should yield
-        # at most three data points per property per molecule.
-        # data_set = _extract_min_max_median_temperature_set(data_set)
+                              allowed_elements,
+                              smiles_to_exclude)
 
         # Optionally filter by ionic liquids.
         if allow_ionic_liquids is False:
@@ -853,7 +896,7 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # Choose a set of molecules which give a good coverage of
     # the vdW parameters which will be optimised against the
     # properties of interest.
-    chosen_smiles = _choose_molecule_set(data_sets, properties_of_interest,
+    chosen_smiles = _choose_molecule_set(data_sets, properties_of_interest, property_order,
                                          minimum_data_points_per_property_per_smirks)
 
     logging.info(f'Chosen smiles: {" ".join(chosen_smiles.keys())}')
@@ -871,69 +914,6 @@ def curate_data_set(property_data_directory, output_data_set_path='curated_data_
     # by the `target_state_points` array.
     final_data_set = _choose_data_points(final_data_set, properties_of_interest, target_state_points)
 
-    # Determine which smirks are actually exercised by the minimum number
-    # of data points
-    exercised_smirks = defaultdict(lambda: defaultdict(int))
-
-    for smiles in chosen_smiles:
-
-        number_of_data_points = defaultdict(int)
-
-        for substance_id in final_data_set.properties:
-
-            if len(final_data_set.properties[substance_id]) == 0:
-                continue
-
-            substance = final_data_set.properties[substance_id][0].substance
-            substance_type = int_to_substance_type[substance.number_of_components]
-
-            contains_smiles = False
-
-            for component in substance.components:
-
-                if component.smiles != smiles:
-                    continue
-
-                contains_smiles = True
-
-            if not contains_smiles:
-                continue
-
-            for physical_property in final_data_set.properties[substance_id]:
-                property_type = type(physical_property)
-                number_of_data_points[(property_type, substance_type)] += 1
-
-        for smirks in chosen_smiles[smiles]:
-
-            for property_tuple in number_of_data_points:
-                exercised_smirks[smirks][property_tuple] += number_of_data_points[property_tuple]
-
-    smirks_with_minimum_data = set()
-
-    for smirks in exercised_smirks:
-
-        include_smirks = True
-
-        for property_tuple in exercised_smirks[smirks]:
-
-            if exercised_smirks[smirks][property_tuple] >= minimum_data_points_per_property_per_smirks:
-                continue
-
-            include_smirks = False
-            continue
-
-        if not include_smirks:
-            continue
-
-        total_data_points = sum(exercised_smirks[smirks].values())
-
-        if total_data_points < minimum_total_data_points_per_smirks:
-            continue
-
-        smirks_with_minimum_data.add(smirks)
-
-    logging.info(f'SMIRKS to be exercised: {smirks_with_minimum_data}')
-
     # Save the final data set in a form consumable by force balance.
     with open(output_data_set_path, 'w') as file:
         file.write(final_data_set.json())
@@ -944,9 +924,6 @@ def _main():
     expects that the data files generated by the `parserawdata`
     script are located in the '~/property_data' directory.
     """
-
-    # home_directory = os.path.expanduser("~")
-    # data_directory = os.path.join(home_directory, 'property_data')
 
     import json
 
@@ -963,9 +940,45 @@ def _main():
     except (json.JSONDecodeError, FileNotFoundError):
         pass
 
-    data_directory = 'data_sets'
+    home_directory = os.path.expanduser("~")
+    data_directory = os.path.join(home_directory, 'property_data')
 
-    curate_data_set(data_directory)
+    # data_directory = 'data_sets'
+
+    smiles_to_exclude = [
+        'CC#N',
+        'c1ccc(cc1)Cl',
+        'c1ccsc1',
+        'C(=O)O',
+        'C(Cl)(Cl)Cl',
+        'c1cc(cc(c1)Cl)Cl',
+        'c1cc(cc(c1)Br)Br',
+        'CCI',
+        'C1CCNCC1',
+        'CCOC(OCC)OCC',
+        'c1ccc(cc1)F',
+        'C(Br)Br',
+        'C(Cl)Br',
+        'CCOC(=O)CC(=O)C',
+        'CC(=O)CCC(=O)O',
+        'C(C(C(F)(F)F)(F)F)O',
+        'COc1cccc(c1)Br',
+        'C=CC#N',
+        'CNCCCN',
+        'CCn1ccnc1',
+        'CCCI',
+        'CCCCCCCCCCCCS',
+        'COc1ccccc1O',
+        'c1cc(cc(c1)I)F',
+        'c1cc(ccc1F)I',
+        'c1ccc2c(c1)ncs2',
+        'Cc1ccc2c(c1)OCO2',
+        'c1ccc(cc1)SCN=[N+]=[N-]',
+        'c1cscc1C#N',
+        'c1cc(sc1)C#N'
+    ]
+
+    curate_data_set(data_directory, smiles_to_exclude)
 
     # Cache the smirks which will be assigned to the different molecules
     # to speed up future runs.

@@ -19,7 +19,7 @@ from tabulate import tabulate
 from nistdataselection.plugins import ExcessMolarVolume
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import smiles_to_png, cached_smirks_parameters, find_smirks_parameters, \
-    int_to_substance_type, substance_type_to_int
+    int_to_substance_type, substance_type_to_int, invert_dict_of_list
 
 
 def _estimate_required_simulations(properties_of_interest, data_set):
@@ -169,8 +169,8 @@ def _write_data_points_table(property_tuples, all_vdw_smirks, data_points_per_vd
     table_string_split = tabulate(data_frame, headers='keys', tablefmt='latex_raw', showindex=False).split('\n')
     table_string_split = table_string_split[1:]
 
-    smirks_width = 13.5 - 1.0 * (len(columns) - 1)
-    header_string = f'{{m{{{smirks_width}cm}} ' + ' '.join(['C{1.0cm}' for _ in range(len(columns) - 1)]) + '}'
+    smirks_width = 13.5 - 1.25 * (len(columns) - 1)
+    header_string = f'{{m{{{smirks_width}cm}} ' + ' '.join(['C{1.25cm}' for _ in range(len(columns) - 1)]) + '}'
 
     table_string = '\n'.join([
         f'\\begin{{tabular}}{header_string}',
@@ -188,39 +188,62 @@ def _write_data_points_table(property_tuples, all_vdw_smirks, data_points_per_vd
     return table_string
 
 
-def _write_smiles_section(smiles_pattern, exercised_vdw_smirks_patterns, full_data_set, property_tuples):
+def _write_smiles_section(smiles_tuple, exercised_vdw_smirks_patterns, full_data_set, property_tuples):
 
-    exercised_smirks = [smirks for smirks in exercised_vdw_smirks_patterns if
-                        smiles_pattern in exercised_vdw_smirks_patterns[smirks]]
-
-    exercised_smirks_strings = [f'\\item {{{_sanitize_identifier(smirks)}}}' for smirks in exercised_smirks]
-
-    image_file_name = smiles_pattern.replace('/', '').replace('\\', '')
+    smiles_header = ' + '.join([_sanitize_identifier(smiles_pattern) for smiles_pattern in smiles_tuple])
 
     row_template = [
+        r'\newpage',
+        '',
         r'\hrulefill',
         '',
         r'\vspace{.3cm}',
         r'\begin{center}',
-        f'    \\large{{\\textbf{{{_sanitize_identifier(smiles_pattern)}}}}}',
+        f'    \\large{{\\textbf{{{smiles_header}}}}}',
         r'\end{center}'
         r'\vspace{.3cm}',
-        '',
-        r'\begin{tabular}{ m{5cm} m{9cm} }',
-        '    {Structure} & {SMIRKS Exercised} \\\\',
-        f'    {{\\catcode`\\#=12 \\includegraphics{{{"./images/" + image_file_name + ".png"}}}}} & '
-        f'\\begin{{itemize}} {" ".join(exercised_smirks_strings)} \\end{{itemize}} \\\\',
-        r'\end{tabular}'
+        ''
     ]
+
+    for smiles_pattern in smiles_tuple:
+
+        exercised_smirks = [smirks for smirks in exercised_vdw_smirks_patterns if
+                            smiles_pattern in exercised_vdw_smirks_patterns[smirks]]
+
+        exercised_smirks_strings = [f'\\item {{{_sanitize_identifier(smirks)}}}' for smirks in exercised_smirks]
+
+        image_file_name = smiles_pattern.replace('/', '').replace('\\', '')
+
+        row_template.extend([
+            r'\begin{tabular}{ m{5cm} m{9cm} }',
+            '    {Structure} & {SMIRKS Exercised} \\\\',
+            f'    {{\\catcode`\\#=12 \\includegraphics{{{"./images/" + image_file_name + ".png"}}}}} & '
+            f'\\begin{{itemize}} {" ".join(exercised_smirks_strings)} \\end{{itemize}} \\\\',
+            r'\end{tabular}'
+        ])
 
     for property_type, substance_type in property_tuples:
 
-        def filter_by_substance_type(physical_property):
-            return substance_type_to_int[substance_type] == len(physical_property.substance.components)
+        def filter_by_substance_type(property_to_filter):
+            return substance_type_to_int[substance_type] == len(property_to_filter.substance.components)
+
+        def filter_by_smiles_tuple(property_to_filter):
+
+            smiles_list = list(smiles_tuple)
+
+            for component in property_to_filter.substance.components:
+
+                if component.smiles not in smiles_list:
+                    return False
+
+                smiles_list.remove(component.smiles)
+
+            return len(smiles_list) == 0
 
         data_set = PhysicalPropertyDataSet.parse_json(full_data_set.json())
         data_set.filter_by_property_types(property_type)
         data_set.filter_by_function(filter_by_substance_type)
+        data_set.filter_by_function(filter_by_smiles_tuple)
 
         for substance_id in data_set.properties:
 
@@ -233,13 +256,25 @@ def _write_smiles_section(smiles_pattern, exercised_vdw_smirks_patterns, full_da
                     reference=os.path.basename(physical_property.source.reference))
 
         pandas_data_frame = PandasDataSet.to_pandas_data_frame(data_set)
-        pandas_data_frame = pandas_data_frame.loc[pandas_data_frame['Component 1'] == smiles_pattern]
 
         if pandas_data_frame.shape[0] == 0:
             continue
 
-        pandas_data_frame = pandas_data_frame[['Temperature (K)', 'Pressure (kPa)', 'Source']]
-        pandas_data_frame = pandas_data_frame.sort_values(['Pressure (kPa)', 'Temperature (K)'])
+        headers_to_keep = ['Temperature (K)', 'Pressure (kPa)']
+        header_to_sort = ['Pressure (kPa)', 'Temperature (K)']
+
+        mole_fraction_index = 0
+
+        while f'Mole Fraction {mole_fraction_index + 1}' in pandas_data_frame:
+
+            headers_to_keep.append(f'Mole Fraction {mole_fraction_index + 1}')
+            header_to_sort.append(f'Mole Fraction {mole_fraction_index + 1}')
+            mole_fraction_index += 1
+
+        headers_to_keep.append('Source')
+
+        pandas_data_frame = pandas_data_frame[headers_to_keep]
+        pandas_data_frame = pandas_data_frame.sort_values(header_to_sort)
 
         property_name = ' '.join(re.sub('([A-Z][a-z]+)', r' \1',
                                         re.sub('([A-Z]+)', r' \1', property_type.__name__)).split())
@@ -249,7 +284,7 @@ def _write_smiles_section(smiles_pattern, exercised_vdw_smirks_patterns, full_da
         row_template.append(tabulate(pandas_data_frame, headers='keys', tablefmt='latex', showindex=False))
         row_template.append('\\vspace{.3cm}\n')
 
-    return '\n\n'.join(row_template)
+    return '\n\n'.join(row_template) + '\n'
 
 
 def _create_molecule_images(chosen_smiles, directory):
@@ -281,8 +316,6 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
     ----------
     data_set_path: str
         The path to the data set.
-    report_type: ReportType
-        The type of report to create.
     report_path: str
         The path pointing to where to store the report.
     """
@@ -293,7 +326,9 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
         data_set = PhysicalPropertyDataSet.parse_json(file.read())
 
     all_substances = set()
+
     all_smiles = set()
+    all_smiles_tuples = set()
 
     all_property_types = set()
 
@@ -318,6 +353,9 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
             for component in physical_property.substance.components:
                 all_smiles.add(component.smiles)
 
+            all_smiles_tuples.add(tuple(sorted([component.smiles for component in
+                                                physical_property.substance.components])))
+
             data_count_per_substance[physical_property.substance][property_type_tuple] += 1
             data_per_substance[physical_property.substance][property_type_tuple].append(physical_property)
 
@@ -325,29 +363,29 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
     exercised_vdw_smirks_patterns = find_smirks_parameters('vdW', *all_smiles)
 
     # Invert the exercised_vdw_smirks_patterns dictionary.
-    vdw_smirks_patterns_by_smiles = defaultdict(list)
-
-    for smirks in exercised_vdw_smirks_patterns:
-        for smiles in exercised_vdw_smirks_patterns[smirks]:
-            vdw_smirks_patterns_by_smiles[smiles].append(smirks)
+    vdw_smirks_patterns_by_smiles = invert_dict_of_list(exercised_vdw_smirks_patterns)
 
     # Count the number of data points per smirks pattern.
     data_points_per_vdw_smirks = defaultdict(lambda: defaultdict(int))
 
     for substance in data_count_per_substance:
+
+        exercised_smirks = set()
+
         for component in substance.components:
+            exercised_smirks.update(vdw_smirks_patterns_by_smiles[component.smiles])
 
-            for smirks in vdw_smirks_patterns_by_smiles[component.smiles]:
-                for data_tuple in data_count_per_substance[substance]:
+        for smirks in exercised_smirks:
+            for data_tuple in data_count_per_substance[substance]:
 
-                    data_points_per_vdw_smirks[smirks][data_tuple] += 1
+                data_points_per_vdw_smirks[smirks][data_tuple] += 1
 
     number_of_simulations = 0  # _estimate_required_simulations(all_property_types, data_set)
 
     _create_molecule_images(all_smiles, 'images')
 
-    smiles_sections = '\n'.join([_write_smiles_section(smiles, exercised_vdw_smirks_patterns,
-                                                       data_set, all_property_types) for smiles in all_smiles])
+    smiles_sections = '\n'.join([_write_smiles_section(smiles_tuple, exercised_vdw_smirks_patterns, data_set,
+                                                       all_property_types) for smiles_tuple in all_smiles_tuples])
 
     latex_document = '\n\n'.join([
         _write_header(),

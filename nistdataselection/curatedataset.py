@@ -18,7 +18,8 @@ from propertyestimator.utils import setup_timestamp_logging
 
 from nistdataselection.plugins import ExcessMolarVolume
 from nistdataselection.utils import PandasDataSet
-from nistdataselection.utils.utils import SubstanceType, find_smirks_parameters, cached_smirks_parameters
+from nistdataselection.utils.utils import SubstanceType, find_smirks_parameters, cached_smirks_parameters, \
+    invert_dict_of_list
 
 
 def _find_common_smiles_patterns(*data_sets):
@@ -32,18 +33,18 @@ def _find_common_smiles_patterns(*data_sets):
 
     Returns
     -------
-    set of str
-        The smiles patterns which are common to all specified
-        data sets.
+    set of tuple of str
+        A list smiles tuples (containing the smiles in a given substance)
+        which are common to all specified data sets.
     """
 
     assert len(data_sets) > 0
 
-    data_set_smiles = []
+    data_set_smiles_tuples = []
 
     for index, data_set in enumerate(data_sets):
 
-        smiles = set()
+        smiles_tuples = set()
 
         # Find all unique smiles in the data set.
         for substance_id in data_set.properties:
@@ -52,26 +53,27 @@ def _find_common_smiles_patterns(*data_sets):
                 continue
 
             substance = data_set.properties[substance_id][0].substance
+            substance_smiles = [component.smiles for component in substance.components]
 
-            for component in substance.components:
-                smiles.add(component.smiles)
+            smiles_tuple = tuple(sorted(substance_smiles))
+            smiles_tuples.add(smiles_tuple)
 
-        data_set_smiles.append(smiles)
+        data_set_smiles_tuples.append(smiles_tuples)
 
     # Find all of the smiles which are common to the requested
     # data sets.
-    common_smiles = None
+    common_smiles_tuples = None
 
-    for smiles_set in data_set_smiles:
+    for smiles_tuple_set in data_set_smiles_tuples:
 
-        if common_smiles is None:
+        if common_smiles_tuples is None:
 
-            common_smiles = smiles_set
+            common_smiles_tuples = smiles_tuple_set
             continue
 
-        common_smiles = common_smiles.intersection(smiles_set)
+        common_smiles_tuples = common_smiles_tuples.intersection(smiles_tuple_set)
 
-    return common_smiles
+    return common_smiles_tuples
 
 
 def _load_data_set(directory, property_type, substance_type):
@@ -257,6 +259,13 @@ def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_e
     logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
                  f'properties contained unwanted elements and were removed.')
 
+    # Make sure to only include molecules which have well defined stereochemsitry
+    current_number_of_properties = data_set.number_of_properties
+
+    _filter_undefined_steroechemistry(data_set)
+    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
+                 f'properties contained molecules with undefined stereochemistry.')
+
     # Make sure to only include molecules which don't have a net charge.
     current_number_of_properties = data_set.number_of_properties
 
@@ -264,14 +273,14 @@ def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_e
     logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
                  f'properties contained charged molecules.')
 
-    logging.info(f'The filtered data set contains {data_set.number_of_properties} properties.')
-
     # Exclude any excluded smiles patterns.
     current_number_of_properties = data_set.number_of_properties
 
     _filter_excluded_smiles(data_set, smiles_to_exclude)
     logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
                  f'properties were measured for excluded smiles patterns.')
+
+    logging.info(f'The filtered data set contains {data_set.number_of_properties} properties.')
 
 
 def _filter_excluded_smiles(data_set, smiles_to_exclude):
@@ -359,9 +368,54 @@ def _filter_non_zero_charge(data_set):
             except UndefinedStereochemistryError:
                 return False
 
-            return sum([atom.formal_charge for atom in molecule.atoms]) == 0
+            if sum([atom.formal_charge for atom in molecule.atoms]) == 0:
+                continue
+
+            return False
 
         return True
+
+    data_set.filter_by_function(filter_function)
+
+
+def _filter_undefined_steroechemistry(data_set):
+    """Filters out any molecules which have undefined sterochemistry.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    """
+
+    def filter_function(physical_property):
+
+        for component in physical_property.substance.components:
+
+            try:
+                Molecule.from_smiles(component.smiles)
+            except UndefinedStereochemistryError:
+                return False
+
+        return True
+
+    data_set.filter_by_function(filter_function)
+
+
+def _filter_by_smiles_tuple(data_set, *smiles_tuples):
+    """Filters out properties measured for substances which don't
+     appear in the smiles tuples.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    smiles_tuples: tuple of str
+        The smiles tuples to filter against.
+    """
+
+    def filter_function(physical_property):
+        smiles_tuple = tuple(sorted([component.smiles for component in physical_property.substance.components]))
+        return smiles_tuple in smiles_tuples
 
     data_set.filter_by_function(filter_function)
 
@@ -455,7 +509,7 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, desi
         a set of the vdW smirks patterns which they exercise.
     """
 
-    chosen_smiles = defaultdict(set)
+    chosen_smiles_tuples = defaultdict(set)
     smirks_exercised_per_property = {}
 
     for property_type, _ in properties_of_interest:
@@ -465,21 +519,37 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, desi
 
         # Find those compounds for which there is data for all of the properties of
         # interest.
-        common_smiles = _find_common_smiles_patterns(
+        common_smiles_tuples = _find_common_smiles_patterns(
             *[data_sets[property_tuple] for property_tuple in property_list]
         )
 
-        smiles_per_vdw_smirks = find_smirks_parameters('vdW', *common_smiles)
+        # Extract out all unique smiles patterns from the common tuples.
+        all_smiles_patterns = set([smiles for smiles_tuple in common_smiles_tuples for smiles in smiles_tuple])
 
-        unexercised_smirks_per_smiles = defaultdict(set)
+        # Find the smiles patterns which exercise each vdW smirks.
+        smiles_per_vdw_smirks = find_smirks_parameters('vdW', *all_smiles_patterns)
+        # Invert the dictionary to find those smirks exercised by each smiles pattern.
+        vdw_smirks_per_smiles = invert_dict_of_list(smiles_per_vdw_smirks)
+
+        # Use the inverted map to find which smirks are exercised per smiles tuple.
+        vdw_smirks_per_smiles_tuple = defaultdict(set)
+
+        for smiles_tuple in common_smiles_tuples:
+            for smiles in smiles_tuple:
+                vdw_smirks_per_smiles_tuple[smiles_tuple].update(vdw_smirks_per_smiles[smiles])
+
+        # Invert this relationship once more.
+        smiles_tuple_per_vdw_smirks = invert_dict_of_list(vdw_smirks_per_smiles_tuple)
+
+        unexercised_smirks_per_smiles_tuples = defaultdict(set)
 
         # Construct a dictionary of those vdW smirks patterns which
         # haven't yet been exercised by the `chosen_smiles` set.
-        for smirks, smiles_set in smiles_per_vdw_smirks.items():
+        for smirks, smiles_tuples_set in smiles_tuple_per_vdw_smirks.items():
 
             # The smiles set may be None in cases where no molecules
             # exercised a particular smirks pattern.
-            if smiles_set is None:
+            if smiles_tuples_set is None or len(smiles_tuples_set) == 0:
                 continue
 
             # Don't consider vdW parameters which have already been exercised
@@ -498,55 +568,53 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, desi
             if all_properties_exercised is True:
                 continue
 
-            for smiles in smiles_set:
+            for smiles_tuple in smiles_tuples_set:
 
                 # We don't need to consider molecules we have already chosen.
-                if smiles in chosen_smiles:
+                if smiles_tuple in chosen_smiles_tuples:
                     continue
 
-                unexercised_smirks_per_smiles[smiles].add(smirks)
+                unexercised_smirks_per_smiles_tuples[smiles_tuple].add(smirks)
 
         # We sort the dictionary so that molecules which will exercise the most
         # vdW parameters appear first. For molecules which exercise the same number
         # of parameters, we rank smaller molecules higher than larger ones.
-        sorted_smiles = []
-        printed_list = []
+        sorted_smiles_tuples = []
 
         def sorting_function(key_value_pair):
 
-            smiles, vdw_smirks = key_value_pair
+            smiles_tuple, vdw_smirks = key_value_pair
 
             number_of_vdw_smirks = len(vdw_smirks)
 
-            # Determine the number of represented by this smiles pattern.
+            # Determine the number of vdW smirks represented by this smiles pattern.
             # We prefer smaller molecules as they will be quicker to simulate
             # and their properties should converge faster (compared to larger,
             # more flexible molecule with more degrees of freedom to sample).
-            molecule = Molecule.from_smiles(smiles)
-            number_of_atoms = molecule.n_atoms
+            molecules = [Molecule.from_smiles(smiles) for smiles in smiles_tuple]
+            number_of_atoms = sum([molecule.n_atoms for molecule in molecules])
 
             # Return the tuple to sort by, prioritising the number of
-            # exercised smirks, and then the inverse number of atoms. The
+            # exercised vdW smirks, and then the inverse number of atoms. The
             # inverse number of atoms is used as the dictionary is being
             # reverse sorted.
             return number_of_vdw_smirks, 1.0 / number_of_atoms
 
-        for key, value in sorted(unexercised_smirks_per_smiles.items(),
+        for key, value in sorted(unexercised_smirks_per_smiles_tuples.items(),
                                  key=sorting_function, reverse=True):
-            sorted_smiles.append(key)
+            sorted_smiles_tuples.append(key)
 
-            molecule = Molecule.from_smiles(key)
-            printed_list.append((key, len(value), 1.0 / molecule.n_atoms))
+            # molecule = Molecule.from_smiles(key)
+            # printed_list.append((key, len(value), 1.0 / molecule.n_atoms))
 
-        while len(sorted_smiles) > 0:
+        while len(sorted_smiles_tuples) > 0:
 
             # Extract the first molecule which exercises the most smirks
             # patterns at once and add it to the chosen set.
-            smiles = sorted_smiles.pop(0)
-            exercised_smirks = unexercised_smirks_per_smiles.pop(smiles)
+            smiles_tuple = sorted_smiles_tuples.pop(0)
+            exercised_smirks = unexercised_smirks_per_smiles_tuples.pop(smiles_tuple)
 
-            chosen_smiles[smiles] = set([smirks for smirks, values in
-                                         find_smirks_parameters('vdW', smiles).items() if len(values) > 0])
+            chosen_smiles_tuples[smiles_tuple] = set(vdw_smirks_per_smiles_tuple[smiles_tuple])
 
             for exercised_smirks_pattern in exercised_smirks:
                 for property_type, _ in property_list:
@@ -554,11 +622,11 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, desi
 
             # Update the dictionary to reflect that a number of
             # smirks patterns have now been exercised.
-            for remaining_smiles in unexercised_smirks_per_smiles:
+            for remaining_smiles_tuple in unexercised_smirks_per_smiles_tuples:
 
                 for smirks in exercised_smirks:
 
-                    if smirks not in unexercised_smirks_per_smiles[remaining_smiles]:
+                    if smirks not in unexercised_smirks_per_smiles_tuples[remaining_smiles_tuple]:
                         continue
 
                     smirks_fully_exercised = True
@@ -574,21 +642,59 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, desi
                     if not smirks_fully_exercised:
                         continue
 
-                    unexercised_smirks_per_smiles[remaining_smiles].remove(smirks)
+                    unexercised_smirks_per_smiles_tuples[remaining_smiles_tuple].remove(smirks)
 
             # Remove empty dictionary entries
-            unexercised_smirks_per_smiles = {smiles: smirks_set for smiles, smirks_set in
-                                             unexercised_smirks_per_smiles.items() if len(smirks_set) > 0}
+            unexercised_smirks_per_smiles_tuples = {smiles_tuple: smirks_set for smiles_tuple, smirks_set in
+                                                    unexercised_smirks_per_smiles_tuples.items() if len(smirks_set) > 0}
 
             # Re-sort the smiles list by the same criteria as above.
-            resorted_smiles = []
+            resorted_smiles_tuples = []
 
-            for key, value in sorted(unexercised_smirks_per_smiles.items(), key=sorting_function, reverse=True):
-                resorted_smiles.append(key)
+            for key, value in sorted(unexercised_smirks_per_smiles_tuples.items(), key=sorting_function, reverse=True):
+                resorted_smiles_tuples.append(key)
 
-            sorted_smiles = resorted_smiles
+            sorted_smiles_tuples = resorted_smiles_tuples
 
-    return chosen_smiles
+    return chosen_smiles_tuples
+
+
+def _state_distance(target_state_point, state_tuple):
+    """Defines a metric for how close a measured data point
+    (`state_tuple`) is to a state point of interest (`target_state_point`).
+
+    Currently this a tuple of the form (|difference in pressure|, |difference
+    in temperature|), i.e., deviations from the target pressure are first
+    prioritised, followed by deviations from the target temperature.
+
+    Parameters
+    ----------
+    target_state_point: tuple of simtk.unit.Quantity and simtk.unit.Quantity
+        A tuple containing a pressure and temperature of interest of
+        the form (pressure, temperature).
+
+    state_tuple: tuple of float and float and tuple of float and float
+        The measured state point, of the form (pressure in kPa, temperature in K,
+        (mole fraction 0, ..., mole fraction N).
+
+    Returns
+    -------
+    tuple of float and float
+        A tuple of the form (|difference in pressure|, |difference in temperature|)
+    """
+
+    pressure, temperature, mole_fractions = state_tuple
+
+    mole_fraction_distances = [target_state_point[2][i] - mole_fractions[i] for i in range(len(mole_fractions))]
+    mole_fraction_distances_sqr = [i ** 2 for i in mole_fraction_distances]
+
+    mole_fraction_distance = sum(mole_fraction_distances_sqr)
+
+    distance_tuple = (mole_fraction_distance ** 2,
+                      (target_state_point[1].to(unit.kilopascal).magnitude - pressure) ** 2,
+                      (target_state_point[0].to(unit.kelvin).magnitude - temperature) ** 2)
+
+    return distance_tuple
 
 
 def _choose_data_points(data_set, properties_of_interest, target_state_points):
@@ -624,42 +730,6 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
     """
 
     return_data_set = PhysicalPropertyDataSet()
-
-    def state_distance(target_state_point, state_tuple):
-        """Defines a metric for how close a measured data point
-        (`state_tuple`) is to a state point of interest (`target_state_point`).
-
-        Currently this a tuple of the form (|difference in pressure|, |difference
-        in temperature|), i.e., deviations from the target pressure are first
-        prioritised, followed by deviations from the target temperature.
-
-        Parameters
-        ----------
-        target_state_point: tuple of simtk.unit.Quantity and simtk.unit.Quantity
-            A tuple containing a pressure and temperature of interest of
-            the form (pressure, temperature).
-
-        state_tuple: tuple of float and float
-            The measured state point, of the form (pressure in kPa, temperature in K).
-
-        Returns
-        -------
-        tuple of float and float
-            A tuple of the form (|difference in pressure|, |difference in temperature|)
-        """
-
-        pressure, temperature, mole_fractions = state_tuple
-
-        mole_fraction_distances = [target_state_point[2][i] - mole_fractions[i] for i in range(len(mole_fractions))]
-        mole_fraction_distances_sqr = [i ** 2 for i in mole_fraction_distances]
-
-        mole_fraction_distance = sum(mole_fraction_distances_sqr)
-
-        distance_tuple = (mole_fraction_distance ** 2,
-                          (target_state_point[1].to(unit.kilopascal).magnitude - pressure) ** 2,
-                          (target_state_point[0].to(unit.kelvin).magnitude - temperature) ** 2)
-
-        return distance_tuple
 
     properties_by_components = defaultdict(list)
 
@@ -697,7 +767,7 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
 
             for cluster_index, target_state_point in enumerate(target_state_points):
 
-                distance = math.sqrt(sum(state_distance(target_state_point, state_tuple)))
+                distance = math.sqrt(sum(_state_distance(target_state_point, state_tuple)))
 
                 if distance >= shortest_cluster_distance:
                     continue
@@ -725,7 +795,8 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
             properties_to_cover = set(property_tuple[0] for property_tuple in properties_of_interest)
 
             clustered_states = clustered_state_points[cluster_index]
-            clustered_states = list(sorted(clustered_states, key=functools.partial(state_distance, target_state_point)))
+            clustered_states = list(sorted(clustered_states, key=functools.partial(_state_distance,
+                                                                                   target_state_point)))
 
             chosen_states = set()
 
@@ -780,10 +851,6 @@ def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data
         testing set.
     output_data_set_path: str
         The path to save the curated data set to.
-    report_type: ReportType
-        The type of report to create.
-    report_path: str
-        The path pointing to where to store the report.
     """
 
     setup_timestamp_logging()
@@ -792,22 +859,22 @@ def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data
     # as well as the types of data we are interested in.
     properties_of_interest = [
         (ExcessMolarVolume, SubstanceType.Binary),
-        # (EnthalpyOfMixing, SubstanceType.Binary)
+        (EnthalpyOfMixing, SubstanceType.Binary)
     ]
 
     # Define the order of preference for which data molecules should have,
     # as explained above.
     property_order = [
-        # [
-        #     (ExcessMolarVolume, SubstanceType.Binary),
-        #     (EnthalpyOfMixing, SubstanceType.Binary)
-        # ],
-        # [
-        #     (EnthalpyOfMixing, SubstanceType.Binary)
-        # ],
         [
             (ExcessMolarVolume, SubstanceType.Binary),
-        ]
+            (EnthalpyOfMixing, SubstanceType.Binary)
+        ],
+        # [
+        #     (EnthalpyOfMixing, SubstanceType.Binary)
+        # ],
+        # [
+        #     (ExcessMolarVolume, SubstanceType.Binary),
+        # ]
     ]
 
     # Define the ranges of temperatures and pressures of interest.
@@ -896,18 +963,20 @@ def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data
     # Choose a set of molecules which give a good coverage of
     # the vdW parameters which will be optimised against the
     # properties of interest.
-    chosen_smiles = _choose_molecule_set(data_sets, properties_of_interest, property_order,
-                                         minimum_data_points_per_property_per_smirks)
+    chosen_smiles_tuples = _choose_molecule_set(data_sets, properties_of_interest, property_order,
+                                                minimum_data_points_per_property_per_smirks)
 
-    logging.info(f'Chosen smiles: {" ".join(chosen_smiles.keys())}')
+    logging.info(f'Chosen smiles tuples: {" ".join(map(str, chosen_smiles_tuples.keys()))}')
 
     # Merge the multiple property data sets into a single object
     final_data_set = PhysicalPropertyDataSet()
 
-    for data_set in data_sets.values():
-        final_data_set.merge(data_set)
+    if len(chosen_smiles_tuples) > 0:
 
-    final_data_set.filter_by_smiles(*chosen_smiles)
+        for data_set in data_sets.values():
+            final_data_set.merge(data_set)
+
+        _filter_by_smiles_tuple(final_data_set, *chosen_smiles_tuples)
 
     # Finally, choose only a minimal set of data points from the full
     # filtered set which are concentrated on the state points specified

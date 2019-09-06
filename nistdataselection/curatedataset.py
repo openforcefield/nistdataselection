@@ -13,10 +13,9 @@ from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
 from propertyestimator import unit
 from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.properties import DielectricConstant, EnthalpyOfVaporization, EnthalpyOfMixing
+from propertyestimator.properties import DielectricConstant, EnthalpyOfVaporization, ExcessMolarVolume, \
+    EnthalpyOfMixing, Density
 from propertyestimator.utils import setup_timestamp_logging
-
-from nistdataselection.plugins import ExcessMolarVolume
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import SubstanceType, find_smirks_parameters, cached_smirks_parameters, \
     invert_dict_of_list
@@ -262,7 +261,7 @@ def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_e
     # Make sure to only include molecules which have well defined stereochemsitry
     current_number_of_properties = data_set.number_of_properties
 
-    _filter_undefined_steroechemistry(data_set)
+    _filter_undefined_stereochemistry(data_set)
     logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
                  f'properties contained molecules with undefined stereochemistry.')
 
@@ -378,7 +377,7 @@ def _filter_non_zero_charge(data_set):
     data_set.filter_by_function(filter_function)
 
 
-def _filter_undefined_steroechemistry(data_set):
+def _filter_undefined_stereochemistry(data_set):
     """Filters out any molecules which have undefined sterochemistry.
 
     Parameters
@@ -416,6 +415,34 @@ def _filter_by_smiles_tuple(data_set, *smiles_tuples):
     def filter_function(physical_property):
         smiles_tuple = tuple(sorted([component.smiles for component in physical_property.substance.components]))
         return smiles_tuple in smiles_tuples
+
+    data_set.filter_by_function(filter_function)
+
+
+def _filter_by_required_smiles(data_set, required_smiles):
+    """Filters out properties measured for substances which don't
+     contain at least one of the required components as defined by
+     it's smiles representation.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    required_smiles: list of str
+        The list of smiles patterns of which at least one must appear
+        in each substance.
+    """
+
+    def filter_function(physical_property):
+
+        for component in physical_property.substance.components:
+
+            if component.smiles not in required_smiles:
+                continue
+
+            return True
+
+        return False
 
     data_set.filter_by_function(filter_function)
 
@@ -472,7 +499,8 @@ def _extract_min_max_median_temperature_set(data_set):
     return filtered_set
 
 
-def _choose_molecule_set(data_sets, properties_of_interest, property_order, desired_properties_per_smirks=2):
+def _choose_molecule_set(data_sets, properties_of_interest, property_order,
+                         vdw_smirks_to_exercise, desired_properties_per_smirks=2):
     """Selects the minimum set of molecules which (if possible) simultaneously have
     data for all three properties, and exercise the largest number of vdW
     parameters.
@@ -497,6 +525,9 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, desi
     property_order: list of list of tuple of type and SubstanceType
         A list of lists of property types and substance types in the order
         in which to prioritize them.
+
+    vdw_smirks_to_exercise: list of str
+        A list of those vdW smirks patterns to aim to exercise.
 
     desired_properties_per_smirks: int
         The number of each type of property which should
@@ -528,6 +559,13 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, desi
 
         # Find the smiles patterns which exercise each vdW smirks.
         smiles_per_vdw_smirks = find_smirks_parameters('vdW', *all_smiles_patterns)
+
+        # Filter out the smirks patterns which are not of interest
+        smirks_to_exclude = [smirks for smirks in smiles_per_vdw_smirks if smirks not in vdw_smirks_to_exercise]
+
+        for vdw_smirks in smirks_to_exclude:
+            smiles_per_vdw_smirks.pop(vdw_smirks)
+
         # Invert the dictionary to find those smirks exercised by each smiles pattern.
         vdw_smirks_per_smiles = invert_dict_of_list(smiles_per_vdw_smirks)
 
@@ -602,10 +640,8 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, desi
 
         for key, value in sorted(unexercised_smirks_per_smiles_tuples.items(),
                                  key=sorting_function, reverse=True):
-            sorted_smiles_tuples.append(key)
 
-            # molecule = Molecule.from_smiles(key)
-            # printed_list.append((key, len(value), 1.0 / molecule.n_atoms))
+            sorted_smiles_tuples.append(key)
 
         while len(sorted_smiles_tuples) > 0:
 
@@ -836,7 +872,13 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
     return return_data_set
 
 
-def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data_set_path='curated_data_set.json'):
+def curate_data_set(property_data_directory,
+                    property_order,
+                    required_smiles_to_include=None,
+                    smiles_to_exclude=None,
+                    vdw_smirks_to_exercise=None,
+                    output_data_set_path='curated_data_set.json'):
+
     """The main function which will perform the
     data curation.
 
@@ -845,37 +887,43 @@ def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data
     property_data_directory: str
         The directory which contains the processed pandas
         date sets generated by `parserawdata`.
+    property_order: list of list of tuple of type and SubstanceType
+        A list of lists of property types and substance types in the order
+        in which to prioritize them.
+    required_smiles_to_include: list of str, optional
+        The set of smiles which must be present in the final data set
+        if such data is available. In the case of data measured for pure
+        substances, only compounds which appear in this list will be
+        included. In the case of data measured for substances with more
+        than one component, at least one of those components must appear
+        in this list.
     smiles_to_exclude: list of str, optional
         The smiles patterns to exclude from the data set. This
         is useful for excluding smiles in the training set from the
         testing set.
+    vdw_smirks_to_exercise: list of str, optional
+        A list of those vdW smirks patterns to aim to exercise. If none,
+        all vdW smirks will be attempted to be exercised.
     output_data_set_path: str
         The path to save the curated data set to.
-    """
 
-    setup_timestamp_logging()
+    Returns
+    -------
+    PhysicalPropertyDataSet
+        The selected data set object.
+    """
 
     # Define the properties which we are interested in curating data for,
     # as well as the types of data we are interested in.
-    properties_of_interest = [
-        (ExcessMolarVolume, SubstanceType.Binary),
-        (EnthalpyOfMixing, SubstanceType.Binary)
-    ]
+    properties_of_interest = set()
 
-    # Define the order of preference for which data molecules should have,
-    # as explained above.
-    property_order = [
-        [
-            (ExcessMolarVolume, SubstanceType.Binary),
-            (EnthalpyOfMixing, SubstanceType.Binary)
-        ],
-        # [
-        #     (EnthalpyOfMixing, SubstanceType.Binary)
-        # ],
-        # [
-        #     (ExcessMolarVolume, SubstanceType.Binary),
-        # ]
-    ]
+    for property_tuples in property_order:
+        for property_tuple in property_tuples:
+            properties_of_interest.add(property_tuple)
+
+    # Define the vdW smirks to be exercised if none were provided.
+    if vdw_smirks_to_exercise is None:
+        vdw_smirks_to_exercise = find_smirks_parameters('vdW')
 
     # Define the ranges of temperatures and pressures of interest.
     # Here we choose a range of temperatures which are biologically
@@ -919,6 +967,10 @@ def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data
 
         data_set = _load_data_set(property_data_directory, property_type, substance_type)
         data_set = _remove_duplicates(data_set)
+
+        # Retain only properties which contain any required components.
+        if required_smiles_to_include is not None:
+            _filter_by_required_smiles(data_set, required_smiles_to_include)
 
         # Apply the a number of global filters, such as excluding data points
         # outside of the chosen temperature and pressure ranges.
@@ -964,7 +1016,7 @@ def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data
     # the vdW parameters which will be optimised against the
     # properties of interest.
     chosen_smiles_tuples = _choose_molecule_set(data_sets, properties_of_interest, property_order,
-                                                minimum_data_points_per_property_per_smirks)
+                                                vdw_smirks_to_exercise, minimum_data_points_per_property_per_smirks)
 
     logging.info(f'Chosen smiles tuples: {" ".join(map(str, chosen_smiles_tuples.keys()))}')
 
@@ -983,9 +1035,11 @@ def curate_data_set(property_data_directory, smiles_to_exclude=None, output_data
     # by the `target_state_points` array.
     final_data_set = _choose_data_points(final_data_set, properties_of_interest, target_state_points)
 
-    # Save the final data set in a form consumable by force balance.
+    # Save the final data set in a form consumable by the propertyestimator.
     with open(output_data_set_path, 'w') as file:
         file.write(final_data_set.json())
+
+    return final_data_set
 
 
 def _main():
@@ -996,9 +1050,11 @@ def _main():
 
     import json
 
+    setup_timestamp_logging()
+
     # Check to see if we have already cached which vdW smirks will be
     # assigned to which molecules. This can significantly speed up this
-    # script on multiple runs.
+    # script on subsequent runs.
     cached_smirks_file_name = 'cached_smirks_parameters.json'
 
     try:
@@ -1012,8 +1068,7 @@ def _main():
     home_directory = os.path.expanduser("~")
     data_directory = os.path.join(home_directory, 'property_data')
 
-    # data_directory = 'data_sets'
-
+    # The smiles in the release-1 training set.
     smiles_to_exclude = [
         'CC#N',
         'c1ccc(cc1)Cl',
@@ -1046,8 +1101,119 @@ def _main():
         'c1cscc1C#N',
         'c1cc(sc1)C#N'
     ]
+    # The smirks which were optimised in release-1
+    vdw_smirks_of_interest = [
+        '[#1:1]-[#6X4]',
+        '[#1:1]-[#6X4]-[#7,#8,#9,#16,#17,#35]',
+        '[#1:1]-[#6X3]',
+        '[#1:1]-[#6X3]~[#7,#8,#9,#16,#17,#35]',
+        '[#1:1]-[#8]',
+        '[#6:1]',
+        '[#6X4:1]',
+        '[#8:1]',
+        '[#8X2H0+0:1]',
+        '[#8X2H1+0:1]',
+        '[#7:1]',
+        '[#16:1]',
+        '[#9:1]',
+        '[#17:1]',
+        '[#35:1]'
+    ]
 
-    curate_data_set(data_directory, smiles_to_exclude)
+    # Define the order of preference for which data substances should
+    # have.
+    mixture_property_order = [
+        [
+            # We prioritise those molecules for which we have both binary enthalpies
+            # of mixing and excess molar volumes.
+            (ExcessMolarVolume, SubstanceType.Binary),
+            (EnthalpyOfMixing, SubstanceType.Binary)
+        ],
+        [
+            # Failing that, we pick molecules for which we only have enthalpies
+            # of mixing.
+            (EnthalpyOfMixing, SubstanceType.Binary)
+        ],
+        [
+            # Finally, choose molecules for which we only have excess molar volumes.
+            (ExcessMolarVolume, SubstanceType.Binary),
+        ]
+    ]
+
+    full_data_set = PhysicalPropertyDataSet()
+
+    # Build the mixture data sets.
+    mixture_data_set = curate_data_set(data_directory,
+                                       mixture_property_order,
+                                       required_smiles_to_include=None,
+                                       smiles_to_exclude=[*smiles_to_exclude, 'O'],
+                                       vdw_smirks_to_exercise=vdw_smirks_of_interest,
+                                       output_data_set_path='mixture_data_set.json')
+
+    water_mixture_data_set = curate_data_set(data_directory,
+                                             mixture_property_order,
+                                             required_smiles_to_include=['O'],
+                                             smiles_to_exclude=smiles_to_exclude,
+                                             vdw_smirks_to_exercise=vdw_smirks_of_interest,
+                                             output_data_set_path='water_mixture_data_set.json')
+
+    full_data_set.merge(mixture_data_set)
+    full_data_set.merge(water_mixture_data_set)
+
+    # Next, build the pure data sets. Start by collating all of the previously chosen
+    # molecules
+    chosen_mixture_smiles = set()
+
+    for properties in full_data_set.properties.values():
+
+        for physical_property in properties:
+            chosen_mixture_smiles.update([component.smiles for component in physical_property.substance.components])
+
+    # Define the order of preference for which data pure substances should
+    # have.
+    pure_property_order = [
+        [
+            (Density, SubstanceType.Pure),
+            (DielectricConstant, SubstanceType.Pure)
+        ],
+        [
+            (Density, SubstanceType.Pure)
+        ],
+        [
+            (DielectricConstant, SubstanceType.Pure)
+        ],
+        [
+            (EnthalpyOfVaporization, SubstanceType.Pure)
+        ]
+    ]
+
+    # Ideally choose molecules for which we have also chosen binary data.
+    pure_data_set = curate_data_set(data_directory,
+                                    pure_property_order,
+                                    required_smiles_to_include=chosen_mixture_smiles,
+                                    smiles_to_exclude=smiles_to_exclude,
+                                    vdw_smirks_to_exercise=vdw_smirks_of_interest,
+                                    output_data_set_path='pure_data_set_binary_compounds.json')
+
+    chosen_pure_smiles = set()
+
+    for properties in pure_data_set.properties.values():
+
+        for physical_property in properties:
+            chosen_pure_smiles.update([component.smiles for component in physical_property.substance.components])
+
+    # Relax the criteria to include other molecules.
+    pure_data_set.merge(curate_data_set(data_directory,
+                                        pure_property_order,
+                                        required_smiles_to_include=None,
+                                        smiles_to_exclude=[*smiles_to_exclude, *chosen_pure_smiles],
+                                        vdw_smirks_to_exercise=vdw_smirks_of_interest,
+                                        output_data_set_path='pure_data_set.json'))
+
+    full_data_set.merge(pure_data_set)
+
+    with open('curated_data_set.json', 'w') as file:
+        file.write(full_data_set.json())
 
     # Cache the smirks which will be assigned to the different molecules
     # to speed up future runs.

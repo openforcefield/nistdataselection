@@ -3,20 +3,21 @@ Records the tools and decisions used to select NIST data for curation.
 """
 import os
 import re
+import shutil
+import subprocess
 from collections import defaultdict
 
 import pandas
 from propertyestimator.client import PropertyEstimatorOptions
 from propertyestimator.datasets import PhysicalPropertyDataSet
 from propertyestimator.layers import SimulationLayer
-from propertyestimator.properties import Density, DielectricConstant, EnthalpyOfVaporization, MeasurementSource, \
-    EnthalpyOfMixing
+from propertyestimator.properties import Density, DielectricConstant, EnthalpyOfVaporization, ExcessMolarVolume, \
+    MeasurementSource, EnthalpyOfMixing
 from propertyestimator.protocols.groups import ConditionalGroup
 from propertyestimator.utils import setup_timestamp_logging
 from propertyestimator.workflow import WorkflowOptions
 from tabulate import tabulate
 
-from nistdataselection.plugins import ExcessMolarVolume
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import smiles_to_png, cached_smirks_parameters, find_smirks_parameters, \
     int_to_substance_type, substance_type_to_int, invert_dict_of_list
@@ -308,7 +309,7 @@ def _create_molecule_images(chosen_smiles, directory):
         smiles_to_png(smiles, file_path)
 
 
-def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'):
+def generate_report(data_set_path='curated_data_set.json', report_name='report', vdw_smirks_of_interest=None):
     """A helper utility which will take as input a PhysicalPropertyDataSet
     and generate a report of its contents and coverage.
 
@@ -316,8 +317,11 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
     ----------
     data_set_path: str
         The path to the data set.
-    report_path: str
-        The path pointing to where to store the report.
+    report_name: str
+        The name of the report files to generate.
+    vdw_smirks_of_interest: list of str, optional
+        The vdW smirks patterns which should be included in the
+        summary table. If `None`, all vdW smirks will be included.
     """
 
     setup_timestamp_logging()
@@ -334,8 +338,6 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
 
     data_count_per_substance = defaultdict(lambda: defaultdict(int))
     data_per_substance = defaultdict(lambda: defaultdict(list))
-
-    number_of_substances = len(data_set.properties)
 
     for substance_id in data_set.properties:
 
@@ -359,7 +361,15 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
             data_count_per_substance[physical_property.substance][property_type_tuple] += 1
             data_per_substance[physical_property.substance][property_type_tuple].append(physical_property)
 
-    all_vdw_smirks_patterns = [smirks for smirks in find_smirks_parameters('vdW').keys()]
+    # Determine the number of unique molecules
+    number_of_substances = len(all_smiles)
+
+    # Determine the list of all exercised vdW smirks patterns.
+    all_vdw_smirks_patterns = vdw_smirks_of_interest
+
+    if all_vdw_smirks_patterns is None:
+        all_vdw_smirks_patterns = [smirks for smirks in find_smirks_parameters('vdW').keys()]
+
     exercised_vdw_smirks_patterns = find_smirks_parameters('vdW', *all_smiles)
 
     # Invert the exercised_vdw_smirks_patterns dictionary.
@@ -376,11 +386,14 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
             exercised_smirks.update(vdw_smirks_patterns_by_smiles[component.smiles])
 
         for smirks in exercised_smirks:
-            for data_tuple in data_count_per_substance[substance]:
 
+            if smirks not in all_vdw_smirks_patterns:
+                continue
+
+            for data_tuple in data_count_per_substance[substance]:
                 data_points_per_vdw_smirks[smirks][data_tuple] += 1
 
-    number_of_simulations = 0  # _estimate_required_simulations(all_property_types, data_set)
+    number_of_simulations = _estimate_required_simulations(all_property_types, data_set)
 
     _create_molecule_images(all_smiles, 'images')
 
@@ -396,8 +409,16 @@ def generate_report(data_set_path='curated_data_set.json', report_path='tmp.tex'
         r'\end{document}'
     ])
 
+    report_path = report_name + '.tex'
+
     with open(report_path, 'w') as file:
         file.write(latex_document)
+
+    if shutil.which('pdflatex') is not None:
+
+        subprocess.call(['pdflatex', '-synctex=1', '-interaction=nonstopmode', report_path],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
 
 
 def _main():
@@ -426,7 +447,25 @@ def _main():
 
     data_set_path = 'curated_data_set.json'
 
-    generate_report(data_set_path)
+    vdw_smirks_of_interest = [
+        '[#1:1]-[#6X4]',
+        '[#1:1]-[#6X4]-[#7,#8,#9,#16,#17,#35]',
+        '[#1:1]-[#6X3]',
+        '[#1:1]-[#6X3]~[#7,#8,#9,#16,#17,#35]',
+        '[#1:1]-[#8]',
+        '[#6:1]',
+        '[#6X4:1]',
+        '[#8:1]',
+        '[#8X2H0+0:1]',
+        '[#8X2H1+0:1]',
+        '[#7:1]',
+        '[#16:1]',
+        '[#9:1]',
+        '[#17:1]',
+        '[#35:1]'
+    ]
+
+    generate_report(data_set_path, 'report', vdw_smirks_of_interest)
 
     # Cache the smirks which will be assigned to the different molecules
     # to speed up future runs.

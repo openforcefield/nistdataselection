@@ -22,11 +22,6 @@ class MolarVolume(PhysicalProperty):
     pass
 
 
-@register_thermoml_property('Excess molar volume, m3/mol', supported_phases=PropertyPhase.Liquid)
-class ExcessMolarVolume(PhysicalProperty):
-    pass
-
-
 @register_thermoml_property('Partial molar volume, m3/mol', supported_phases=PropertyPhase.Liquid)
 class PartialMolarVolume(PhysicalProperty):
     pass

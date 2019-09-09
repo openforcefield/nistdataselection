@@ -123,6 +123,14 @@ def _write_header(margin_size_cm=3):
         r'\usepackage{url}',
         r'\urlstyle{same}',
         '',
+        r'\usepackage{subfigure}',
+        r'\usepackage{alphalph}',
+        r'\renewcommand*{\thesubfigure}{%',
+        r'\alphalph{\value{subfigure}}%',
+        r'}%',
+        '',
+        r'\edef\hash {\string#}',
+        '',
         r'\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}'
         '',
         r'\begin{document}',
@@ -135,7 +143,7 @@ def _write_title(number_of_substances, number_of_properties, number_of_simulatio
         r'\begin{center}',
         r'    \LARGE{Chosen Data Set}',
         r'    \vspace{.2cm}',
-        r'    \large{\\url{https://github.com/openforcefield/nistdataselection}}',
+        r'    \large{https://github.com/openforcefield/nistdataselection}',
         r'\end{center}',
         '',
         f'A total of {number_of_properties} data points covering '
@@ -145,9 +153,9 @@ def _write_title(number_of_substances, number_of_properties, number_of_simulatio
     ])
 
 
-def _write_data_points_table(property_tuples, all_vdw_smirks, data_points_per_vdw_smirks):
+def _write_smirks_exercised_table(property_tuples, all_vdw_smirks, data_points_per_vdw_smirks):
 
-    columns = ['SMIRKS']
+    columns = ['VdW SMIRKS']
     columns.extend([_property_tuple_to_latex_symbol(*property_tuple) for property_tuple in property_tuples])
 
     rows = []
@@ -155,7 +163,7 @@ def _write_data_points_table(property_tuples, all_vdw_smirks, data_points_per_vd
     for smirks in all_vdw_smirks:
 
         safe_smirks = _sanitize_identifier(smirks)
-        row = {'SMIRKS': f"'{safe_smirks}'"}
+        row = {'VdW SMIRKS': f"'{safe_smirks}'"}
 
         for property_tuple in property_tuples:
 
@@ -179,8 +187,57 @@ def _write_data_points_table(property_tuples, all_vdw_smirks, data_points_per_vd
     ])
 
     table_string = '\n'.join([
+        '',
+        r'\vspace{.3cm}',
+        r'\begin{center}',
+        f'    \\large{{\\textbf{{Data Points Per VdW SMIRKS Pattern}}}}',
+        r'\end{center}'
+        r'\vspace{.3cm}',
+        ''
         r'\vspace{.3cm}',
         table_string,
+        r'\vspace{.3cm}'])
+
+    table_string = table_string.replace('\'\\', '\\')
+    table_string = table_string.replace('}\'', '}')
+
+    return table_string
+
+
+def _write_unique_substances_per_property_table(property_tuples, data_count_per_substance):
+
+    columns = [_property_tuple_to_latex_symbol(*property_tuple) for property_tuple in property_tuples]
+
+    smiles_tuples_per_property = {property_tuple: set() for property_tuple in property_tuples}
+
+    for substance in data_count_per_substance:
+
+        substance_smiles = [component.smiles for component in substance.components]
+        smiles_tuple = tuple(sorted(substance_smiles))
+
+        for property_tuple in data_count_per_substance[substance]:
+            smiles_tuples_per_property[property_tuple].add(smiles_tuple)
+
+    row = {}
+
+    for property_tuple in smiles_tuples_per_property:
+
+        property_string = _property_tuple_to_latex_symbol(*property_tuple)
+        row[property_string] = len(smiles_tuples_per_property[property_tuple])
+
+    data_frame = pandas.DataFrame(data=[row], columns=columns)
+    data_frame.sort_values(columns[1:], ascending=False, inplace=True)
+
+    table_string = '\n'.join([
+        '',
+        r'\vspace{.3cm}',
+        r'\begin{center}',
+        f'    \\large{{\\textbf{{Unique Substances Per Data Type}}}}',
+        r'\end{center}'
+        r'\vspace{.3cm}',
+        ''
+        r'\vspace{.3cm}',
+        tabulate(data_frame, headers='keys', tablefmt='latex_raw', showindex=False),
         r'\vspace{.3cm}'])
 
     table_string = table_string.replace('\'\\', '\\')
@@ -286,6 +343,81 @@ def _write_smiles_section(smiles_tuple, exercised_vdw_smirks_patterns, full_data
         row_template.append('\\vspace{.3cm}\n')
 
     return '\n\n'.join(row_template) + '\n'
+
+
+def _write_substances_per_data_type_section(property_tuple, data_count_per_substance, total_molecules_per_row):
+
+    smiles_tuples = set()
+
+    for substance in data_count_per_substance:
+
+        if property_tuple not in data_count_per_substance[substance]:
+            continue
+
+        substance_smiles = [component.smiles for component in substance.components]
+        smiles_tuples.add(tuple(sorted(substance_smiles)))
+
+    property_string = _property_tuple_to_latex_symbol(*property_tuple)
+
+    row_template = [
+        '',
+        r'\newpage',
+        '',
+        r'\hrulefill',
+        '',
+        r'\vspace{.3cm}',
+        r'\begin{center}',
+        f'    \\large{{\\textbf{{{property_string}}}}}',
+        r'\end{center}'
+        r'\vspace{.3cm}',
+        '',
+        r'\begin{figure}[h!]%',
+    ]
+
+    image_width_fraction = 1.0 / total_molecules_per_row * 0.98
+    line_counter = 0
+
+    for smiles_tuple in smiles_tuples:
+
+        line_counter += len(smiles_tuple)
+
+        if line_counter > total_molecules_per_row:
+            row_template.extend([r'\end{figure}', '', r'\begin{figure}[h!]%'])
+            line_counter = len(smiles_tuple)
+
+        subfigure = [
+            f'\\subfigure[][]{{%',
+        ]
+
+        for smiles_pattern in smiles_tuple:
+
+            image_file_name = smiles_pattern.replace('/', '').replace('\\', '')
+            image_file_path = './images/' + image_file_name + '.png'
+            image_file_path = image_file_path.replace('#', '\\hash ')
+
+            subfigure.append(f'\\includegraphics[width={image_width_fraction}\\textwidth]'
+                             f'{{{image_file_path}}}%')
+
+        subfigure[-1] = subfigure[-1][:-1] + r'}%'
+
+        row_template.extend(subfigure)
+
+    row_template.append(r'\end{figure}')
+
+    return row_template
+
+
+def _write_substances_per_data_type_sections(property_tuples, data_count_per_substance, total_molecules_per_row=8):
+
+    all_sections = []
+
+    for property_tuple in property_tuples:
+
+        all_sections.append('\n'.join(_write_substances_per_data_type_section(property_tuple,
+                                                                              data_count_per_substance,
+                                                                              total_molecules_per_row)))
+
+    return '\n'.join(all_sections)
 
 
 def _create_molecule_images(chosen_smiles, directory):
@@ -403,7 +535,9 @@ def generate_report(data_set_path='curated_data_set.json', report_name='report',
     latex_document = '\n\n'.join([
         _write_header(),
         _write_title(number_of_substances, data_set.number_of_properties, number_of_simulations),
-        _write_data_points_table(all_property_types, all_vdw_smirks_patterns, data_points_per_vdw_smirks),
+        _write_smirks_exercised_table(all_property_types, all_vdw_smirks_patterns, data_points_per_vdw_smirks),
+        _write_unique_substances_per_property_table(all_property_types, data_count_per_substance),
+        _write_substances_per_data_type_sections(all_property_types, data_count_per_substance),
         r'\pagebreak',
         smiles_sections,
         r'\end{document}'

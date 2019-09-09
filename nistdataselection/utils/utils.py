@@ -3,6 +3,7 @@
 import shutil
 import subprocess
 import tempfile
+from collections import defaultdict
 from enum import Enum
 
 from openforcefield.topology import Molecule, Topology
@@ -235,3 +236,28 @@ def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
             smiles_by_parameter_smirks[smirks].add(smiles)
 
     return smiles_by_parameter_smirks
+
+
+def invert_dict_of_list(dictionary):
+    """Inverts a dictionary of string keys with values of
+    lists of strings.
+
+    Parameters
+    ----------
+    dictionary: dict of str and list of str
+        The dictionary to invert
+
+    Returns
+    -------
+    dictionary: dict of str and list of str
+        The inverted dictionary
+    """
+
+    inverted_dictionary = defaultdict(list)
+
+    for key in dictionary:
+        for list_value in dictionary[key]:
+
+            inverted_dictionary[list_value].append(key)
+
+    return inverted_dictionary

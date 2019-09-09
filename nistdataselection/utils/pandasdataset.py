@@ -217,7 +217,7 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
                 for index, component in enumerate(physical_property.substance.components):
 
-                    amount = physical_property.substance.get_amount(component)
+                    amount = next(iter(physical_property.substance.get_amounts(component)))
                     assert isinstance(amount, Substance.MoleFraction)
 
                     components[index] = (component.smiles, amount.value)

@@ -15,7 +15,7 @@ pytest_runner = ['pytest-runner'] if needs_pytest else []
 try:
     with open("README.md", "r") as handle:
         long_description = handle.read()
-except:
+except IOError:
     long_description = "\n".join(short_description[2:]),
 
 
@@ -46,7 +46,7 @@ setup(
 
     # Set up the entry point plugin so that the extra ThermoML
     # properties are detected.
-    entry_points={'propertyestimator.plugins': 'nistdataselection = plugins'},
+    entry_points={'propertyestimator.plugins': 'nistdataselection = nistdataselection.plugins'},
 
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='http://www.my_package.com',  # Website
@@ -59,5 +59,4 @@ setup(
 
     # Manual control if final package is compressible or not, set False to prevent the .egg from being made
     # zip_safe=False,
-
 )

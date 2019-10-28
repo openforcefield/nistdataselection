@@ -13,11 +13,6 @@ from propertyestimator import unit
 from propertyestimator.backends import DaskLocalCluster, QueueWorkerResources, DaskLSFBackend
 
 
-class BackendType(Enum):
-    Local = 'Local'
-    LSF = 'LSF'
-
-
 class SubstanceType(Enum):
     """An enum which encodes the names used for substances
     with different numbers of components.
@@ -70,31 +65,6 @@ def setup_parallel_backend(backend_type=BackendType.Local,
     PropertyEstimatorBackend
         The created and started backend.
     """
-
-    calculation_backend = None
-
-    if backend_type == BackendType.Local:
-        calculation_backend = DaskLocalCluster(number_of_workers=number_of_workers)
-
-    elif backend_type == BackendType.LSF:
-
-        queue_resources = QueueWorkerResources(number_of_threads=1,
-                                               per_thread_memory_limit=12 * unit.gigabyte,
-                                               wallclock_time_limit="01:30")
-
-        if lsf_worker_commands is None:
-            lsf_worker_commands = []
-
-        calculation_backend = DaskLSFBackend(minimum_number_of_workers=1,
-                                             maximum_number_of_workers=number_of_workers,
-                                             resources_per_worker=queue_resources,
-                                             queue_name=lsf_queue,
-                                             setup_script_commands=lsf_worker_commands,
-                                             adaptive_interval='1000ms')
-
-    calculation_backend.start()
-
-    return calculation_backend
 
 
 def analyse_functional_groups(smiles):

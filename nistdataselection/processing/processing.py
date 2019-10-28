@@ -11,10 +11,11 @@ import traceback
 import uuid
 
 import pandas
+from propertyestimator.backends import DaskLocalCluster
 from propertyestimator.datasets import ThermoMLDataSet, PhysicalPropertyDataSet
 from propertyestimator.utils import setup_timestamp_logging
 
-from nistdataselection.utils import PandasDataSet, setup_parallel_backend, BackendType
+from nistdataselection.utils import PandasDataSet
 
 
 def _parse_thermoml_archives(file_paths, retain_values=False,
@@ -234,11 +235,11 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, retain_valu
     return full_data_frames
 
 
-def parse_raw_data(directory, output_directory='property_data', retain_values=False,
-                   retain_uncertainties=False, backend_type=BackendType.Local,
-                   number_of_workers=4, files_per_worker=50, conda_environment='nistdataselection'):
+def process_raw_data(directory, output_directory='property_data', retain_values=False,
+                     retain_uncertainties=False, compute_backend=None, files_per_worker=50):
     """Extracts all of the physical property data from a collection of
-    ThermoML xml archives in a specified directory.
+    ThermoML xml archives in a specified directory, and converts them into
+    more manageable `pandas.DataFrame` compatible csv files.
 
     Parameters
     ----------
@@ -253,17 +254,14 @@ def parse_raw_data(directory, output_directory='property_data', retain_values=Fa
     retain_uncertainties: bool
         If False, all uncertainties in measured property values will
         be stripped from the final data set.
-    backend_type: BackendType
-        The type of backend to use when distributing the data extraction.
-    number_of_workers: int
-        The number of workers to distribute the extraction over.
+    compute_backend: PropertyEstimatorBackend, optional
+        The compute backend to distribute the processing over. This is
+        useful when processing a large number of archive files in one go.
+        If None, a single worker `DaskLocalCluster` will be used.
     files_per_worker: int
         The number of files each worker should process at once. This
         should be lowered if segmentation faults ( / core dumps) are
         observed.
-    conda_environment: str
-        The name of the conda environment in which this package is installed.
-        This only needs to be provided when using the LSF backend.
     """
 
     # Set up verbose logging.
@@ -275,28 +273,9 @@ def parse_raw_data(directory, output_directory='property_data', retain_values=Fa
 
     # Create the backend which will distribute the extraction of data across
     # multiple threads / nodes.
-    if backend_type == BackendType.Local:
-
-        compute_backend = setup_parallel_backend(backend_type=BackendType.Local,
-                                                 number_of_workers=number_of_workers)
-
-    else:
-
-        # The below will optionally distribute the data extraction over nodes
-        # accessible through an LSF queueing system.
-        home_directory = os.path.expanduser("~")
-
-        worker_script_commands = [
-            f'export OE_LICENSE="{os.path.join(home_directory, "oe_license.txt")}"',
-            f'. {os.path.join(home_directory, "miniconda3/etc/profile.d/conda.sh")}',
-            f'conda activate {conda_environment}',
-        ]
-
-        logging.info(f'Worker extra script commands: {worker_script_commands}')
-
-        compute_backend = setup_parallel_backend(backend_type=BackendType.LSF,
-                                                 number_of_workers=number_of_workers,
-                                                 lsf_worker_commands=worker_script_commands)
+    if compute_backend is None:
+        compute_backend = DaskLocalCluster(number_of_workers=1)
+        compute_backend.start()
 
     # Extract the data from the archives
     data_frames = _extract_data_from_archives(archive_file_paths=archive_paths,
@@ -317,22 +296,3 @@ def parse_raw_data(directory, output_directory='property_data', retain_values=Fa
 
             data_subset = data_frame.loc[data_frame['Number Of Components'] == index + 1]
             data_subset.to_csv(os.path.join(output_directory, f'{property_type}_{data_type}.csv'))
-
-    # Close down all of the compute workers.
-    compute_backend.stop()
-
-
-def _main():
-    """A utility function for calling this script directly, which
-    expects that the ThermoML .xml archies are located in the
-    '~/checked_thermoml_files' directory.
-    """
-
-    home_directory = os.path.expanduser("~")
-    archive_directory = os.path.join(home_directory, 'checked_thermoml_files')
-
-    parse_raw_data(archive_directory)
-
-
-if __name__ == '__main__':
-    _main()

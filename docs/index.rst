@@ -3,18 +3,25 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to NistDataSelection's documentation!
-=========================================================
+========================
+Automated Data Selection
+========================
+
+This tool aims to automate the process of curating data sets of condensed phase physical properties
+from the NIST ThermoML archive for optimizing and benchmarking molecular force fields against.
+
+========
+
+Index
+-----
+
+**User Guide**
+
+* :doc:`install`
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+  :maxdepth: 2
+  :hidden:
+  :caption: User Guide
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+  install

@@ -1,6 +1,6 @@
 """
 Extends the number of properties which can be understood and parsed by
-the ThermoMLDataSet
+the `propertyestimator.datasets.ThermoMLDataSet` object.
 """
 
 from propertyestimator.datasets.plugins import register_thermoml_property

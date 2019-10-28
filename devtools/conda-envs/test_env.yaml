@@ -13,17 +13,12 @@ dependencies:
   - pytest-cov
   - codecov
 
-    # Main Requirements
-  - pandas
-  - openforcefield
-  - smirnoff99frosst
-  - matplotlib
-  - tabulate
-
     # Commercial
   - openeye-toolkits
 
-    # Pip-only installs
-  #- pip:
-  #  - codecov
-
+    # Main Requirements
+  - pandas
+  - openforcefield
+  - propertyestimator
+  - matplotlib
+  - tabulate

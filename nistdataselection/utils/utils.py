@@ -17,28 +17,20 @@ class SubstanceType(Enum):
     """An enum which encodes the names used for substances
     with different numbers of components.
     """
-    Pure = 'pure'
-    Binary = 'binary'
-    Ternary = 'ternary'
+
+    Pure = "pure"
+    Binary = "binary"
+    Ternary = "ternary"
 
 
-substance_type_to_int = {
-    SubstanceType.Pure: 1,
-    SubstanceType.Binary: 2,
-    SubstanceType.Ternary: 3,
-}
+substance_type_to_int = {SubstanceType.Pure: 1, SubstanceType.Binary: 2, SubstanceType.Ternary: 3}
 
-int_to_substance_type = {
-    1: SubstanceType.Pure,
-    2: SubstanceType.Binary,
-    3: SubstanceType.Ternary,
-}
+int_to_substance_type = {1: SubstanceType.Pure, 2: SubstanceType.Binary, 3: SubstanceType.Ternary}
 
 
-def setup_parallel_backend(backend_type=BackendType.Local,
-                           number_of_workers=1,
-                           lsf_queue='cpuqueue',
-                           lsf_worker_commands=None):
+def setup_parallel_backend(
+    backend_type=BackendType.Local, number_of_workers=1, lsf_queue="cpuqueue", lsf_worker_commands=None
+):
     """Sets up the `PropertyEstimatorBackend` that will be used to distribute
     the data extraction from the xml files over multiple threads / compute nodes.
 
@@ -85,11 +77,13 @@ def analyse_functional_groups(smiles):
     from openforcefield.topology import Molecule
 
     # Make sure the checkmol utility has been installed separately.
-    if shutil.which('checkmol') is None:
+    if shutil.which("checkmol") is None:
 
-        raise FileNotFoundError('checkmol was not found on this machine. Visit '
-                                'http://merian.pch.univie.ac.at/~nhaider/cheminf/cmmm.html '
-                                'to obtain it.')
+        raise FileNotFoundError(
+            "checkmol was not found on this machine. Visit "
+            "http://merian.pch.univie.ac.at/~nhaider/cheminf/cmmm.html "
+            "to obtain it."
+        )
 
     molecule = Molecule.from_smiles(smiles)
 
@@ -97,17 +91,16 @@ def analyse_functional_groups(smiles):
     # to use as input to checkmol.
     with tempfile.NamedTemporaryFile() as file:
 
-        molecule.to_file(file, 'SDF')
+        molecule.to_file(file, "SDF")
 
         # Execute checkmol.
-        result = subprocess.check_output(['checkmol', file.name],
-                                         stderr=subprocess.STDOUT).decode()
+        result = subprocess.check_output(["checkmol", file.name], stderr=subprocess.STDOUT).decode()
 
     groups = None
 
     # Turn the string output into a list of moieties.
     if len(result) > 0:
-        groups = list(filter(None, result.replace('\n', '').split(';')))
+        groups = list(filter(None, result.replace("\n", "").split(";")))
 
     return groups
 
@@ -142,7 +135,7 @@ def smiles_to_png(smiles, file_path):
 cached_smirks_parameters = {}
 
 
-def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
+def find_smirks_parameters(parameter_tag="vdW", *smiles_patterns):
     """Finds those force field parameters with a given tag which
     would be assigned to a specified set of molecules defined by
     the their smiles patterns.
@@ -163,7 +156,7 @@ def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
         those parameters.
     """
 
-    force_field = ForceField('smirnoff99Frosst-1.0.9.offxml')
+    force_field = ForceField("smirnoff99Frosst-1.0.9.offxml")
     parameter_handler = force_field.get_parameter_handler(parameter_tag)
 
     smiles_by_parameter_smirks = {}

@@ -18,8 +18,7 @@ from propertyestimator.utils import setup_timestamp_logging
 from nistdataselection.utils import PandasDataSet
 
 
-def _parse_thermoml_archives(file_paths, retain_values=False,
-                             retain_uncertainties=False, directory='', **_):
+def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainties=False, directory="", **_):
 
     """Loads a number of ThermoML data xml files (making sure to
     catch errors raised by individual files), and concatenates
@@ -72,7 +71,7 @@ def _parse_thermoml_archives(file_paths, retain_values=False,
             except Exception as e:
 
                 formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-                logging.warning(f'An exception was raised when loading {file_path}: {formatted_exception}')
+                logging.warning(f"An exception was raised when loading {file_path}: {formatted_exception}")
 
                 continue
 
@@ -92,44 +91,51 @@ def _parse_thermoml_archives(file_paths, retain_values=False,
 
                     property_data_sets[property_type].properties[substance_id].append(physical_property)
 
-        unique_id = str(uuid.uuid4()).replace('-', '')
+        unique_id = str(uuid.uuid4()).replace("-", "")
 
         for property_type in property_data_sets:
 
-            file_path = os.path.join(directory, f'{property_type}_{unique_id}.csv')
+            file_path = os.path.join(directory, f"{property_type}_{unique_id}.csv")
             data_set_paths[property_type] = file_path
 
             try:
 
                 data_frame = PandasDataSet.to_pandas_data_frame(property_data_sets[property_type])
 
-                if not retain_uncertainties and 'Uncertainty' in data_frame:
-                    data_frame.drop(columns='Uncertainty', inplace=True)
+                if not retain_uncertainties and "Uncertainty" in data_frame:
+                    data_frame.drop(columns="Uncertainty", inplace=True)
 
-                if not retain_values and 'Value' in data_frame:
-                    data_frame.drop(columns='Value', inplace=True)
+                if not retain_values and "Value" in data_frame:
+                    data_frame.drop(columns="Value", inplace=True)
 
                 data_frame.to_csv(file_path, index=False)
 
             except Exception as e:
 
                 formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-                logging.warning(f'An exception was raised when saving the csv file of {property_type}'
-                                f'properties to {file_path}: {formatted_exception}')
+                logging.warning(
+                    f"An exception was raised when saving the csv file of {property_type}"
+                    f"properties to {file_path}: {formatted_exception}"
+                )
 
                 continue
 
     except Exception as e:
 
         formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-        logging.info(f'An uncaught exception was raised: {formatted_exception}')
+        logging.info(f"An uncaught exception was raised: {formatted_exception}")
 
     return data_set_paths
 
 
-def _extract_data_from_archives(archive_file_paths, compute_backend, retain_values=False,
-                                retain_uncertainties=False, files_per_worker=50,
-                                delete_temporary_files=True):
+def _extract_data_from_archives(
+    archive_file_paths,
+    compute_backend,
+    retain_values=False,
+    retain_uncertainties=False,
+    files_per_worker=50,
+    delete_temporary_files=True,
+):
     """Uses the compute backend to extract the data contained in
     a set of ThermoML xml data files, and then merges this data into
     convenient pandas csv files.
@@ -162,7 +168,7 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, retain_valu
     from propertyestimator.datasets import registered_thermoml_properties
 
     # Create a working directory to store temporary files in.
-    working_directory_path = 'working_directory'
+    working_directory_path = "working_directory"
     os.makedirs(working_directory_path, exist_ok=True)
 
     # Store pointers to where the data will exist once the
@@ -184,13 +190,11 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, retain_valu
         if end_index - start_index <= 0:
             continue
 
-        worker_file_paths = archive_file_paths[start_index: end_index]
+        worker_file_paths = archive_file_paths[start_index:end_index]
 
-        calculation_future = compute_backend.submit_task(_parse_thermoml_archives,
-                                                         worker_file_paths,
-                                                         retain_values,
-                                                         retain_uncertainties,
-                                                         working_directory_path)
+        calculation_future = compute_backend.submit_task(
+            _parse_thermoml_archives, worker_file_paths, retain_values, retain_uncertainties, working_directory_path
+        )
 
         calculation_futures.append(calculation_future)
 
@@ -220,14 +224,17 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, retain_valu
                 full_data_frames[property_type] = data_frame
                 continue
 
-            full_data_frames[property_type] = pandas.concat([full_data_frames[property_type],
-                                                            data_frame], ignore_index=True, sort=False)
+            full_data_frames[property_type] = pandas.concat(
+                [full_data_frames[property_type], data_frame], ignore_index=True, sort=False
+            )
 
         current_future.release()
         del current_future
 
-        logging.info(f'Finished processing {total_futures - len(calculation_futures)} '
-                     f'out of {total_futures} batches (each of size {files_per_worker})')
+        logging.info(
+            f"Finished processing {total_futures - len(calculation_futures)} "
+            f"out of {total_futures} batches (each of size {files_per_worker})"
+        )
 
     if delete_temporary_files and os.path.isdir(working_directory_path):
         shutil.rmtree(working_directory_path)
@@ -235,8 +242,14 @@ def _extract_data_from_archives(archive_file_paths, compute_backend, retain_valu
     return full_data_frames
 
 
-def process_raw_data(directory, output_directory='property_data', retain_values=False,
-                     retain_uncertainties=False, compute_backend=None, files_per_worker=50):
+def process_raw_data(
+    directory,
+    output_directory="property_data",
+    retain_values=False,
+    retain_uncertainties=False,
+    compute_backend=None,
+    files_per_worker=50,
+):
     """Extracts all of the physical property data from a collection of
     ThermoML xml archives in a specified directory, and converts them into
     more manageable `pandas.DataFrame` compatible csv files.
@@ -269,7 +282,7 @@ def process_raw_data(directory, output_directory='property_data', retain_values=
 
     # Define the directory in which to search for the xml files, and
     # find all xml file paths within that directory.
-    archive_paths = glob.glob(os.path.join(directory, '*.xml'))
+    archive_paths = glob.glob(os.path.join(directory, "*.xml"))
 
     # Create the backend which will distribute the extraction of data across
     # multiple threads / nodes.
@@ -278,11 +291,13 @@ def process_raw_data(directory, output_directory='property_data', retain_values=
         compute_backend.start()
 
     # Extract the data from the archives
-    data_frames = _extract_data_from_archives(archive_file_paths=archive_paths,
-                                              retain_values=retain_values,
-                                              retain_uncertainties=retain_uncertainties,
-                                              compute_backend=compute_backend,
-                                              files_per_worker=files_per_worker)
+    data_frames = _extract_data_from_archives(
+        archive_file_paths=archive_paths,
+        retain_values=retain_values,
+        retain_uncertainties=retain_uncertainties,
+        compute_backend=compute_backend,
+        files_per_worker=files_per_worker,
+    )
 
     # Save the data frames to disk.
     os.makedirs(output_directory, exist_ok=True)
@@ -292,7 +307,7 @@ def process_raw_data(directory, output_directory='property_data', retain_values=
         data_frame = data_frames[property_type]
 
         # Save one file for each composition type.
-        for index, data_type in enumerate(['pure', 'binary', 'ternary']):
+        for index, data_type in enumerate(["pure", "binary", "ternary"]):
 
-            data_subset = data_frame.loc[data_frame['Number Of Components'] == index + 1]
-            data_subset.to_csv(os.path.join(output_directory, f'{property_type}_{data_type}.csv'))
+            data_subset = data_frame.loc[data_frame["Number Of Components"] == index + 1]
+            data_subset.to_csv(os.path.join(output_directory, f"{property_type}_{data_type}.csv"))

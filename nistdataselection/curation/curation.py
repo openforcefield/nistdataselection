@@ -96,13 +96,12 @@ def _load_data_set(directory, property_type, substance_type):
     assert os.path.isdir(directory)
 
     # Try to load in the pandas data file.
-    file_name = f'{property_type.__name__}_{str(substance_type.value)}.csv'
+    file_name = f"{property_type.__name__}_{str(substance_type.value)}.csv"
     file_path = os.path.join(directory, file_name)
 
     if not os.path.isfile(file_path):
 
-        raise ValueError(f'No data file could be found for '
-                         f'{substance_type} {property_type}s at {file_path}')
+        raise ValueError(f"No data file could be found for " f"{substance_type} {property_type}s at {file_path}")
 
     data_set = PandasDataSet.from_pandas_csv(file_path, property_type)
 
@@ -153,12 +152,12 @@ def _remove_duplicates(data_set):
 
             if physical_property.thermodynamic_state.pressure is None:
 
-                state_tuple = (f'{temperature:.2f}', f'None')
+                state_tuple = (f"{temperature:.2f}", f"None")
 
             else:
 
                 pressure = physical_property.thermodynamic_state.pressure.to(unit.kilopascal).magnitude
-                state_tuple = (f'{temperature:.2f}', f'{pressure:.3f}')
+                state_tuple = (f"{temperature:.2f}", f"{pressure:.3f}")
 
             if state_tuple not in properties_by_substance[substance_id][property_type]:
 
@@ -169,11 +168,8 @@ def _remove_duplicates(data_set):
 
             existing_property = properties_by_substance[substance_id][property_type][state_tuple]
 
-            existing_uncertainty = (math.inf if existing_property.uncertainty is None else
-                                    existing_property.uncertainty)
-
-            current_uncertainty = (math.inf if physical_property.uncertainty is None else
-                                   physical_property.uncertainty)
+            existing_uncertainty = math.inf if existing_property.uncertainty is None else existing_property.uncertainty
+            current_uncertainty = math.inf if physical_property.uncertainty is None else physical_property.uncertainty
 
             base_unit = None
 
@@ -189,8 +185,11 @@ def _remove_duplicates(data_set):
             if base_unit is not None and isinstance(current_uncertainty, unit.Quantity):
                 current_uncertainty = current_uncertainty.to(base_unit).magnitude
 
-            if (math.isinf(existing_uncertainty) and math.isinf(current_uncertainty) or
-                existing_uncertainty < current_uncertainty):
+            if (
+                math.isinf(existing_uncertainty)
+                and math.isinf(current_uncertainty)
+                or existing_uncertainty < current_uncertainty
+            ):
 
                 # If neither property has an uncertainty, or the existing one has
                 # a lower uncertainty keep that one.
@@ -211,10 +210,13 @@ def _remove_duplicates(data_set):
             for state_tuple in properties_by_substance[substance_id][property_type]:
 
                 unique_data_set.properties[substance_id].append(
-                    properties_by_substance[substance_id][property_type][state_tuple])
+                    properties_by_substance[substance_id][property_type][state_tuple]
+                )
 
-    logging.info(f'{data_set.number_of_properties - unique_data_set.number_of_properties} '
-                 f'duplicate properties were removed.')
+    logging.info(
+        f"{data_set.number_of_properties - unique_data_set.number_of_properties} "
+        f"duplicate properties were removed."
+    )
 
     return unique_data_set
 
@@ -238,46 +240,55 @@ def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_e
 
     current_number_of_properties = data_set.number_of_properties
 
-    data_set.filter_by_temperature(min_temperature=temperature_range[0],
-                                   max_temperature=temperature_range[1])
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties were outside of the temperature range and were removed.')
+    data_set.filter_by_temperature(min_temperature=temperature_range[0], max_temperature=temperature_range[1])
+    logging.info(
+        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"properties were outside of the temperature range and were removed."
+    )
 
     current_number_of_properties = data_set.number_of_properties
 
-    data_set.filter_by_pressure(min_pressure=pressure_range[0],
-                                max_pressure=pressure_range[1])
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties were outside of the pressure range and were removed.')
+    data_set.filter_by_pressure(min_pressure=pressure_range[0], max_pressure=pressure_range[1])
+    logging.info(
+        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"properties were outside of the pressure range and were removed."
+    )
 
     current_number_of_properties = data_set.number_of_properties
 
     data_set.filter_by_elements(*allowed_elements)
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties contained unwanted elements and were removed.')
+    logging.info(
+        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"properties contained unwanted elements and were removed."
+    )
 
     # Make sure to only include molecules which have well defined stereochemsitry
     current_number_of_properties = data_set.number_of_properties
 
     _filter_undefined_stereochemistry(data_set)
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties contained molecules with undefined stereochemistry.')
+    logging.info(
+        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"properties contained molecules with undefined stereochemistry."
+    )
 
     # Make sure to only include molecules which don't have a net charge.
     current_number_of_properties = data_set.number_of_properties
 
     _filter_non_zero_charge(data_set)
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties contained charged molecules.')
+    logging.info(
+        f"{current_number_of_properties - data_set.number_of_properties} " f"properties contained charged molecules."
+    )
 
     # Exclude any excluded smiles patterns.
     current_number_of_properties = data_set.number_of_properties
 
     _filter_excluded_smiles(data_set, smiles_to_exclude)
-    logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                 f'properties were measured for excluded smiles patterns.')
+    logging.info(
+        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"properties were measured for excluded smiles patterns."
+    )
 
-    logging.info(f'The filtered data set contains {data_set.number_of_properties} properties.')
+    logging.info(f"The filtered data set contains {data_set.number_of_properties} properties.")
 
 
 def _filter_excluded_smiles(data_set, smiles_to_exclude):
@@ -339,7 +350,7 @@ def _filter_ionic_liquids(data_set):
 
         for component in physical_property.substance.components:
 
-            if '.' in component.smiles:
+            if "." in component.smiles:
                 return False
 
         return True
@@ -483,8 +494,9 @@ def _molecule_ranking_function(substance_tuple):
     return number_of_vdw_smirks, 1.0 / number_of_atoms
 
 
-def _choose_molecule_set(data_sets, properties_of_interest, property_order,
-                         vdw_smirks_to_exercise, desired_properties_per_smirks=2):
+def _choose_molecule_set(
+    data_sets, properties_of_interest, property_order, vdw_smirks_to_exercise, desired_properties_per_smirks=2
+):
     """Selects the minimum set of molecules which (if possible) simultaneously have
     data for the first set of properties in the `property_order` list, and which exercise
     the largest number of vdW parameters.
@@ -539,7 +551,7 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order,
         all_smiles_patterns = set([smiles for smiles_tuple in common_smiles_tuples for smiles in smiles_tuple])
 
         # Find the smiles patterns which exercise each vdW smirks.
-        smiles_per_vdw_smirks = find_smirks_parameters('vdW', *all_smiles_patterns)
+        smiles_per_vdw_smirks = find_smirks_parameters("vdW", *all_smiles_patterns)
 
         # Filter out the smirks patterns which are not of interest
         smirks_to_exclude = [smirks for smirks in smiles_per_vdw_smirks if smirks not in vdw_smirks_to_exercise]
@@ -600,8 +612,9 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order,
         # of parameters, we rank smaller molecules higher than larger ones.
         sorted_smiles_tuples = []
 
-        for key, value in sorted(unexercised_smirks_per_smiles_tuples.items(),
-                                 key=_molecule_ranking_function, reverse=True):
+        for key, value in sorted(
+            unexercised_smirks_per_smiles_tuples.items(), key=_molecule_ranking_function, reverse=True
+        ):
 
             sorted_smiles_tuples.append(key)
 
@@ -643,14 +656,18 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order,
                     unexercised_smirks_per_smiles_tuples[remaining_smiles_tuple].remove(smirks)
 
             # Remove empty dictionary entries
-            unexercised_smirks_per_smiles_tuples = {smiles_tuple: smirks_set for smiles_tuple, smirks_set in
-                                                    unexercised_smirks_per_smiles_tuples.items() if len(smirks_set) > 0}
+            unexercised_smirks_per_smiles_tuples = {
+                smiles_tuple: smirks_set
+                for smiles_tuple, smirks_set in unexercised_smirks_per_smiles_tuples.items()
+                if len(smirks_set) > 0
+            }
 
             # Re-sort the smiles list by the same criteria as above.
             resorted_smiles_tuples = []
 
-            for key, value in sorted(unexercised_smirks_per_smiles_tuples.items(),
-                                     key=_molecule_ranking_function, reverse=True):
+            for key, value in sorted(
+                unexercised_smirks_per_smiles_tuples.items(), key=_molecule_ranking_function, reverse=True
+            ):
 
                 resorted_smiles_tuples.append(key)
 
@@ -690,9 +707,11 @@ def _state_distance(target_state_point, state_tuple):
 
     mole_fraction_distance = sum(mole_fraction_distances_sqr)
 
-    distance_tuple = (mole_fraction_distance ** 2,
-                      (target_state_point[1].to(unit.kilopascal).magnitude - pressure) ** 2,
-                      (target_state_point[0].to(unit.kelvin).magnitude - temperature) ** 2)
+    distance_tuple = (
+        mole_fraction_distance ** 2,
+        (target_state_point[1].to(unit.kilopascal).magnitude - pressure) ** 2,
+        (target_state_point[0].to(unit.kelvin).magnitude - temperature) ** 2,
+    )
 
     return distance_tuple
 
@@ -757,8 +776,12 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
             temperature = physical_property.thermodynamic_state.temperature.to(unit.kelvin).magnitude
             pressure = physical_property.thermodynamic_state.pressure.to(unit.kilopascal).magnitude
 
-            mole_fractions = tuple([next(iter(physical_property.substance.get_amounts(component))).value for
-                                    component in physical_property.substance.components])
+            mole_fractions = tuple(
+                [
+                    next(iter(physical_property.substance.get_amounts(component))).value
+                    for component in physical_property.substance.components
+                ]
+            )
 
             state_tuple = (round(pressure, 3), round(temperature, 2), mole_fractions)
 
@@ -795,8 +818,9 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
             properties_to_cover = set(property_tuple[0] for property_tuple in properties_of_interest)
 
             clustered_states = clustered_state_points[cluster_index]
-            clustered_states = list(sorted(clustered_states, key=functools.partial(_state_distance,
-                                                                                   target_state_point)))
+            clustered_states = list(
+                sorted(clustered_states, key=functools.partial(_state_distance, target_state_point))
+            )
 
             chosen_states = set()
 
@@ -817,7 +841,8 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
                     chosen_states.add(clustered_state)
 
                     properties_to_cover = properties_to_cover.symmetric_difference(
-                        properties_to_cover.intersection(property_types_at_state))
+                        properties_to_cover.intersection(property_types_at_state)
+                    )
 
             # Add the properties which were measured at the chosen state points
             # to the returned data set.
@@ -836,13 +861,15 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
     return return_data_set
 
 
-def curate_data_set(property_data_directory,
-                    property_order,
-                    required_smiles_to_include=None,
-                    smiles_to_exclude=None,
-                    vdw_smirks_to_exercise=None,
-                    minimum_data_points_per_property_per_smirks=2,
-                    output_data_set_path='curated_data_set.json'):
+def curate_data_set(
+    property_data_directory,
+    property_order,
+    required_smiles_to_include=None,
+    smiles_to_exclude=None,
+    vdw_smirks_to_exercise=None,
+    minimum_data_points_per_property_per_smirks=2,
+    output_data_set_path="curated_data_set.json",
+):
 
     """The main function which will perform the
     data curation.
@@ -891,7 +918,7 @@ def curate_data_set(property_data_directory,
 
     # Define the vdW smirks to be exercised if none were provided.
     if vdw_smirks_to_exercise is None:
-        vdw_smirks_to_exercise = find_smirks_parameters('vdW')
+        vdw_smirks_to_exercise = find_smirks_parameters("vdW")
 
     # Define the ranges of temperatures and pressures of interest.
     # Here we choose a range of temperatures which are biologically
@@ -904,14 +931,13 @@ def curate_data_set(property_data_directory,
     # and a tuple of the mole fractions of each of the components.
     target_state_points = [
         (298.15 * unit.kelvin, 101.325 * unit.kilopascal, (0.25, 0.75)),
-        (298.15 * unit.kelvin, 101.325 * unit.kilopascal, (0.75, 0.25))
+        (298.15 * unit.kelvin, 101.325 * unit.kilopascal, (0.75, 0.25)),
     ]
 
     # Define the elements that we are interested in. Here we only allow
     # a subset of those elements for which smirnoff99Frosst has parameters
     # for.
-    allowed_elements = ['H', 'N', 'C', 'O', 'S', 'F',
-                        'Cl', 'Br', 'I']
+    allowed_elements = ["H", "N", "C", "O", "S", "F", "Cl", "Br", "I"]
 
     # Define a minimum dielectric constant threshold so as not to try
     # try to reproduce values which cannot be simulated with accuracy.
@@ -927,7 +953,7 @@ def curate_data_set(property_data_directory,
 
         # Load the full data sets from the processed data files, and
         # remove any duplicate properties according to `_remove_duplicates`.
-        logging.info(f'Loading the {substance_type.value} {property_type.__name__} data set.')
+        logging.info(f"Loading the {substance_type.value} {property_type.__name__} data set.")
 
         data_set = _load_data_set(property_data_directory, property_type, substance_type)
         data_set = _remove_duplicates(data_set)
@@ -938,11 +964,7 @@ def curate_data_set(property_data_directory,
 
         # Apply the a number of global filters, such as excluding data points
         # outside of the chosen temperature and pressure ranges.
-        _apply_global_filters(data_set,
-                              temperature_range,
-                              pressure_range,
-                              allowed_elements,
-                              smiles_to_exclude)
+        _apply_global_filters(data_set, temperature_range, pressure_range, allowed_elements, smiles_to_exclude)
 
         # Optionally filter by ionic liquids.
         if allow_ionic_liquids is False:
@@ -956,13 +978,15 @@ def curate_data_set(property_data_directory,
 
             _filter_dielectric_constants(data_set, minimum_dielectric_value)
 
-            logging.info(f'{current_number_of_properties - data_set.number_of_properties} '
-                         f'dielectric properties had values less than {minimum_dielectric_value} '
-                         f'and were removed.')
+            logging.info(
+                f"{current_number_of_properties - data_set.number_of_properties} "
+                f"dielectric properties had values less than {minimum_dielectric_value} "
+                f"and were removed."
+            )
 
         data_sets[(property_type, substance_type)] = data_set
 
-        logging.info(f'Finished loading the {substance_type} {property_type.__name__} data set.')
+        logging.info(f"Finished loading the {substance_type} {property_type.__name__} data set.")
 
     # Due to ambiguity about at which pressure the enthalpy of vaporisation
     # was collected (no pressure is recorded in any of the ThermoML archives,
@@ -979,8 +1003,13 @@ def curate_data_set(property_data_directory,
     # Choose a set of molecules which give a good coverage of
     # the vdW parameters which will be optimised against the
     # properties of interest.
-    chosen_smiles_tuples = _choose_molecule_set(data_sets, properties_of_interest, property_order,
-                                                vdw_smirks_to_exercise, minimum_data_points_per_property_per_smirks)
+    chosen_smiles_tuples = _choose_molecule_set(
+        data_sets,
+        properties_of_interest,
+        property_order,
+        vdw_smirks_to_exercise,
+        minimum_data_points_per_property_per_smirks,
+    )
 
     logging.info(f'Chosen smiles tuples: {" ".join(map(str, chosen_smiles_tuples.keys()))}')
 
@@ -1000,7 +1029,7 @@ def curate_data_set(property_data_directory,
     final_data_set = _choose_data_points(final_data_set, properties_of_interest, target_state_points)
 
     # Save the final data set in a form consumable by the propertyestimator.
-    with open(output_data_set_path, 'w') as file:
+    with open(output_data_set_path, "w") as file:
         file.write(final_data_set.json())
 
     return final_data_set

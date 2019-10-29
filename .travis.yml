@@ -47,11 +47,11 @@ install:
 
 script:
   - if [[ $LINT == false ]]; then pytest -v --cov=nistdataselection nistdataselection/tests/ ; fi
-  - if [[ $LINT == true ]]; then conda install flake8 ; flake8 nistdataselection ; fi
-  - if [[ $LINT == true ]]; then conda install flake8-black; black nistdataselection --line-length 119 --check; fi
+  - if [[ $LINT == true ]]; then conda install flake8 ; flake8 nistdataselection ; flake8 examples ; fi
+  - if [[ $LINT == true ]]; then conda install flake8-black; black nistdataselection --check; black examples --check ; fi
 
 notifications:
     email: false
 
 after_success:
-  - codecov
+  - if [[ $LINT == false ]]; codecov ; fi

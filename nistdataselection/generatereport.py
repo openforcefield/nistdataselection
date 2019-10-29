@@ -99,7 +99,7 @@ def _property_tuple_to_latex_symbol(property_type, substance_type):
         DielectricConstant: r'$\epsilon_0$',
         EnthalpyOfVaporization: r'$\Delta H_{vap}$',
         EnthalpyOfMixing: r'$H_{mix}$',
-        ExcessMolarVolume: r'$\rho_{excess}$',
+        ExcessMolarVolume: r'$V_{excess}$',
     }
 
     return f'{str(substance_type.value).title()} {property_type_to_symbol[property_type]}'

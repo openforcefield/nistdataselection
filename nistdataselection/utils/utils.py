@@ -9,8 +9,6 @@ from enum import Enum
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError
-from propertyestimator import unit
-from propertyestimator.backends import DaskLocalCluster, QueueWorkerResources, DaskLSFBackend
 
 
 class SubstanceType(Enum):
@@ -26,37 +24,6 @@ class SubstanceType(Enum):
 substance_type_to_int = {SubstanceType.Pure: 1, SubstanceType.Binary: 2, SubstanceType.Ternary: 3}
 
 int_to_substance_type = {1: SubstanceType.Pure, 2: SubstanceType.Binary, 3: SubstanceType.Ternary}
-
-
-def setup_parallel_backend(
-    backend_type=BackendType.Local, number_of_workers=1, lsf_queue="cpuqueue", lsf_worker_commands=None
-):
-    """Sets up the `PropertyEstimatorBackend` that will be used to distribute
-    the data extraction from the xml files over multiple threads / compute nodes.
-
-    Parameters
-    ----------
-    backend_type: BackendType
-        The type of backend to set up.
-    number_of_workers: int
-        The number of workers to distribute the data extraction
-        over. If the `backend_type` is set to `BackendType.Local`,
-        this should be set to the number of CPU's available on your
-        machine. Otherwise, this represents the number of compute
-        workers which will be spun up in your LSF queueing system.
-    lsf_queue: str, optional
-        The queue to create the compute workers in when `backend_type`
-        is set to `BackendType.LSF`.
-    lsf_worker_commands: list of str
-        A list of commands to run on each spun up worker (such as setting
-        up the correct conda environment) when `backend_type` is set to
-        `BackendType.LSF`.
-
-    Returns
-    -------
-    PropertyEstimatorBackend
-        The created and started backend.
-    """
 
 
 def analyse_functional_groups(smiles):

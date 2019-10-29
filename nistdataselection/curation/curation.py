@@ -16,7 +16,7 @@ from propertyestimator.datasets import PhysicalPropertyDataSet
 from propertyestimator.properties import DielectricConstant, EnthalpyOfVaporization
 
 from nistdataselection.utils import PandasDataSet
-from nistdataselection.utils.utils import SubstanceType, find_smirks_parameters, invert_dict_of_list
+from nistdataselection.utils.utils import find_smirks_parameters, invert_dict_of_list
 
 
 def _find_common_smiles_patterns(*data_sets):

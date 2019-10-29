@@ -1,12 +1,12 @@
 """
-Unit and regression test for the nistdataselection package.
+Unit test for the nistdataselection package.
 """
 
-# Import package, test suite, and other packages as needed
-import nistdataselection
-import pytest
-import sys
 
 def test_nistdataselection_imported():
     """Sample test, will always pass so long as import statement worked"""
-    assert "nistdataselection" in sys.modules
+    from nistdataselection import curation, processing, reporting
+
+    assert curation is not None
+    assert processing is not None
+    assert reporting is not None

@@ -9,92 +9,21 @@ from enum import Enum
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError
-from propertyestimator import unit
-from propertyestimator.backends import DaskLocalCluster, QueueWorkerResources, DaskLSFBackend
-
-
-class BackendType(Enum):
-    Local = 'Local'
-    LSF = 'LSF'
 
 
 class SubstanceType(Enum):
     """An enum which encodes the names used for substances
     with different numbers of components.
     """
-    Pure = 'pure'
-    Binary = 'binary'
-    Ternary = 'ternary'
+
+    Pure = "pure"
+    Binary = "binary"
+    Ternary = "ternary"
 
 
-substance_type_to_int = {
-    SubstanceType.Pure: 1,
-    SubstanceType.Binary: 2,
-    SubstanceType.Ternary: 3,
-}
+substance_type_to_int = {SubstanceType.Pure: 1, SubstanceType.Binary: 2, SubstanceType.Ternary: 3}
 
-int_to_substance_type = {
-    1: SubstanceType.Pure,
-    2: SubstanceType.Binary,
-    3: SubstanceType.Ternary,
-}
-
-
-def setup_parallel_backend(backend_type=BackendType.Local,
-                           number_of_workers=1,
-                           lsf_queue='cpuqueue',
-                           lsf_worker_commands=None):
-    """Sets up the `PropertyEstimatorBackend` that will be used to distribute
-    the data extraction from the xml files over multiple threads / compute nodes.
-
-    Parameters
-    ----------
-    backend_type: BackendType
-        The type of backend to set up.
-    number_of_workers: int
-        The number of workers to distribute the data extraction
-        over. If the `backend_type` is set to `BackendType.Local`,
-        this should be set to the number of CPU's available on your
-        machine. Otherwise, this represents the number of compute
-        workers which will be spun up in your LSF queueing system.
-    lsf_queue: str, optional
-        The queue to create the compute workers in when `backend_type`
-        is set to `BackendType.LSF`.
-    lsf_worker_commands: list of str
-        A list of commands to run on each spun up worker (such as setting
-        up the correct conda environment) when `backend_type` is set to
-        `BackendType.LSF`.
-
-    Returns
-    -------
-    PropertyEstimatorBackend
-        The created and started backend.
-    """
-
-    calculation_backend = None
-
-    if backend_type == BackendType.Local:
-        calculation_backend = DaskLocalCluster(number_of_workers=number_of_workers)
-
-    elif backend_type == BackendType.LSF:
-
-        queue_resources = QueueWorkerResources(number_of_threads=1,
-                                               per_thread_memory_limit=12 * unit.gigabyte,
-                                               wallclock_time_limit="01:30")
-
-        if lsf_worker_commands is None:
-            lsf_worker_commands = []
-
-        calculation_backend = DaskLSFBackend(minimum_number_of_workers=1,
-                                             maximum_number_of_workers=number_of_workers,
-                                             resources_per_worker=queue_resources,
-                                             queue_name=lsf_queue,
-                                             setup_script_commands=lsf_worker_commands,
-                                             adaptive_interval='1000ms')
-
-    calculation_backend.start()
-
-    return calculation_backend
+int_to_substance_type = {1: SubstanceType.Pure, 2: SubstanceType.Binary, 3: SubstanceType.Ternary}
 
 
 def analyse_functional_groups(smiles):
@@ -115,11 +44,13 @@ def analyse_functional_groups(smiles):
     from openforcefield.topology import Molecule
 
     # Make sure the checkmol utility has been installed separately.
-    if shutil.which('checkmol') is None:
+    if shutil.which("checkmol") is None:
 
-        raise FileNotFoundError('checkmol was not found on this machine. Visit '
-                                'http://merian.pch.univie.ac.at/~nhaider/cheminf/cmmm.html '
-                                'to obtain it.')
+        raise FileNotFoundError(
+            "checkmol was not found on this machine. Visit "
+            "http://merian.pch.univie.ac.at/~nhaider/cheminf/cmmm.html "
+            "to obtain it."
+        )
 
     molecule = Molecule.from_smiles(smiles)
 
@@ -127,17 +58,16 @@ def analyse_functional_groups(smiles):
     # to use as input to checkmol.
     with tempfile.NamedTemporaryFile() as file:
 
-        molecule.to_file(file, 'SDF')
+        molecule.to_file(file, "SDF")
 
         # Execute checkmol.
-        result = subprocess.check_output(['checkmol', file.name],
-                                         stderr=subprocess.STDOUT).decode()
+        result = subprocess.check_output(["checkmol", file.name], stderr=subprocess.STDOUT).decode()
 
     groups = None
 
     # Turn the string output into a list of moieties.
     if len(result) > 0:
-        groups = list(filter(None, result.replace('\n', '').split(';')))
+        groups = list(filter(None, result.replace("\n", "").split(";")))
 
     return groups
 
@@ -172,7 +102,7 @@ def smiles_to_png(smiles, file_path):
 cached_smirks_parameters = {}
 
 
-def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
+def find_smirks_parameters(parameter_tag="vdW", *smiles_patterns):
     """Finds those force field parameters with a given tag which
     would be assigned to a specified set of molecules defined by
     the their smiles patterns.
@@ -193,7 +123,7 @@ def find_smirks_parameters(parameter_tag='vdW', *smiles_patterns):
         those parameters.
     """
 
-    force_field = ForceField('smirnoff99Frosst-1.0.9.offxml')
+    force_field = ForceField("smirnoff99Frosst-1.0.9.offxml")
     parameter_handler = force_field.get_parameter_handler(parameter_tag)
 
     smiles_by_parameter_smirks = {}

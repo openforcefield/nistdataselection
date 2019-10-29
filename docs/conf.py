@@ -41,8 +41,21 @@ release = ''
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.doctest',
+    'sphinx.ext.todo',
     'sphinx.ext.mathjax',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.intersphinx',
+    'nbsphinx',
+    'm2r'
 ]
+
+# Autodoc settings
+autosummary_generate = True
+autodoc_default_flags = ['members', 'inherited-members']
+autodoc_member_order = 'bysource' # preserve ordering in source
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -50,8 +63,8 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
+# source_suffix = '.rst'
 
 # The master toctree document.
 master_doc = 'index'
@@ -70,6 +83,15 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'propertyestimator': ('https://property-estimator.readthedocs.io/en/en/latest/', None),
+}
 
 
 # -- Options for HTML output -------------------------------------------------

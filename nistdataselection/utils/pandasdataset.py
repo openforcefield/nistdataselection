@@ -64,22 +64,23 @@ class PandasDataSet(PhysicalPropertyDataSet):
         for index, row in data_frame.iterrows():
 
             # Create the substance from the component columns
-            number_of_components = row['Number Of Components']
+            number_of_components = row["Number Of Components"]
 
             substance = Substance()
 
             for component_index in range(number_of_components):
 
-                smiles = row[f'Component {component_index + 1}']
-                mole_fraction = row[f'Mole Fraction {component_index + 1}']
+                smiles = row[f"Component {component_index + 1}"]
+                mole_fraction = row[f"Mole Fraction {component_index + 1}"]
 
-                substance.add_component(Substance.Component(smiles=smiles),
-                                        Substance.MoleFraction(value=mole_fraction))
+                substance.add_component(
+                    Substance.Component(smiles=smiles), Substance.MoleFraction(value=mole_fraction)
+                )
 
             if substance.identifier not in return_value._properties:
                 return_value.properties[substance.identifier] = []
 
-            pressure = row['Pressure (kPa)']
+            pressure = row["Pressure (kPa)"]
 
             if math.isnan(pressure):
                 pressure = None
@@ -87,31 +88,34 @@ class PandasDataSet(PhysicalPropertyDataSet):
                 pressure *= unit.kilopascal
 
             # Parse the state
-            thermodynamic_state = ThermodynamicState(temperature=row['Temperature (K)'] * unit.kelvin,
-                                                     pressure=pressure)
+            thermodynamic_state = ThermodynamicState(
+                temperature=row["Temperature (K)"] * unit.kelvin, pressure=pressure
+            )
 
-            phase = PropertyPhase(row['Phase'])
+            phase = PropertyPhase(row["Phase"])
 
             value = None
             uncertainty = None
 
-            if 'Value' in row:
-                value_string = row['Value'].replace('None', 'dimensionless')
+            if "Value" in row:
+                value_string = row["Value"].replace("None", "dimensionless")
                 value = unit(value_string)
 
-            if 'Uncertainty' in row:
-                uncertainty_string = row['Uncertainty'].replace('None', 'dimensionless')
+            if "Uncertainty" in row:
+                uncertainty_string = row["Uncertainty"].replace("None", "dimensionless")
                 uncertainty = unit(uncertainty_string)
 
-            source = MeasurementSource(reference=row['Source'])
+            source = MeasurementSource(reference=row["Source"])
             sources.add(source)
 
-            physical_property = property_type(thermodynamic_state=thermodynamic_state,
-                                              phase=phase,
-                                              substance=substance,
-                                              value=value,
-                                              uncertainty=uncertainty,
-                                              source=source)
+            physical_property = property_type(
+                thermodynamic_state=thermodynamic_state,
+                phase=phase,
+                substance=substance,
+                value=value,
+                uncertainty=uncertainty,
+                source=source,
+            )
 
             return_value.properties[substance.identifier].append(physical_property)
 
@@ -178,14 +182,14 @@ class PandasDataSet(PhysicalPropertyDataSet):
             if len(data_set.properties[substance_id]) == 0:
                 continue
 
-            maximum_number_of_components = max(maximum_number_of_components,
-                                               data_set.properties[substance_id][0].substance.number_of_components)
+            maximum_number_of_components = max(
+                maximum_number_of_components, data_set.properties[substance_id][0].substance.number_of_components
+            )
 
         # Make sure the maximum number of components is not zero.
         if maximum_number_of_components <= 0 and len(data_set.properties) > 0:
 
-            raise ValueError('The data set did not contain any substances with '
-                             'one or more components.')
+            raise ValueError("The data set did not contain any substances with " "one or more components.")
 
         # Extract the data from the data set.
         for substance_id in data_set.properties:
@@ -197,9 +201,11 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
                 if property_type != type(physical_property):
 
-                    raise ValueError('Only data sets containing a single type of '
-                                     'property can be converted to a DataFrame '
-                                     'object')
+                    raise ValueError(
+                        "Only data sets containing a single type of "
+                        "property can be converted to a DataFrame "
+                        "object"
+                    )
 
                 # Extract the measured state.
                 temperature = physical_property.thermodynamic_state.temperature.to(unit.kelvin).magnitude
@@ -224,12 +230,10 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
                 # Extract the value data as a string.
                 # noinspection PyTypeChecker
-                value = (None if physical_property.value is None else
-                         str(physical_property.value))
+                value = None if physical_property.value is None else str(physical_property.value)
 
                 # noinspection PyTypeChecker
-                uncertainty = (None if physical_property.uncertainty is None else
-                               str(physical_property.uncertainty))
+                uncertainty = None if physical_property.uncertainty is None else str(physical_property.uncertainty)
 
                 # Extract the data source.
                 source = physical_property.source.reference
@@ -239,39 +243,30 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
                 # Create the data row.
                 data_row = {
-                    'Temperature (K)': temperature,
-                    'Pressure (kPa)': pressure,
-                    'Phase': phase,
-                    'Number Of Components': number_of_components
+                    "Temperature (K)": temperature,
+                    "Pressure (kPa)": pressure,
+                    "Phase": phase,
+                    "Number Of Components": number_of_components,
                 }
 
                 for index in range(len(components)):
-                    data_row[f'Component {index + 1}'] = components[index][0]
-                    data_row[f'Mole Fraction {index + 1}'] = components[index][1]
+                    data_row[f"Component {index + 1}"] = components[index][0]
+                    data_row[f"Mole Fraction {index + 1}"] = components[index][1]
 
-                data_row['Value'] = value
-                data_row['Uncertainty'] = uncertainty
-                data_row['Source'] = source
+                data_row["Value"] = value
+                data_row["Uncertainty"] = uncertainty
+                data_row["Source"] = source
 
                 data_rows.append(data_row)
 
         # Set up the column headers.
-        data_columns = [
-            'Temperature (K)',
-            'Pressure (kPa)',
-            'Phase',
-            'Number Of Components',
-        ]
+        data_columns = ["Temperature (K)", "Pressure (kPa)", "Phase", "Number Of Components"]
 
         for index in range(maximum_number_of_components):
-            data_columns.append(f'Component {index + 1}')
-            data_columns.append(f'Mole Fraction {index + 1}')
+            data_columns.append(f"Component {index + 1}")
+            data_columns.append(f"Mole Fraction {index + 1}")
 
-        data_columns.extend([
-            'Value',
-            'Uncertainty',
-            'Source'
-        ])
+        data_columns.extend(["Value", "Uncertainty", "Source"])
 
         data_frame = pandas.DataFrame(data_rows, columns=data_columns)
         return data_frame

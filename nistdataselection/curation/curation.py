@@ -494,8 +494,14 @@ def _molecule_ranking_function(substance_tuple):
     return number_of_vdw_smirks, 1.0 / number_of_atoms
 
 
-def _choose_molecule_set(data_sets, properties_of_interest, property_order, vdw_smirks_to_exercise,
-                         desired_substances_per_property, desired_properties_per_smirks=2):
+def _choose_molecule_set(
+    data_sets,
+    properties_of_interest,
+    property_order,
+    vdw_smirks_to_exercise,
+    desired_substances_per_property,
+    desired_properties_per_smirks=2,
+):
     """Selects the minimum set of molecules which (if possible) simultaneously have
     data for the first set of properties in the `property_order` list, and which exercise
     the largest number of vdW parameters.
@@ -687,9 +693,12 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, vdw_
     # if required.
     for property_list in property_order:
 
-        required_number_extra = max([desired_substances_per_property[property_tuple] -
-                                     len(smiles_tuples_per_property[property_tuple])
-                                     for property_tuple in property_list])
+        required_number_extra = max(
+            [
+                desired_substances_per_property[property_tuple] - len(smiles_tuples_per_property[property_tuple])
+                for property_tuple in property_list
+            ]
+        )
 
         # If we have already met the target number of substances for this property we
         # do not need to add any more.
@@ -707,14 +716,14 @@ def _choose_molecule_set(data_sets, properties_of_interest, property_order, vdw_
         if len(remaining_smiles_tuples) <= 0:
             continue
 
-        smirks_per_remaining_smirks = {smiles_tuple: vdw_smirks_per_smiles_tuple[smiles_tuple]
-                                       for smiles_tuple in remaining_smiles_tuples}
+        smirks_per_remaining_smirks = {
+            smiles_tuple: vdw_smirks_per_smiles_tuple[smiles_tuple] for smiles_tuple in remaining_smiles_tuples
+        }
 
         # Re-rank the smiles list by the same criteria as above.
         ranked_smiles_tuples = []
 
-        for key, value in sorted(smirks_per_remaining_smirks.items(),
-                                 key=_molecule_ranking_function, reverse=True):
+        for key, value in sorted(smirks_per_remaining_smirks.items(), key=_molecule_ranking_function, reverse=True):
             ranked_smiles_tuples.append(key)
 
         for _ in range(required_number_extra):
@@ -916,14 +925,16 @@ def _choose_data_points(data_set, properties_of_interest, target_state_points):
     return return_data_set
 
 
-def curate_data_set(property_data_directory,
-                    property_order,
-                    desired_substances_per_property,
-                    required_smiles_to_include=None,
-                    smiles_to_exclude=None,
-                    vdw_smirks_to_exercise=None,
-                    minimum_data_points_per_property_per_smirks=2,
-                    output_data_set_path='curated_data_set.json'):
+def curate_data_set(
+    property_data_directory,
+    property_order,
+    desired_substances_per_property,
+    required_smiles_to_include=None,
+    smiles_to_exclude=None,
+    vdw_smirks_to_exercise=None,
+    minimum_data_points_per_property_per_smirks=2,
+    output_data_set_path="curated_data_set.json",
+):
 
     """The main function which will perform the
     data curation.
@@ -1061,9 +1072,14 @@ def curate_data_set(property_data_directory,
     # Choose a set of molecules which give a good coverage of
     # the vdW parameters which will be optimised against the
     # properties of interest.
-    chosen_smiles_tuples = _choose_molecule_set(data_sets, properties_of_interest, property_order,
-                                                vdw_smirks_to_exercise, desired_substances_per_property,
-                                                minimum_data_points_per_property_per_smirks)
+    chosen_smiles_tuples = _choose_molecule_set(
+        data_sets,
+        properties_of_interest,
+        property_order,
+        vdw_smirks_to_exercise,
+        desired_substances_per_property,
+        minimum_data_points_per_property_per_smirks,
+    )
 
     logging.info(f'Chosen smiles tuples: {" ".join(map(str, chosen_smiles_tuples.keys()))}')
 

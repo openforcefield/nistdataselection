@@ -16,6 +16,7 @@ from propertyestimator.datasets import ThermoMLDataSet, PhysicalPropertyDataSet
 from propertyestimator.utils import setup_timestamp_logging
 
 from nistdataselection.utils import PandasDataSet
+from nistdataselection.utils.utils import SubstanceType, substance_type_to_int
 
 
 def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainties=False, directory="", **_):
@@ -307,7 +308,76 @@ def process_raw_data(
         data_frame = data_frames[property_type]
 
         # Save one file for each composition type.
-        for index, data_type in enumerate(["pure", "binary", "ternary"]):
+        for substance_type in [SubstanceType.Pure, SubstanceType.Binary, SubstanceType.Ternary]:
 
-            data_subset = data_frame.loc[data_frame["Number Of Components"] == index + 1]
-            data_subset.to_csv(os.path.join(output_directory, f"{property_type}_{data_type}.csv"))
+            number_of_components = substance_type_to_int(substance_type)
+
+            data_subset = data_frame.loc[data_frame["Number Of Components"] == number_of_components]
+            save_processed_data_set(output_directory, data_subset, property_type, substance_type)
+
+
+def save_processed_data_set(directory, data_set, property_type, substance_type):
+    """Saves a data set of measured physical properties of a specific
+    type which was created using the `process_raw_data` function, with
+    a file name of `PropertyType_SubstanceType.csv`.
+
+    Parameters
+    ----------
+    directory: str
+        The path to the directory to save the data set in.
+    data_set: pandas.DataFrame or PandasDataSet
+        The data set to save.
+    property_type: type of PhysicalProperty
+        The type of property in the data set.
+    substance_type: SubstanceType
+        The type of substances in the data set.
+    """
+    os.makedirs(directory, exist_ok=True)
+
+    # Try to load in the pandas data file.
+    file_name = f"{property_type.__name__}_{str(substance_type.value)}.csv"
+    file_path = os.path.join(directory, file_name)
+
+    if isinstance(data_set, PandasDataSet):
+        PandasDataSet.to_pandas_csv(data_set, file_path)
+
+    elif isinstance(data_set, pandas.DataFrame):
+        data_set.to_csv(file_path)
+
+    else:
+        raise NotImplementedError()
+
+
+def load_processed_data_set(directory, property_type, substance_type):
+    """Loads a data set of measured physical properties of a specific
+    type which was created using the `process_raw_data` function.
+
+    Parameters
+    ----------
+    directory: str
+        The path which contains the data csv files generated
+        by the `process_raw_data` method.
+    property_type: type of PhysicalProperty
+        The property of interest.
+    substance_type: SubstanceType
+        The substance type of interest.
+
+    Returns
+    -------
+    PandasDataSet
+        The loaded data set.
+    """
+
+    assert os.path.isdir(directory)
+
+    # Try to load in the pandas data file.
+    file_name = f"{property_type.__name__}_{str(substance_type.value)}.csv"
+    file_path = os.path.join(directory, file_name)
+
+    if not os.path.isfile(file_path):
+
+        raise ValueError(f"No data file could be found for " f"{substance_type} {property_type}s at {file_path}")
+
+    data_set = PandasDataSet.from_pandas_csv(file_path, property_type)
+
+    return data_set

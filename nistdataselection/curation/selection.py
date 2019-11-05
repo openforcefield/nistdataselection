@@ -1,6 +1,6 @@
 """
-Tools for selecting sets of molecules and corresponding measured physical properties
-for use in optimizing and benchmarking molecular force fields.
+Tools for selecting sets of molecules and corresponding measured physical property
+data points for use in optimizing and benchmarking molecular force fields.
 """
 import functools
 import logging
@@ -10,18 +10,18 @@ import sys
 from collections import defaultdict
 
 from openforcefield.topology import Molecule
-from openforcefield.utils import UndefinedStereochemistryError
 from propertyestimator import unit
 from propertyestimator.datasets import PhysicalPropertyDataSet
 from propertyestimator.properties import DielectricConstant, EnthalpyOfVaporization
 
+from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import find_smirks_parameters, invert_dict_of_list
 
 
-def _find_common_smiles_patterns(*data_sets):
-    """Find the set of smiles patterns which are common to multiple
-    property data sets.
+def _find_common_substance_compositions(*data_sets):
+    """Find the set of substance compositions (defined as a tuple of smiles
+    patterns) which are common to multiple property data sets.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def _find_common_smiles_patterns(*data_sets):
     Returns
     -------
     set of tuple of str
-        A list smiles tuples (containing the smiles in a given substance)
+        A set of smiles tuples (containing the smiles in a given substance)
         which are common to all specified data sets.
     """
 
@@ -73,389 +73,6 @@ def _find_common_smiles_patterns(*data_sets):
     return common_smiles_tuples
 
 
-def _load_data_set(directory, property_type, substance_type):
-    """Loads a data set of measured physical properties of a specific
-    type.
-
-    Parameters
-    ----------
-    directory: str
-        The path which contains the data csv files generated
-        by the `process_raw_data` method.
-    property_type: type of PhysicalProperty
-        The property of interest.
-    substance_type: SubstanceType
-        The substance type of interest.
-
-    Returns
-    -------
-    PhysicalPropertyDataSet
-        The loaded data set.
-    """
-
-    assert os.path.isdir(directory)
-
-    # Try to load in the pandas data file.
-    file_name = f"{property_type.__name__}_{str(substance_type.value)}.csv"
-    file_path = os.path.join(directory, file_name)
-
-    if not os.path.isfile(file_path):
-
-        raise ValueError(f"No data file could be found for " f"{substance_type} {property_type}s at {file_path}")
-
-    data_set = PandasDataSet.from_pandas_csv(file_path, property_type)
-
-    return data_set
-
-
-def _remove_duplicates(data_set):
-    """Removes duplicate properties (i.e. those measured at the same
-    states) from a data set. For now, the measurement with the largest
-    uncertainty is retained.
-
-    Notes
-    -----
-    Temperatures are compared in kelvin to two decimal places, while
-    pressures are compared in kilopascals to three decimal places.
-
-    Warnings
-    --------
-    This method is not guaranteed to be deterministic.
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to remove duplicates from.
-
-    Returns
-    -------
-    PhysicalPropertyDataSet
-        The processed data set.
-    """
-
-    properties_by_substance = {}
-
-    for substance_id in data_set.properties:
-
-        properties_by_substance[substance_id] = {}
-
-        for physical_property in data_set.properties[substance_id]:
-
-            property_type = physical_property.__class__.__name__
-
-            # Partition the properties by type.
-            if property_type not in properties_by_substance[substance_id]:
-                properties_by_substance[substance_id][property_type] = {}
-
-            # Partition the properties by state.
-            temperature = physical_property.thermodynamic_state.temperature.to(unit.kelvin).magnitude
-
-            if physical_property.thermodynamic_state.pressure is None:
-
-                state_tuple = (f"{temperature:.2f}", f"None")
-
-            else:
-
-                pressure = physical_property.thermodynamic_state.pressure.to(unit.kilopascal).magnitude
-                state_tuple = (f"{temperature:.2f}", f"{pressure:.3f}")
-
-            if state_tuple not in properties_by_substance[substance_id][property_type]:
-
-                # Handle the easy case where this is the first time a
-                # property at this state has been observed.
-                properties_by_substance[substance_id][property_type][state_tuple] = physical_property
-                continue
-
-            existing_property = properties_by_substance[substance_id][property_type][state_tuple]
-
-            existing_uncertainty = math.inf if existing_property.uncertainty is None else existing_property.uncertainty
-            current_uncertainty = math.inf if physical_property.uncertainty is None else physical_property.uncertainty
-
-            base_unit = None
-
-            if isinstance(existing_uncertainty, unit.Quantity):
-                base_unit = existing_uncertainty.units
-
-            elif isinstance(current_uncertainty, unit.Quantity):
-                base_unit = current_uncertainty.units
-
-            if base_unit is not None and isinstance(existing_uncertainty, unit.Quantity):
-                existing_uncertainty = existing_uncertainty.to(base_unit).magnitude
-
-            if base_unit is not None and isinstance(current_uncertainty, unit.Quantity):
-                current_uncertainty = current_uncertainty.to(base_unit).magnitude
-
-            if (
-                math.isinf(existing_uncertainty)
-                and math.isinf(current_uncertainty)
-                or existing_uncertainty < current_uncertainty
-            ):
-
-                # If neither property has an uncertainty, or the existing one has
-                # a lower uncertainty keep that one.
-                continue
-
-            properties_by_substance[substance_id][property_type][state_tuple] = physical_property
-
-    # Rebuild the data set with only unique properties.
-    unique_data_set = PhysicalPropertyDataSet()
-
-    for substance_id in properties_by_substance:
-
-        if substance_id not in unique_data_set.properties:
-            unique_data_set.properties[substance_id] = []
-
-        for property_type in properties_by_substance[substance_id]:
-
-            for state_tuple in properties_by_substance[substance_id][property_type]:
-
-                unique_data_set.properties[substance_id].append(
-                    properties_by_substance[substance_id][property_type][state_tuple]
-                )
-
-    logging.info(
-        f"{data_set.number_of_properties - unique_data_set.number_of_properties} "
-        f"duplicate properties were removed."
-    )
-
-    return unique_data_set
-
-
-def _apply_global_filters(data_set, temperature_range, pressure_range, allowed_elements, smiles_to_exclude):
-    """Applies a set of global curation filters to the data set
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to filter.
-    temperature_range: tuple of unit.Quantity and unit.Quantity
-        The minimum and maximum temperatures.
-    pressure_range: tuple of unit.Quantity and unit.Quantity
-        The minimum and maximum pressures.
-    allowed_elements: list of str
-        A list of the allowed chemical elements.
-    smiles_to_exclude: list of str
-        A list of the smiles patterns to exclude.
-    """
-
-    current_number_of_properties = data_set.number_of_properties
-
-    data_set.filter_by_temperature(min_temperature=temperature_range[0], max_temperature=temperature_range[1])
-    logging.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
-        f"properties were outside of the temperature range and were removed."
-    )
-
-    current_number_of_properties = data_set.number_of_properties
-
-    data_set.filter_by_pressure(min_pressure=pressure_range[0], max_pressure=pressure_range[1])
-    logging.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
-        f"properties were outside of the pressure range and were removed."
-    )
-
-    current_number_of_properties = data_set.number_of_properties
-
-    data_set.filter_by_elements(*allowed_elements)
-    logging.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
-        f"properties contained unwanted elements and were removed."
-    )
-
-    # Make sure to only include molecules which have well defined stereochemsitry
-    current_number_of_properties = data_set.number_of_properties
-
-    _filter_undefined_stereochemistry(data_set)
-    logging.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
-        f"properties contained molecules with undefined stereochemistry."
-    )
-
-    # Make sure to only include molecules which don't have a net charge.
-    current_number_of_properties = data_set.number_of_properties
-
-    _filter_non_zero_charge(data_set)
-    logging.info(
-        f"{current_number_of_properties - data_set.number_of_properties} " f"properties contained charged molecules."
-    )
-
-    # Exclude any excluded smiles patterns.
-    current_number_of_properties = data_set.number_of_properties
-
-    _filter_excluded_smiles(data_set, smiles_to_exclude)
-    logging.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
-        f"properties were measured for excluded smiles patterns."
-    )
-
-    logging.info(f"The filtered data set contains {data_set.number_of_properties} properties.")
-
-
-def _filter_excluded_smiles(data_set, smiles_to_exclude):
-    """Filters out data points measured for excluded smiles.
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to filter
-    smiles_to_exclude: list of str
-        The smiles patterns to exclude.
-    """
-
-    def filter_function(physical_property):
-
-        for component in physical_property.substance.components:
-
-            if component.smiles in smiles_to_exclude:
-                return False
-
-        return True
-
-    data_set.filter_by_function(filter_function)
-
-
-def _filter_dielectric_constants(data_set, minimum_value):
-    """Filter out measured dielectric constants whose value is
-    below a given threshold.
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to filter
-    minimum_value: simtk.unit.Quantity
-        The minimum acceptable value of the
-        dielectric constant.
-    """
-
-    def filter_function(physical_property):
-
-        if not isinstance(physical_property, DielectricConstant):
-            return True
-
-        return physical_property.value >= minimum_value
-
-    data_set.filter_by_function(filter_function)
-
-
-def _filter_ionic_liquids(data_set):
-    """Filters out ionic liquids.
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to filter
-    """
-
-    def filter_function(physical_property):
-
-        for component in physical_property.substance.components:
-
-            if "." in component.smiles:
-                return False
-
-        return True
-
-    data_set.filter_by_function(filter_function)
-
-
-def _filter_non_zero_charge(data_set):
-    """Filters out any molecules which have a net charge.
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to filter
-    """
-
-    def filter_function(physical_property):
-
-        for component in physical_property.substance.components:
-
-            try:
-                molecule = Molecule.from_smiles(component.smiles)
-            except UndefinedStereochemistryError:
-                return False
-
-            if sum([atom.formal_charge for atom in molecule.atoms]) == 0:
-                continue
-
-            return False
-
-        return True
-
-    data_set.filter_by_function(filter_function)
-
-
-def _filter_undefined_stereochemistry(data_set):
-    """Filters out any molecules which have undefined sterochemistry.
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to filter
-    """
-
-    def filter_function(physical_property):
-
-        for component in physical_property.substance.components:
-
-            try:
-                Molecule.from_smiles(component.smiles)
-            except UndefinedStereochemistryError:
-                return False
-
-        return True
-
-    data_set.filter_by_function(filter_function)
-
-
-def _filter_by_smiles_tuple(data_set, *smiles_tuples):
-    """Filters out properties measured for substances which don't
-     appear in the smiles tuples.
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to filter
-    smiles_tuples: tuple of str
-        The smiles tuples to filter against.
-    """
-
-    def filter_function(physical_property):
-        smiles_tuple = tuple(sorted([component.smiles for component in physical_property.substance.components]))
-        return smiles_tuple in smiles_tuples
-
-    data_set.filter_by_function(filter_function)
-
-
-def _filter_by_required_smiles(data_set, required_smiles):
-    """Filters out properties measured for substances which don't
-     contain at least one of the required components as defined by
-     it's smiles representation.
-
-    Parameters
-    ----------
-    data_set: PhysicalPropertyDataSet
-        The data set to filter
-    required_smiles: list of str
-        The list of smiles patterns of which at least one must appear
-        in each substance.
-    """
-
-    def filter_function(physical_property):
-
-        for component in physical_property.substance.components:
-
-            if component.smiles not in required_smiles:
-                continue
-
-            return True
-
-        return False
-
-    data_set.filter_by_function(filter_function)
-
-
 def _molecule_ranking_function(substance_tuple):
     """A function used to sort a list of smiles tuples in order
     of preference to include them in the final data set. Currently
@@ -494,13 +111,10 @@ def _molecule_ranking_function(substance_tuple):
     return number_of_vdw_smirks, 1.0 / number_of_atoms
 
 
-def _choose_molecule_set(
-    data_sets,
-    properties_of_interest,
-    property_order,
-    vdw_smirks_to_exercise,
-    desired_substances_per_property,
-    desired_properties_per_smirks=2,
+def select_substances(
+    data_directory,
+    target_substances_per_property,
+    vdw_smirks_to_exercise=None
 ):
     """Selects the minimum set of molecules which (if possible) simultaneously have
     data for the first set of properties in the `property_order` list, and which exercise
@@ -512,44 +126,33 @@ def _choose_molecule_set(
 
     Parameters
     ----------
-    data_sets: dict of type and PhysicalPropertyDataSet
-        A dictionary of the data sets containing the properties of
-        interest, with keys of the type of property within each data
-        set.
-
-    properties_of_interest: list of tuple of type and SubstanceType
-        A list of all of the properties which are of interest to optimise against.
-
-    property_order: list of list of tuple of type and SubstanceType
-        A list of lists of property types and substance types in the order
-        in which to prioritize them.
-
-    vdw_smirks_to_exercise: list of str
-        A list of those vdW smirks patterns to aim to exercise.
-
-    desired_substances_per_property: dict of tuple and int
-        The desired number of unique substances which should have data points
-        for each of the properties of interest. This may not be attainable if
-        a property only has limited data.
-
-    desired_properties_per_smirks: int
-        The number of each type of property which should
-        ideally exercise each smirks pattern.
+    data_directory: str
+        The directory which contains the processed pandas
+        data sets
+    target_substances_per_property: dict of tuple of type and SubstanceType and int
+        The target number of unique substances to choose for each
+        type of property of interest.
+    vdw_smirks_to_exercise: list of str, optional
+        A list of those vdW smirks patterns to aim to exercise. If
+        None, all VdW parameters in the smirnoff99Frosst force field
+        will be targeted.
 
     Returns
     -------
-    dict of str and set of str
-        The smiles representations of the chosen molecules, as well as
-        a set of the vdW smirks patterns which they exercise.
+    list of tuple of str
+        The smiles representations of the chosen substances.
     """
+
+    data_sets = {}
+
+    for property_tuple in target_substances_per_property:
+        # Load the full data sets from the processed data file
+        data_sets[property_tuple] = load_processed_data_set(data_directory, *property_tuple)
 
     chosen_smiles_tuples = defaultdict(set)
 
-    smirks_exercised_per_property = {}
+    smirks_exercised_per_property = defaultdict(lambda: defaultdict(int))
     smiles_tuples_per_property = defaultdict(set)
-
-    for property_type, _ in properties_of_interest:
-        smirks_exercised_per_property[property_type] = defaultdict(int)
 
     # Keep track of which smiles exercise which vdW smirks.
     vdw_smirks_per_smiles_tuple = defaultdict(set)
@@ -558,7 +161,7 @@ def _choose_molecule_set(
 
         # Find those compounds for which there is data for all of the properties of
         # interest.
-        common_smiles_tuples = _find_common_smiles_patterns(
+        common_smiles_tuples = _find_common_substance_compositions(
             *[data_sets[property_tuple] for property_tuple in property_list]
         )
 
@@ -705,7 +308,7 @@ def _choose_molecule_set(
         if required_number_extra <= 0:
             continue
 
-        remaining_smiles_tuples = _find_common_smiles_patterns(
+        remaining_smiles_tuples = _find_common_substance_compositions(
             *[data_sets[property_tuple] for property_tuple in property_list]
         )
 
@@ -780,7 +383,7 @@ def _state_distance(target_state_point, state_tuple):
     return distance_tuple
 
 
-def _choose_data_points(data_set, properties_of_interest, target_state_points):
+def select_data_set(data_set, properties_of_interest, target_state_points):
     """The method attempts to find a small set of data points for each
     property which are clustered around the set of conditions specified
     in the `target_state_points` input array.

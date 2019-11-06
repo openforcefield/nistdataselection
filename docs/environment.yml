@@ -1,0 +1,18 @@
+name: propertyestimator
+channels:
+  - conda-forge
+  - omnia
+dependencies:
+  # Base depends
+  - python
+  - setuptools
+
+  # Sphinx specific
+  - numpydoc
+  - nbsphinx
+  - m2r >=0.2.1
+  - sphinx_rtd_theme
+
+  # Main Requirements
+  - pandas
+  - tabulate

@@ -57,7 +57,6 @@ def _get_default_force_field():
     return ForceField("openff-1.0.0.offxml")
 
 
-@functools.lru_cache(1000)
 def find_smirks_matches(smirks_of_interest, *smiles_patterns):
     """Determines which of the specified smirks match the specified
     set of molecules.
@@ -207,7 +206,7 @@ class LogFilter(object):
 
         self._initial_number_of_properties = -1
         self._data_set = data_set
-        self._message = 'were removed after filtering' if message is None else message
+        self._message = "were removed after filtering" if message is None else message
 
     def __enter__(self):
         self._initial_number_of_properties = self._data_set.number_of_properties
@@ -216,9 +215,7 @@ class LogFilter(object):
 
         logger = logging.getLogger()
 
-        logger.info(
-            f"{self._initial_number_of_properties - self._data_set.number_of_properties} {self._message}"
-        )
+        logger.info(f"{self._initial_number_of_properties - self._data_set.number_of_properties} {self._message}")
 
         return True
 

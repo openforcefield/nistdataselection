@@ -413,6 +413,7 @@ def filter_by_longest_path_length(data_set, maximum_path_length, include_ring_co
         rings, such as aromatics. When included, this behaviour may not be
         well defined.
     """
+
     def filter_function(physical_property):
 
         for component in physical_property.substance.components:
@@ -430,7 +431,7 @@ def filter_by_longest_path_length(data_set, maximum_path_length, include_ring_co
                     continue
 
             hydrogen_nodes = reversed(
-                sorted([node for node, data in molecule_graph.nodes(data=True) if data['atomic_number'] == 1])
+                sorted([node for node, data in molecule_graph.nodes(data=True) if data["atomic_number"] == 1])
             )
 
             for node in hydrogen_nodes:

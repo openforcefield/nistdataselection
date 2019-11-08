@@ -115,7 +115,9 @@ class StatePoint:
 
         temperature_distance_sqr = (state_b_temperature - state_a_temperature) ** 2
 
-        assert (state_a.pressure is None and state_b is None) or (state_a is not None and state_b is not None)
+        assert (state_a.pressure is None and state_b.pressure is None) or (
+            state_a.pressure is not None and state_b.pressure is not None
+        )
 
         pressure_distance_sqr = 0.0
 

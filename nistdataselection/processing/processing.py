@@ -13,10 +13,12 @@ import uuid
 import pandas
 from propertyestimator.backends import DaskLocalCluster
 from propertyestimator.datasets import ThermoMLDataSet, PhysicalPropertyDataSet
-from propertyestimator.utils import setup_timestamp_logging
 
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import SubstanceType, substance_type_to_int
+
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainties=False, directory="", **_):
@@ -72,7 +74,7 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
             except Exception as e:
 
                 formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-                logging.warning(f"An exception was raised when loading {file_path}: {formatted_exception}")
+                logger.warning(f"An exception was raised when loading {file_path}: {formatted_exception}")
 
                 continue
 
@@ -114,7 +116,7 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
             except Exception as e:
 
                 formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-                logging.warning(
+                logger.warning(
                     f"An exception was raised when saving the csv file of {property_type}"
                     f"properties to {file_path}: {formatted_exception}"
                 )
@@ -124,7 +126,7 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
     except Exception as e:
 
         formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-        logging.info(f"An uncaught exception was raised: {formatted_exception}")
+        logger.info(f"An uncaught exception was raised: {formatted_exception}")
 
     return data_set_paths
 
@@ -232,7 +234,7 @@ def _extract_data_from_archives(
         current_future.release()
         del current_future
 
-        logging.info(
+        logger.info(
             f"Finished processing {total_futures - len(calculation_futures)} "
             f"out of {total_futures} batches (each of size {files_per_worker})"
         )
@@ -277,9 +279,6 @@ def process_raw_data(
         should be lowered if segmentation faults ( / core dumps) are
         observed.
     """
-
-    # Set up verbose logging.
-    setup_timestamp_logging()
 
     # Define the directory in which to search for the xml files, and
     # find all xml file paths within that directory.

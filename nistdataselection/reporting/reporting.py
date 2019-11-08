@@ -1,6 +1,7 @@
 """
 Tools for generating reports what is included within a curated data set.
 """
+
 import os
 import re
 import shutil
@@ -20,14 +21,12 @@ from propertyestimator.properties import (
     EnthalpyOfMixing,
 )
 from propertyestimator.protocols.groups import ConditionalGroup
-from propertyestimator.utils import setup_timestamp_logging
 from propertyestimator.workflow import WorkflowOptions
 from tabulate import tabulate
 
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import (
-    smiles_to_png,
-    find_smirks_parameters,
+    find_parameter_smirks_matches,
     int_to_substance_type,
     substance_type_to_int,
     invert_dict_of_list,
@@ -512,6 +511,33 @@ def _write_substances_per_data_type_sections(property_tuples, data_count_per_sub
     return "\n".join(all_sections)
 
 
+def _smiles_to_png(smiles, file_path):
+    """Creates a png image of the 2D representation of
+    a given smiles pattern.
+
+    Parameters
+    ----------
+    smiles: str
+        The smiles pattern to generate the png of.
+    file_path: str
+        The path of the output png file.
+    """
+
+    from openeye import oedepict
+    from openforcefield.topology import Molecule
+
+    off_molecule = Molecule.from_smiles(smiles)
+    oe_molecule = off_molecule.to_openeye()
+    # oe_molecule.SetTitle(off_molecule.to_smiles())
+
+    oedepict.OEPrepareDepiction(oe_molecule)
+
+    options = oedepict.OE2DMolDisplayOptions(200, 200, oedepict.OEScale_AutoScale)
+
+    display = oedepict.OE2DMolDisplay(oe_molecule, options)
+    oedepict.OERenderMolecule(file_path, display)
+
+
 def _create_molecule_images(chosen_smiles, directory):
     """Creates a PNG image of the 2D representation of each
     molecule represented in a list of smiles patterns.
@@ -530,7 +556,7 @@ def _create_molecule_images(chosen_smiles, directory):
         file_name = smiles.replace("/", "").replace("\\", "")
         file_path = os.path.join(directory, f"{file_name}.png")
 
-        smiles_to_png(smiles, file_path)
+        _smiles_to_png(smiles, file_path)
 
 
 def generate_report(data_set_path="curated_data_set.json", report_name="report", vdw_smirks_of_interest=None):
@@ -547,8 +573,6 @@ def generate_report(data_set_path="curated_data_set.json", report_name="report",
         The vdW smirks patterns which should be included in the
         summary table. If `None`, all vdW smirks will be included.
     """
-
-    setup_timestamp_logging()
 
     with open(data_set_path) as file:
         data_set = PhysicalPropertyDataSet.parse_json(file.read())
@@ -593,9 +617,9 @@ def generate_report(data_set_path="curated_data_set.json", report_name="report",
     all_vdw_smirks_patterns = vdw_smirks_of_interest
 
     if all_vdw_smirks_patterns is None:
-        all_vdw_smirks_patterns = [smirks for smirks in find_smirks_parameters("vdW").keys()]
+        all_vdw_smirks_patterns = [smirks for smirks in find_parameter_smirks_matches("vdW").keys()]
 
-    exercised_vdw_smirks_patterns = find_smirks_parameters("vdW", *all_smiles)
+    exercised_vdw_smirks_patterns = find_parameter_smirks_matches("vdW", *all_smiles)
 
     # Invert the exercised_vdw_smirks_patterns dictionary.
     vdw_smirks_patterns_by_smiles = invert_dict_of_list(exercised_vdw_smirks_patterns)

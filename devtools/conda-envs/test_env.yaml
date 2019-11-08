@@ -19,6 +19,7 @@ dependencies:
     # Main Requirements
   - pandas
   - openforcefield
+  - openforcefields
   - propertyestimator
   - matplotlib
   - tabulate

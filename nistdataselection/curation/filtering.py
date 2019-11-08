@@ -3,13 +3,15 @@ Utilities for filtering data sets of measured physical properties.
 """
 import logging
 import math
+import networkx
 
 import numpy as np
 from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
 from propertyestimator import unit
-from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.properties import PhysicalProperty
+
+
+logger = logging.getLogger(__name__)
 
 
 def filter_duplicates(data_set):
@@ -102,7 +104,7 @@ def filter_duplicates(data_set):
             properties_by_substance[substance_id][property_type][state_tuple] = physical_property
 
     # Rebuild the data set with only unique properties.
-    unique_data_set = PhysicalPropertyDataSet()
+    unique_data_set = data_set.__class__()
 
     for substance_id in properties_by_substance:
 
@@ -116,11 +118,6 @@ def filter_duplicates(data_set):
                 unique_data_set.properties[substance_id].append(
                     properties_by_substance[substance_id][property_type][state_tuple]
                 )
-
-    logging.info(
-        f"{data_set.number_of_properties - unique_data_set.number_of_properties} "
-        f"duplicate properties were removed."
-    )
 
     return unique_data_set
 
@@ -358,6 +355,99 @@ def filter_ionic_liquids(data_set):
     data_set.filter_by_function(filter_function)
 
 
+def filter_by_number_of_halogens(data_set, minimum_halogens=0, maximum_halogens=3):
+    """Filters the data set so that it only contains substance whose
+    components contain a number of halogens within the specified limits.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    minimum_halogens: int
+        The inclusive minimum number of halogens a component
+        must have.
+    maximum_halogens: int
+        The inclusive maximum number of halogens a component
+        may have
+    """
+    halogens = ["F", "Cl", "Br", "I"]
+
+    def filter_function(physical_property):
+
+        for component in physical_property.substance.components:
+
+            molecule = Molecule.from_smiles(component.smiles)
+            molecule_halogens = (atom for atom in molecule.atoms if atom.element.symbol in halogens)
+
+            number_of_halogens = {halogen: 0 for halogen in halogens}
+
+            for atom in molecule_halogens:
+                number_of_halogens[atom.element.symbol] += 1
+
+            for halogen_count in number_of_halogens.values():
+
+                if halogen_count < minimum_halogens or halogen_count > maximum_halogens:
+                    return False
+
+        return True
+
+    data_set.filter_by_function(filter_function)
+
+
+def filter_by_longest_path_length(data_set, maximum_path_length, include_ring_containing=False):
+    """Filters the data set so that it only contains substance whose
+    components are shorter than the maximum path length (ignoring any
+    hydrogens). In simple chain molecules, this would be the length of
+    the chain e.g `maximum_path_length=5` would retain alkanes up to
+    and including pentane.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    maximum_path_length: int
+        The maximum eccentricity in the molecular graph, excluding
+        any hydrogens.
+    include_ring_containing: bool
+        Determines whether this should be applied to substances containing
+        rings, such as aromatics. When included, this behaviour may not be
+        well defined.
+    """
+    def filter_function(physical_property):
+
+        for component in physical_property.substance.components:
+
+            molecule = Molecule.from_smiles(component.smiles)
+            molecule_graph = molecule.to_networkx()
+
+            if include_ring_containing is False:
+
+                try:
+                    networkx.find_cycle(molecule_graph)
+                except networkx.NetworkXNoCycle:
+                    pass
+                else:
+                    continue
+
+            hydrogen_nodes = reversed(
+                sorted([node for node, data in molecule_graph.nodes(data=True) if data['atomic_number'] == 1])
+            )
+
+            for node in hydrogen_nodes:
+                molecule_graph.remove_node(node)
+
+            diameter = networkx.diameter(molecule_graph) + 1
+
+            if diameter <= maximum_path_length:
+                continue
+
+            return False
+
+        return True
+
+    data_set.filter_by_function(filter_function)
+
+
 def apply_standard_filters(data_set, temperature_range, pressure_range, allowed_elements):
     """Filters the data set (in the listed order) such as to remove:
 
@@ -379,25 +469,30 @@ def apply_standard_filters(data_set, temperature_range, pressure_range, allowed_
         The minimum and maximum pressures.
     allowed_elements: list of str
         A list of the allowed atomic elements.
+
+    Returns
+    -------
+    PhysicalPropertyDataSet
+        The filtered data set.
     """
 
     current_number_of_properties = data_set.number_of_properties
 
-    filter_duplicates(data_set)
-    logging.info(f"{current_number_of_properties - data_set.number_of_properties} duplicate data points were removed.")
+    data_set = filter_duplicates(data_set)
+    logger.info(f"{current_number_of_properties - data_set.number_of_properties} duplicate data points were removed.")
 
     current_number_of_properties = data_set.number_of_properties
 
-    data_set.filter_by_temperature(min_temperature=temperature_range[0], max_temperature=temperature_range[1])
-    logging.info(
+    data_set.filter_by_temperature(*temperature_range)
+    logger.info(
         f"{current_number_of_properties - data_set.number_of_properties} "
         f"data points were outside of the temperature range and were removed."
     )
 
     current_number_of_properties = data_set.number_of_properties
 
-    data_set.filter_by_pressure(min_pressure=pressure_range[0], max_pressure=pressure_range[1])
-    logging.info(
+    data_set.filter_by_pressure(*pressure_range)
+    logger.info(
         f"{current_number_of_properties - data_set.number_of_properties} "
         f"data points were outside of the pressure range and were removed."
     )
@@ -405,7 +500,7 @@ def apply_standard_filters(data_set, temperature_range, pressure_range, allowed_
     current_number_of_properties = data_set.number_of_properties
 
     data_set.filter_by_elements(*allowed_elements)
-    logging.info(
+    logger.info(
         f"{current_number_of_properties - data_set.number_of_properties} "
         f"data points were measured for substances containing unwanted elements and were removed."
     )
@@ -414,7 +509,7 @@ def apply_standard_filters(data_set, temperature_range, pressure_range, allowed_
     current_number_of_properties = data_set.number_of_properties
 
     filter_undefined_stereochemistry(data_set)
-    logging.info(
+    logger.info(
         f"{current_number_of_properties - data_set.number_of_properties} "
         f"data points were measured for substances with undefined stereochemistry."
     )
@@ -423,9 +518,9 @@ def apply_standard_filters(data_set, temperature_range, pressure_range, allowed_
     current_number_of_properties = data_set.number_of_properties
 
     filter_charged_molecules(data_set)
-    logging.info(
+    logger.info(
         f"{current_number_of_properties - data_set.number_of_properties} data points were measured "
         f"for substances with a net non-zero charge."
     )
 
-    logging.info(f"The filtered data set contains {data_set.number_of_properties} properties.")
+    return data_set

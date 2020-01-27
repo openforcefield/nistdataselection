@@ -69,7 +69,7 @@ jobs:
         run: |
           . devtools/scripts/initialize_conda.sh
           conda activate test
-          pytest -v --cov=bayesiantesting bayesiantesting/tests/
+          pytest -v --cov=nistdataselection nistdataselection/tests/
 
   lint:
 

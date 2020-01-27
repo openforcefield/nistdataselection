@@ -23,8 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Additional info about the build
-        run: |
         shell: bash
+        run: |
           uname -a
           df -h
           ulimit -a

@@ -91,10 +91,10 @@ jobs:
 
       - name: Run black
         run: |
-          black bayesiantesting --check
-          black studies --check
+          black nistdataselection --check
+          black examples --check
 
       - name: Run flake8
         run: |
-          flake8 bayesiantesting
-          flake8 studies
+          flake8 nistdataselection
+          flake8 examples

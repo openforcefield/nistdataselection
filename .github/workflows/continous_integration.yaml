@@ -28,7 +28,7 @@ jobs:
 
       - name: Set MacOS permissions
         shell: bash
-        if: ${{ matrix.os }} == "macOS-latest"
+        if: matrix.os == "macOS-latest"
         run: |
           - sudo chown -R $USER:staff $HOME/.conda
           - sudo chown -R $USER:staff $CONDA

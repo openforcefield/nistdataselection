@@ -87,9 +87,9 @@ def main():
     # step.
     #
     # Here we specify which regions of chemical space we want to cover. This
-    # is mainly driven by the VdW parameters we wish to exercise, but is also
-    # supplemented with additional environments which are poorly represented.
-    target_vdw_smirks_to_fit = [
+    # is mainly driven by the VdW parameters we wish to exercise, but may also
+    # be supplemented with additional environments which are poorly represented.
+    target_environments = [
         "[#1:1]-[#6X4]",
         "[#1:1]-[#6X3]",
         "[#1:1]-[#8]",
@@ -105,16 +105,8 @@ def main():
         "[#35:1]",
     ]
 
-    smirks_of_interest = [
-        # The smirks patterns of the VdW parameters we
-        # wish to fit.
-        *target_vdw_smirks_to_fit,
-        # Additional smirks to try and improve the set diversity.
-        "[#6X4H2:1]-[#6X4H2]",  # Try and increase the number of alkane like molecules
-    ]
-
     chosen_substances = selection.select_substances(
-        filtered_data_directory, target_substances_per_property, smirks_of_interest
+        filtered_data_directory, target_substances_per_property, target_environments
     )
 
     logging.info(f"{len(chosen_substances)} substances where chosen.")
@@ -137,7 +129,7 @@ def main():
     }
 
     # Set the output path to the data set.
-    data_set_name = "pure_training_set"
+    data_set_name = "pure_data_set"
 
     # Choose the final data set containing the chosen substances, and
     # data points at the target state points.
@@ -152,7 +144,7 @@ def main():
 
     # Generate a pdf report detailing the chosen set.
     reporting.generate_report(
-        f"{data_set_name}.json", vdw_smirks_of_interest=target_vdw_smirks_to_fit
+        f"{data_set_name}.json", vdw_smirks_of_interest=target_environments
     )
 
 

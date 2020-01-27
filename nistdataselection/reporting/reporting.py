@@ -22,6 +22,7 @@ from propertyestimator.properties import (
 )
 from propertyestimator.protocols.groups import ConditionalGroup
 from propertyestimator.workflow import WorkflowOptions
+from tabulate import tabulate
 
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import (
@@ -30,7 +31,6 @@ from nistdataselection.utils.utils import (
     invert_dict_of_list,
     substance_type_to_int,
 )
-from tabulate import tabulate
 
 
 def _estimate_required_simulations(properties_of_interest, data_set):
@@ -345,7 +345,7 @@ def _write_unique_substances_per_property_table(
         row[property_string] = len(smiles_tuples_per_property[property_tuple])
 
     data_frame = pandas.DataFrame(data=[row], columns=columns)
-    data_frame.sort_values(columns[1:], ascending=False, inplace=True)
+    data_frame.sort_values(columns[:], ascending=False, inplace=True)
 
     table_string = "\n".join(
         [

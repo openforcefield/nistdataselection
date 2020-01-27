@@ -334,7 +334,7 @@ def process_raw_data(
             SubstanceType.Ternary,
         ]:
 
-            number_of_components = substance_type_to_int(substance_type)
+            number_of_components = substance_type_to_int[substance_type]
 
             data_subset = data_frame.loc[
                 data_frame["Number Of Components"] == number_of_components
@@ -355,7 +355,7 @@ def save_processed_data_set(directory, data_set, property_type, substance_type):
         The path to the directory to save the data set in.
     data_set: pandas.DataFrame or PandasDataSet
         The data set to save.
-    property_type: type of PhysicalProperty
+    property_type: type of PhysicalProperty or str
         The type of property in the data set.
     substance_type: SubstanceType
         The type of substances in the data set.
@@ -363,7 +363,10 @@ def save_processed_data_set(directory, data_set, property_type, substance_type):
     os.makedirs(directory, exist_ok=True)
 
     # Try to load in the pandas data file.
-    file_name = f"{property_type.__name__}_{str(substance_type.value)}.csv"
+    if not isinstance(property_type, str):
+        property_type = property_type.__name__
+
+    file_name = f"{property_type}_{str(substance_type.value)}.csv"
     file_path = os.path.join(directory, file_name)
 
     if isinstance(data_set, PandasDataSet):

@@ -8,7 +8,7 @@ import math
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Tuple, Type, Set
+from typing import Set, Tuple, Type
 
 from propertyestimator import unit
 from propertyestimator.datasets import PhysicalPropertyDataSet
@@ -16,12 +16,12 @@ from propertyestimator.properties import PhysicalProperty
 
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils.utils import (
+    SubstanceType,
     find_parameter_smirks_matches,
     find_smirks_matches,
     get_atom_count,
     invert_dict_of_iterable,
     property_to_type_tuple,
-    SubstanceType,
 )
 
 logger = logging.getLogger(__name__)
@@ -131,7 +131,10 @@ class StatePoint:
         assert len(state_a.mole_fractions) == len(state_b.mole_fractions)
 
         mole_fraction_distance_sqr = sum(
-            [(state_b.mole_fractions[i] - state_a.mole_fractions[i]) ** 2 for i in range(len(state_a.mole_fractions))]
+            [
+                (state_b.mole_fractions[i] - state_a.mole_fractions[i]) ** 2
+                for i in range(len(state_a.mole_fractions))
+            ]
         )
 
         distance_tuple = (
@@ -175,17 +178,27 @@ class StatePoint:
         if self.pressure is not None:
             pressure_string = f"{self.pressure.to(unit.kilopascal).magnitude:.3f}"
 
-        return hash((pressure_string, f"{self.temperature.to(unit.kelvin).magnitude:.2f}", self.mole_fractions,))
+        return hash(
+            (
+                pressure_string,
+                f"{self.temperature.to(unit.kelvin).magnitude:.2f}",
+                self.mole_fractions,
+            )
+        )
 
     def __repr__(self):
 
         if self.pressure is None:
-            return f"T={self.temperature:~} x=({', '.join(map(str, self.mole_fractions))})"
+            return (
+                f"T={self.temperature:~} x=({', '.join(map(str, self.mole_fractions))})"
+            )
 
         return f"T={self.temperature:~} P={self.pressure:~} x=({', '.join(map(str, self.mole_fractions))})"
 
 
-def _build_substance_data(data_directory, target_substances_per_property, smirks_to_exercise):
+def _build_substance_data(
+    data_directory, target_substances_per_property, smirks_to_exercise
+):
     """Loads all of the different data sets for each property type of
     interest and converts them into a single list of `SubstanceData`
     objects.
@@ -216,7 +229,9 @@ def _build_substance_data(data_directory, target_substances_per_property, smirks
     for property_type, substance_type in target_substances_per_property:
 
         # Load the full data sets from the processed data file
-        data_set = load_processed_data_set(data_directory, property_type, substance_type)
+        data_set = load_processed_data_set(
+            data_directory, property_type, substance_type
+        )
 
         for substance_id in data_set.properties:
 
@@ -232,12 +247,6 @@ def _build_substance_data(data_directory, target_substances_per_property, smirks
             all_substance_tuples[substance_tuple].add((property_type, substance_type))
             all_smiles_patterns.update(substance_tuple)
 
-    # Pre-compute which smirks patterns match which molecules.
-    smiles_per_smirks = find_smirks_matches(smirks_to_exercise, *all_smiles_patterns)
-    smiles_per_smirks = {smirks: smiles for smirks, smiles in smiles_per_smirks.items() if len(smiles) > 0}
-
-    smirks_per_smiles = invert_dict_of_iterable(smiles_per_smirks)
-
     # Build the list of substances which we can choose from
     all_substance_data = []
 
@@ -245,14 +254,23 @@ def _build_substance_data(data_directory, target_substances_per_property, smirks
 
         # Make sure that this smiles tuple does actually exercise at least one
         # of the chemical environments of interest.
-        all_exercised_smirks = find_smirks_matches(smirks_to_exercise, *substance_tuple)
-        all_exercised_smirks = set([smirks for smirks, smiles in all_exercised_smirks.items() if len(smiles) > 0])
+        smiles_per_smirks = find_smirks_matches(
+            tuple(smirks_to_exercise), *substance_tuple
+        )
+        all_exercised_smirks = set(
+            [smirks for smirks, smiles in smiles_per_smirks.items() if len(smiles) > 0]
+        )
+
+        smirks_per_smiles = invert_dict_of_iterable(smiles_per_smirks)
 
         exercised_smirks_of_interest = set()
 
         for smiles_pattern in substance_tuple:
 
-            if smiles_pattern not in smirks_per_smiles or len(smirks_per_smiles[smiles_pattern]) == 0:
+            if (
+                smiles_pattern not in smirks_per_smiles
+                or len(smirks_per_smiles[smiles_pattern]) == 0
+            ):
                 continue
 
             exercised_smirks_of_interest.update(smirks_per_smiles[smiles_pattern])
@@ -271,7 +289,9 @@ def _build_substance_data(data_directory, target_substances_per_property, smirks
     return all_substance_data
 
 
-def _filter_by_target_substances(substance_data, target_substances_per_property, substances_chosen_per_property):
+def _filter_by_target_substances(
+    substance_data, target_substances_per_property, substances_chosen_per_property
+):
     """Filters substances based on whether this substance
     moves us closer towards the target number of substances
     or not.
@@ -295,7 +315,10 @@ def _filter_by_target_substances(substance_data, target_substances_per_property,
 
     for property_tuple in substance_data.property_types:
 
-        if substances_chosen_per_property[property_tuple] + 1 > target_substances_per_property[property_tuple]:
+        if (
+            substances_chosen_per_property[property_tuple] + 1
+            > target_substances_per_property[property_tuple]
+        ):
             continue
 
         increases_target_substance_count = True
@@ -305,7 +328,10 @@ def _filter_by_target_substances(substance_data, target_substances_per_property,
 
 
 def rank_substance_data(
-    substance_data, target_substances_per_property, substances_chosen_per_property, substances_chosen_per_smirks
+    substance_data,
+    target_substances_per_property,
+    substances_chosen_per_property,
+    substances_chosen_per_smirks,
 ):
     """A function used to rank a list of substances tuples in order
     of preference to include them in the chosen data set.
@@ -353,13 +379,18 @@ def rank_substance_data(
     number_of_least_exercised_smirks = 0
 
     number_of_least_exercised_smirks += sum(
-        [int(smirks in smirks_per_number_of_chosen[lowest_smirks_count]) for smirks in substance_data.smirks_exercised]
+        [
+            int(smirks in smirks_per_number_of_chosen[lowest_smirks_count])
+            for smirks in substance_data.smirks_exercised
+        ]
     )
 
     # We prefer smaller molecules as they will be quicker to simulate
     # and their properties should converge faster (compared to larger,
     # possibly more flexible molecule with more degrees of freedom to sample).
-    inverse_number_of_atoms = 1.0 / sum([get_atom_count(smiles) for smiles in substance_data.substance_tuple])
+    inverse_number_of_atoms = 1.0 / sum(
+        [get_atom_count(smiles) for smiles in substance_data.substance_tuple]
+    )
 
     # Return the tuple to sort by
     return_tuple = (
@@ -371,7 +402,12 @@ def rank_substance_data(
     return return_tuple
 
 
-def select_substances(data_directory, target_substances_per_property, smirks_to_exercise=None, ranking_function=None):
+def select_substances(
+    data_directory,
+    target_substances_per_property,
+    smirks_to_exercise=None,
+    ranking_function=None,
+):
     """Selects the minimum set of molecules which (if possible) have a target amount
      of data for a number of properties of interest, and which exercise a specified
      region of chemical space represented by a series of smirks patterns.
@@ -465,7 +501,9 @@ def select_substances(data_directory, target_substances_per_property, smirks_to_
             )
         )
 
-    chosen_substances = [substance_data.substance_tuple for substance_data in chosen_substances]
+    chosen_substances = [
+        substance_data.substance_tuple for substance_data in chosen_substances
+    ]
     return chosen_substances
 
 
@@ -550,7 +588,9 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
 
     for property_type, substance_type in target_state_points:
 
-        property_data_set = load_processed_data_set(data_directory, property_type, substance_type)
+        property_data_set = load_processed_data_set(
+            data_directory, property_type, substance_type
+        )
         data_set.merge(property_data_set)
 
     properties_by_substance = defaultdict(list)
@@ -563,12 +603,16 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
             continue
 
         substance = data_set.properties[substance_id][0].substance
-        substance_tuple = tuple(sorted([component.smiles for component in substance.components]))
+        substance_tuple = tuple(
+            sorted([component.smiles for component in substance.components])
+        )
 
         if substance_tuple not in chosen_substances:
             continue
 
-        properties_by_substance[substance_tuple].extend(data_set.properties[substance_id])
+        properties_by_substance[substance_tuple].extend(
+            data_set.properties[substance_id]
+        )
 
     # Start to choose the state points.
     return_data_set = PhysicalPropertyDataSet()
@@ -602,18 +646,24 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
             sorted_states_points = list(
                 sorted(
                     properties_per_state.keys(),
-                    key=functools.partial(StatePoint.individual_distances, target_state_point),
+                    key=functools.partial(
+                        StatePoint.individual_distances, target_state_point
+                    ),
                 )
             )
 
             # Keep track of the properties which we need to choose a state point for
-            properties_to_cover = set(property_tuple for property_tuple in target_state_points)
+            properties_to_cover = set(
+                property_tuple for property_tuple in target_state_points
+            )
             # as well as the chosen state points
             chosen_state_points = set()
 
             # Iteratively consider state points which have all data points, down
             # to state points for which we only have single property measurements.
-            for target_number_of_properties in reversed(range(1, len(target_state_points) + 1)):
+            for target_number_of_properties in reversed(
+                range(1, len(target_state_points) + 1)
+            ):
 
                 for state_point in sorted_states_points:
 
@@ -622,7 +672,10 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
                     if len(property_types_at_state) != target_number_of_properties:
                         continue
 
-                    if len(properties_to_cover.intersection(property_types_at_state)) == 0:
+                    if (
+                        len(properties_to_cover.intersection(property_types_at_state))
+                        == 0
+                    ):
                         continue
 
                     chosen_state_points.add(state_point)
@@ -643,6 +696,8 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
                 if substance_id not in return_data_set.properties:
                     return_data_set.properties[substance_id] = []
 
-                return_data_set.properties[substance_id].extend(properties_per_state[state_point])
+                return_data_set.properties[substance_id].extend(
+                    properties_per_state[state_point]
+                )
 
     return return_data_set

@@ -15,22 +15,22 @@ from propertyestimator.layers import SimulationLayer
 from propertyestimator.properties import (
     Density,
     DielectricConstant,
+    EnthalpyOfMixing,
     EnthalpyOfVaporization,
     ExcessMolarVolume,
     MeasurementSource,
-    EnthalpyOfMixing,
 )
 from propertyestimator.protocols.groups import ConditionalGroup
 from propertyestimator.workflow import WorkflowOptions
-from tabulate import tabulate
 
 from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import (
     find_parameter_smirks_matches,
     int_to_substance_type,
-    substance_type_to_int,
     invert_dict_of_list,
+    substance_type_to_int,
 )
+from tabulate import tabulate
 
 
 def _estimate_required_simulations(properties_of_interest, data_set):
@@ -57,17 +57,25 @@ def _estimate_required_simulations(properties_of_interest, data_set):
 
     for property_type, _ in properties_of_interest:
 
-        options.workflow_options[property_type.__name__] = {calculation_layer: WorkflowOptions()}
+        options.workflow_options[property_type.__name__] = {
+            calculation_layer: WorkflowOptions()
+        }
 
-        default_schema = property_type.get_default_workflow_schema(calculation_layer, WorkflowOptions())
-        options.workflow_schemas[property_type.__name__] = {calculation_layer: default_schema}
+        default_schema = property_type.get_default_workflow_schema(
+            calculation_layer, WorkflowOptions()
+        )
+        options.workflow_schemas[property_type.__name__] = {
+            calculation_layer: default_schema
+        }
 
     properties = []
 
     for substance_id in data_set.properties:
         properties.extend(data_set.properties[substance_id])
 
-    workflow_graph = SimulationLayer._build_workflow_graph("", properties, "", [], options)
+    workflow_graph = SimulationLayer._build_workflow_graph(
+        "", properties, "", [], options
+    )
 
     number_of_simulations = 0
 
@@ -124,7 +132,9 @@ def _property_tuple_to_string(property_type, substance_type):
     """
 
     property_name = " ".join(
-        re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", property_type.__name__)).split()
+        re.sub(
+            "([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", property_type.__name__)
+        ).split()
     )
 
     return f"{str(substance_type.value).title()} {property_name.title()}"
@@ -155,7 +165,9 @@ def _property_tuple_to_latex_symbol(property_type, substance_type):
         ExcessMolarVolume: r"$\V_{excess}$",
     }
 
-    return f"{str(substance_type.value).title()} {property_type_to_symbol[property_type]}"
+    return (
+        f"{str(substance_type.value).title()} {property_type_to_symbol[property_type]}"
+    )
 
 
 def _write_header(margin_size_cm=3):
@@ -198,7 +210,8 @@ def _write_header(margin_size_cm=3):
             "",
             r"\edef\hash {\string#}",
             "",
-            r"\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}" "",
+            r"\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}"
+            "",
             r"\begin{document}",
         ]
     )
@@ -239,10 +252,17 @@ def _write_title(number_of_substances, number_of_properties, number_of_simulatio
     )
 
 
-def _write_smirks_exercised_table(property_tuples, all_vdw_smirks, data_points_per_vdw_smirks):
+def _write_smirks_exercised_table(
+    property_tuples, all_vdw_smirks, data_points_per_vdw_smirks
+):
 
     columns = ["VdW SMIRKS"]
-    columns.extend([_property_tuple_to_latex_symbol(*property_tuple) for property_tuple in property_tuples])
+    columns.extend(
+        [
+            _property_tuple_to_latex_symbol(*property_tuple)
+            for property_tuple in property_tuples
+        ]
+    )
 
     rows = []
 
@@ -261,13 +281,21 @@ def _write_smirks_exercised_table(property_tuples, all_vdw_smirks, data_points_p
     data_frame = pandas.DataFrame(data=rows, columns=columns)
     data_frame.sort_values(columns[1:], ascending=False, inplace=True)
 
-    table_string_split = tabulate(data_frame, headers="keys", tablefmt="latex_raw", showindex=False).split("\n")
+    table_string_split = tabulate(
+        data_frame, headers="keys", tablefmt="latex_raw", showindex=False
+    ).split("\n")
     table_string_split = table_string_split[1:]
 
     smirks_width = 13.5 - 1.25 * (len(columns) - 1)
-    header_string = f"{{m{{{smirks_width}cm}} " + " ".join(["C{1.25cm}" for _ in range(len(columns) - 1)]) + "}"
+    header_string = (
+        f"{{m{{{smirks_width}cm}} "
+        + " ".join(["C{1.25cm}" for _ in range(len(columns) - 1)])
+        + "}"
+    )
 
-    table_string = "\n".join([f"\\begin{{tabular}}{header_string}", *table_string_split])
+    table_string = "\n".join(
+        [f"\\begin{{tabular}}{header_string}", *table_string_split]
+    )
 
     table_string = "\n".join(
         [
@@ -288,11 +316,18 @@ def _write_smirks_exercised_table(property_tuples, all_vdw_smirks, data_points_p
     return table_string
 
 
-def _write_unique_substances_per_property_table(property_tuples, data_count_per_substance):
+def _write_unique_substances_per_property_table(
+    property_tuples, data_count_per_substance
+):
 
-    columns = [_property_tuple_to_latex_symbol(*property_tuple) for property_tuple in property_tuples]
+    columns = [
+        _property_tuple_to_latex_symbol(*property_tuple)
+        for property_tuple in property_tuples
+    ]
 
-    smiles_tuples_per_property = {property_tuple: set() for property_tuple in property_tuples}
+    smiles_tuples_per_property = {
+        property_tuple: set() for property_tuple in property_tuples
+    }
 
     for substance in data_count_per_substance:
 
@@ -331,9 +366,13 @@ def _write_unique_substances_per_property_table(property_tuples, data_count_per_
     return table_string
 
 
-def _write_smiles_section(smiles_tuple, exercised_vdw_smirks_patterns, full_data_set, property_tuples):
+def _write_smiles_section(
+    smiles_tuple, exercised_vdw_smirks_patterns, full_data_set, property_tuples
+):
 
-    smiles_header = " + ".join([_sanitize_identifier(smiles_pattern) for smiles_pattern in smiles_tuple])
+    smiles_header = " + ".join(
+        [_sanitize_identifier(smiles_pattern) for smiles_pattern in smiles_tuple]
+    )
 
     row_template = [
         r"\newpage",
@@ -355,7 +394,9 @@ def _write_smiles_section(smiles_tuple, exercised_vdw_smirks_patterns, full_data
             if smiles_pattern in exercised_vdw_smirks_patterns[smirks]
         ]
 
-        exercised_smirks_strings = [f"\\item {{{_sanitize_identifier(smirks)}}}" for smirks in exercised_smirks]
+        exercised_smirks_strings = [
+            f"\\item {{{_sanitize_identifier(smirks)}}}" for smirks in exercised_smirks
+        ]
 
         image_file_name = smiles_pattern.replace("/", "").replace("\\", "")
 
@@ -372,7 +413,9 @@ def _write_smiles_section(smiles_tuple, exercised_vdw_smirks_patterns, full_data
     for property_type, substance_type in property_tuples:
 
         def filter_by_substance_type(property_to_filter):
-            return substance_type_to_int[substance_type] == len(property_to_filter.substance.components)
+            return substance_type_to_int[substance_type] == len(
+                property_to_filter.substance.components
+            )
 
         def filter_by_smiles_tuple(property_to_filter):
 
@@ -425,18 +468,30 @@ def _write_smiles_section(smiles_tuple, exercised_vdw_smirks_patterns, full_data
         pandas_data_frame = pandas_data_frame.sort_values(header_to_sort)
 
         property_name = " ".join(
-            re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", property_type.__name__)).split()
+            re.sub(
+                "([A-Z][a-z]+)",
+                r" \1",
+                re.sub("([A-Z]+)", r" \1", property_type.__name__),
+            ).split()
         )
 
-        row_template.append(f"\n{str(substance_type.value).title()} {property_name.title()} Data\n")
+        row_template.append(
+            f"\n{str(substance_type.value).title()} {property_name.title()} Data\n"
+        )
         row_template.append("\\vspace{.3cm}\n")
-        row_template.append(tabulate(pandas_data_frame, headers="keys", tablefmt="latex", showindex=False))
+        row_template.append(
+            tabulate(
+                pandas_data_frame, headers="keys", tablefmt="latex", showindex=False
+            )
+        )
         row_template.append("\\vspace{.3cm}\n")
 
     return "\n\n".join(row_template) + "\n"
 
 
-def _write_substances_per_data_type_section(property_tuple, data_count_per_substance, total_molecules_per_row):
+def _write_substances_per_data_type_section(
+    property_tuple, data_count_per_substance, total_molecules_per_row
+):
 
     smiles_tuples = set()
 
@@ -483,7 +538,10 @@ def _write_substances_per_data_type_section(property_tuple, data_count_per_subst
             image_file_path = "./images/" + image_file_name + ".png"
             image_file_path = image_file_path.replace("#", "\\hash ")
 
-            subfigure.append(f"\\includegraphics[width={image_width_fraction}\\textwidth]" f"{{{image_file_path}}}%")
+            subfigure.append(
+                f"\\includegraphics[width={image_width_fraction}\\textwidth]"
+                f"{{{image_file_path}}}%"
+            )
 
         subfigure[-1] = subfigure[-1][:-1] + r"}%"
 
@@ -494,7 +552,9 @@ def _write_substances_per_data_type_section(property_tuple, data_count_per_subst
     return row_template
 
 
-def _write_substances_per_data_type_sections(property_tuples, data_count_per_substance, total_molecules_per_row=16):
+def _write_substances_per_data_type_sections(
+    property_tuples, data_count_per_substance, total_molecules_per_row=16
+):
 
     all_sections = []
 
@@ -559,7 +619,11 @@ def _create_molecule_images(chosen_smiles, directory):
         _smiles_to_png(smiles, file_path)
 
 
-def generate_report(data_set_path="curated_data_set.json", report_name="report", vdw_smirks_of_interest=None):
+def generate_report(
+    data_set_path="curated_data_set.json",
+    report_name="report",
+    vdw_smirks_of_interest=None,
+):
     """A helper utility which will take as input a PhysicalPropertyDataSet
     and generate a report of its contents and coverage.
 
@@ -594,7 +658,9 @@ def generate_report(data_set_path="curated_data_set.json", report_name="report",
 
         for physical_property in data_set.properties[substance_id]:
 
-            substance_type = int_to_substance_type[physical_property.substance.number_of_components]
+            substance_type = int_to_substance_type[
+                physical_property.substance.number_of_components
+            ]
             property_type_tuple = (type(physical_property), substance_type)
 
             all_property_types.add(property_type_tuple)
@@ -604,11 +670,22 @@ def generate_report(data_set_path="curated_data_set.json", report_name="report",
                 all_smiles.add(component.smiles)
 
             all_smiles_tuples.add(
-                tuple(sorted([component.smiles for component in physical_property.substance.components]))
+                tuple(
+                    sorted(
+                        [
+                            component.smiles
+                            for component in physical_property.substance.components
+                        ]
+                    )
+                )
             )
 
-            data_count_per_substance[physical_property.substance][property_type_tuple] += 1
-            data_per_substance[physical_property.substance][property_type_tuple].append(physical_property)
+            data_count_per_substance[physical_property.substance][
+                property_type_tuple
+            ] += 1
+            data_per_substance[physical_property.substance][property_type_tuple].append(
+                physical_property
+            )
 
     # Determine the number of unique molecules
     number_of_substances = len(all_smiles)
@@ -617,7 +694,9 @@ def generate_report(data_set_path="curated_data_set.json", report_name="report",
     all_vdw_smirks_patterns = vdw_smirks_of_interest
 
     if all_vdw_smirks_patterns is None:
-        all_vdw_smirks_patterns = [smirks for smirks in find_parameter_smirks_matches("vdW").keys()]
+        all_vdw_smirks_patterns = [
+            smirks for smirks in find_parameter_smirks_matches("vdW").keys()
+        ]
 
     exercised_vdw_smirks_patterns = find_parameter_smirks_matches("vdW", *all_smiles)
 
@@ -648,7 +727,12 @@ def generate_report(data_set_path="curated_data_set.json", report_name="report",
 
     smiles_sections = "\n".join(
         [
-            _write_smiles_section(smiles_tuple, exercised_vdw_smirks_patterns, data_set, all_property_types)
+            _write_smiles_section(
+                smiles_tuple,
+                exercised_vdw_smirks_patterns,
+                data_set,
+                all_property_types,
+            )
             for smiles_tuple in all_smiles_tuples
         ]
     )
@@ -656,10 +740,20 @@ def generate_report(data_set_path="curated_data_set.json", report_name="report",
     latex_document = "\n\n".join(
         [
             _write_header(),
-            _write_title(number_of_substances, data_set.number_of_properties, number_of_simulations),
-            _write_smirks_exercised_table(all_property_types, all_vdw_smirks_patterns, data_points_per_vdw_smirks),
-            _write_unique_substances_per_property_table(all_property_types, data_count_per_substance),
-            _write_substances_per_data_type_sections(all_property_types, data_count_per_substance),
+            _write_title(
+                number_of_substances,
+                data_set.number_of_properties,
+                number_of_simulations,
+            ),
+            _write_smirks_exercised_table(
+                all_property_types, all_vdw_smirks_patterns, data_points_per_vdw_smirks
+            ),
+            _write_unique_substances_per_property_table(
+                all_property_types, data_count_per_substance
+            ),
+            _write_substances_per_data_type_sections(
+                all_property_types, data_count_per_substance
+            ),
             r"\pagebreak",
             smiles_sections,
             r"\end{document}",

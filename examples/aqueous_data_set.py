@@ -1,7 +1,7 @@
 import os
 
 from pkg_resources import resource_filename
-from propertyestimator.properties import ExcessMolarVolume, EnthalpyOfMixing
+from propertyestimator.properties import EnthalpyOfMixing, ExcessMolarVolume
 
 from nistdataselection.curation import curate_data_set
 from nistdataselection.processing import process_raw_data
@@ -14,7 +14,9 @@ def main():
     more readily manipulable pandas csv files.
     """
 
-    raw_data_directory = resource_filename("nistdataselection", os.path.join("data", "thermoml"))
+    raw_data_directory = resource_filename(
+        "nistdataselection", os.path.join("data", "thermoml")
+    )
     processed_data_directory = "processed_data"
 
     # Convert the raw ThermoML data files into more easily manipulable

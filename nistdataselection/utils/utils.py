@@ -20,9 +20,17 @@ class SubstanceType(Enum):
     Ternary = "ternary"
 
 
-substance_type_to_int = {SubstanceType.Pure: 1, SubstanceType.Binary: 2, SubstanceType.Ternary: 3}
+substance_type_to_int = {
+    SubstanceType.Pure: 1,
+    SubstanceType.Binary: 2,
+    SubstanceType.Ternary: 3,
+}
 
-int_to_substance_type = {1: SubstanceType.Pure, 2: SubstanceType.Binary, 3: SubstanceType.Ternary}
+int_to_substance_type = {
+    1: SubstanceType.Pure,
+    2: SubstanceType.Binary,
+    3: SubstanceType.Ternary,
+}
 
 cached_smirks_parameters = {}
 
@@ -47,9 +55,17 @@ def property_to_type_tuple(physical_property):
     )
 
 
-@functools.lru_cache(1000)
+@functools.lru_cache(3000)
 def get_atom_count(smiles):
-    return Molecule.from_smiles(smiles).n_atoms
+    return Molecule.from_smiles(smiles, allow_undefined_stereo=True).n_atoms
+
+
+@functools.lru_cache(3000)
+def get_heavy_atom_count(smiles):
+
+    molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    heavy_atoms = [atom for atom in molecule.atoms if atom.element.symbol != "H"]
+    return len(heavy_atoms)
 
 
 @functools.lru_cache()
@@ -57,13 +73,14 @@ def _get_default_force_field():
     return ForceField("openff-1.0.0.offxml")
 
 
+@functools.lru_cache(3000)
 def find_smirks_matches(smirks_of_interest, *smiles_patterns):
     """Determines which of the specified smirks match the specified
     set of molecules.
 
     Parameters
     ----------
-    smirks_of_interest: list of str
+    smirks_of_interest: tuple of str
         The list of smirks to try and match against the given molecules.
 
     Returns
@@ -77,10 +94,12 @@ def find_smirks_matches(smirks_of_interest, *smiles_patterns):
 
     for smiles in smiles_patterns:
 
-        molecule = Molecule.from_smiles(smiles)
+        molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
 
         matches_per_smiles[smiles] = [
-            smirks for smirks in smirks_of_interest if len(molecule.chemical_environment_matches(smirks)) > 0
+            smirks
+            for smirks in smirks_of_interest
+            if len(molecule.chemical_environment_matches(smirks)) > 0
         ]
 
     matches_per_smirks = {smirks: set() for smirks in smirks_of_interest}
@@ -120,12 +139,17 @@ def find_parameter_smirks_matches(parameter_tag="vdW", *smiles_patterns):
 
     # Initialize the array with all possible smirks pattern
     # to make it easier to identify which are missing.
-    smiles_by_parameter_smirks = {parameter.smirks: set() for parameter in parameter_handler.parameters}
+    smiles_by_parameter_smirks = {
+        parameter.smirks: set() for parameter in parameter_handler.parameters
+    }
 
     # Populate the dictionary using the open force field toolkit.
     for smiles in smiles_patterns:
 
-        if smiles not in cached_smirks_parameters or parameter_tag not in cached_smirks_parameters[smiles]:
+        if (
+            smiles not in cached_smirks_parameters
+            or parameter_tag not in cached_smirks_parameters[smiles]
+        ):
 
             try:
                 molecule = Molecule.from_smiles(smiles)
@@ -142,7 +166,10 @@ def find_parameter_smirks_matches(parameter_tag="vdW", *smiles_patterns):
                 cached_smirks_parameters[smiles][parameter_tag] = []
 
             cached_smirks_parameters[smiles][parameter_tag] = [
-                parameter.smirks for parameter in force_field.label_molecules(topology)[0][parameter_tag].values()
+                parameter.smirks
+                for parameter in force_field.label_molecules(topology)[0][
+                    parameter_tag
+                ].values()
             ]
 
         parameters_with_tag = cached_smirks_parameters[smiles][parameter_tag]
@@ -215,7 +242,9 @@ class LogFilter(object):
 
         logger = logging.getLogger()
 
-        logger.info(f"{self._initial_number_of_properties - self._data_set.number_of_properties} {self._message}")
+        logger.info(
+            f"{self._initial_number_of_properties - self._data_set.number_of_properties} {self._message}"
+        )
 
         return True
 

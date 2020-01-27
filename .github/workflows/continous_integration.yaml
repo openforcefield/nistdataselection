@@ -30,8 +30,8 @@ jobs:
         shell: bash
         if: startsWith(matrix.os, 'macOS')
         run: |
-          - sudo chown -R $USER:staff $HOME/.conda
-          - sudo chown -R $USER:staff $CONDA
+          sudo chown -R $USER:staff $HOME/.conda
+          sudo chown -R $USER:staff $CONDA
 
       - name: Configure conda
         shell: bash

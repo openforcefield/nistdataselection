@@ -81,8 +81,8 @@ jobs:
         with:
           python-version: '3.7'
       - name: Install the package
-          run: |
-            python setup.py develop --no-deps
+        run: |
+          python setup.py develop --no-deps
 
       - name: Install isort / flake8 / black
         run: |

@@ -7,7 +7,11 @@ import math
 import pandas
 from propertyestimator import unit
 from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.properties import PropertyPhase, PhysicalProperty, MeasurementSource
+from propertyestimator.properties import (
+    MeasurementSource,
+    PhysicalProperty,
+    PropertyPhase,
+)
 from propertyestimator.substances import Substance
 from propertyestimator.thermodynamics import ThermodynamicState
 
@@ -74,7 +78,8 @@ class PandasDataSet(PhysicalPropertyDataSet):
                 mole_fraction = row[f"Mole Fraction {component_index + 1}"]
 
                 substance.add_component(
-                    Substance.Component(smiles=smiles), Substance.MoleFraction(value=mole_fraction)
+                    Substance.Component(smiles=smiles),
+                    Substance.MoleFraction(value=mole_fraction),
                 )
 
             if substance.identifier not in return_value._properties:
@@ -183,13 +188,17 @@ class PandasDataSet(PhysicalPropertyDataSet):
                 continue
 
             maximum_number_of_components = max(
-                maximum_number_of_components, data_set.properties[substance_id][0].substance.number_of_components
+                maximum_number_of_components,
+                data_set.properties[substance_id][0].substance.number_of_components,
             )
 
         # Make sure the maximum number of components is not zero.
         if maximum_number_of_components <= 0 and len(data_set.properties) > 0:
 
-            raise ValueError("The data set did not contain any substances with " "one or more components.")
+            raise ValueError(
+                "The data set did not contain any substances with "
+                "one or more components."
+            )
 
         # Extract the data from the data set.
         for substance_id in data_set.properties:
@@ -208,11 +217,15 @@ class PandasDataSet(PhysicalPropertyDataSet):
                     )
 
                 # Extract the measured state.
-                temperature = physical_property.thermodynamic_state.temperature.to(unit.kelvin).magnitude
+                temperature = physical_property.thermodynamic_state.temperature.to(
+                    unit.kelvin
+                ).magnitude
                 pressure = None
 
                 if physical_property.thermodynamic_state.pressure is not None:
-                    pressure = physical_property.thermodynamic_state.pressure.to(unit.kilopascal).magnitude
+                    pressure = physical_property.thermodynamic_state.pressure.to(
+                        unit.kilopascal
+                    ).magnitude
 
                 phase = physical_property.phase
 
@@ -221,19 +234,31 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
                 components = [(None, None)] * maximum_number_of_components
 
-                for index, component in enumerate(physical_property.substance.components):
+                for index, component in enumerate(
+                    physical_property.substance.components
+                ):
 
-                    amount = next(iter(physical_property.substance.get_amounts(component)))
+                    amount = next(
+                        iter(physical_property.substance.get_amounts(component))
+                    )
                     assert isinstance(amount, Substance.MoleFraction)
 
                     components[index] = (component.smiles, amount.value)
 
                 # Extract the value data as a string.
                 # noinspection PyTypeChecker
-                value = None if physical_property.value is None else str(physical_property.value)
+                value = (
+                    None
+                    if physical_property.value is None
+                    else str(physical_property.value)
+                )
 
                 # noinspection PyTypeChecker
-                uncertainty = None if physical_property.uncertainty is None else str(physical_property.uncertainty)
+                uncertainty = (
+                    None
+                    if physical_property.uncertainty is None
+                    else str(physical_property.uncertainty)
+                )
 
                 # Extract the data source.
                 source = physical_property.source.reference
@@ -260,7 +285,12 @@ class PandasDataSet(PhysicalPropertyDataSet):
                 data_rows.append(data_row)
 
         # Set up the column headers.
-        data_columns = ["Temperature (K)", "Pressure (kPa)", "Phase", "Number Of Components"]
+        data_columns = [
+            "Temperature (K)",
+            "Pressure (kPa)",
+            "Phase",
+            "Number Of Components",
+        ]
 
         for index in range(maximum_number_of_components):
             data_columns.append(f"Component {index + 1}")

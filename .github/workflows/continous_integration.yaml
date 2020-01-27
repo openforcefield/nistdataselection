@@ -89,10 +89,10 @@ jobs:
         run: |
           pip install isort flake8 black
 
-      - name: Run isort
-        run: |
-          isort --recursive --check-only nistdataselection
-          isort --recursive --check-only examples
+#      - name: Run isort
+#        run: |
+#          isort --recursive --check-only nistdataselection
+#          isort --recursive --check-only examples
 
       - name: Run black
         run: |

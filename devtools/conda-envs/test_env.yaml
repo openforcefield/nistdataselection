@@ -16,6 +16,9 @@ dependencies:
     # Commercial
   - openeye-toolkits
 
+    # Python 3.6 compatibility
+  - dataclasses
+
     # Main Requirements
   - pandas
   - openforcefield

@@ -12,13 +12,17 @@ import uuid
 
 import pandas
 from propertyestimator.backends import DaskLocalCluster
-from propertyestimator.datasets import ThermoMLDataSet, PhysicalPropertyDataSet
-from propertyestimator.utils import setup_timestamp_logging
+from propertyestimator.datasets import PhysicalPropertyDataSet, ThermoMLDataSet
 
 from nistdataselection.utils import PandasDataSet
+from nistdataselection.utils.utils import SubstanceType, substance_type_to_int
+
+logger = logging.getLogger(__name__)
 
 
-def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainties=False, directory="", **_):
+def _parse_thermoml_archives(
+    file_paths, retain_values=False, retain_uncertainties=False, directory="", **_
+):
 
     """Loads a number of ThermoML data xml files (making sure to
     catch errors raised by individual files), and concatenates
@@ -58,7 +62,9 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
 
         for thermoml_name in registered_thermoml_properties:
 
-            property_type = registered_thermoml_properties[thermoml_name].class_type.__name__
+            property_type = registered_thermoml_properties[
+                thermoml_name
+            ].class_type.__name__
             property_data_sets[property_type] = PhysicalPropertyDataSet()
 
         # We make sure to wrap each of the 'error prone' calls in this method
@@ -70,8 +76,12 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
 
             except Exception as e:
 
-                formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-                logging.warning(f"An exception was raised when loading {file_path}: {formatted_exception}")
+                formatted_exception = traceback.format_exception(
+                    None, e, e.__traceback__
+                )
+                logger.warning(
+                    f"An exception was raised when loading {file_path}: {formatted_exception}"
+                )
 
                 continue
 
@@ -89,7 +99,9 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
                     if substance_id not in property_data_sets[property_type].properties:
                         property_data_sets[property_type].properties[substance_id] = []
 
-                    property_data_sets[property_type].properties[substance_id].append(physical_property)
+                    property_data_sets[property_type].properties[substance_id].append(
+                        physical_property
+                    )
 
         unique_id = str(uuid.uuid4()).replace("-", "")
 
@@ -100,7 +112,9 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
 
             try:
 
-                data_frame = PandasDataSet.to_pandas_data_frame(property_data_sets[property_type])
+                data_frame = PandasDataSet.to_pandas_data_frame(
+                    property_data_sets[property_type]
+                )
 
                 if not retain_uncertainties and "Uncertainty" in data_frame:
                     data_frame.drop(columns="Uncertainty", inplace=True)
@@ -112,8 +126,10 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
 
             except Exception as e:
 
-                formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-                logging.warning(
+                formatted_exception = traceback.format_exception(
+                    None, e, e.__traceback__
+                )
+                logger.warning(
                     f"An exception was raised when saving the csv file of {property_type}"
                     f"properties to {file_path}: {formatted_exception}"
                 )
@@ -123,7 +139,7 @@ def _parse_thermoml_archives(file_paths, retain_values=False, retain_uncertainti
     except Exception as e:
 
         formatted_exception = traceback.format_exception(None, e, e.__traceback__)
-        logging.info(f"An uncaught exception was raised: {formatted_exception}")
+        logger.info(f"An uncaught exception was raised: {formatted_exception}")
 
     return data_set_paths
 
@@ -193,7 +209,11 @@ def _extract_data_from_archives(
         worker_file_paths = archive_file_paths[start_index:end_index]
 
         calculation_future = compute_backend.submit_task(
-            _parse_thermoml_archives, worker_file_paths, retain_values, retain_uncertainties, working_directory_path
+            _parse_thermoml_archives,
+            worker_file_paths,
+            retain_values,
+            retain_uncertainties,
+            working_directory_path,
         )
 
         calculation_futures.append(calculation_future)
@@ -203,7 +223,9 @@ def _extract_data_from_archives(
 
     for thermoml_name in registered_thermoml_properties:
 
-        property_type = registered_thermoml_properties[thermoml_name].class_type.__name__
+        property_type = registered_thermoml_properties[
+            thermoml_name
+        ].class_type.__name__
 
         extracted_data_paths[property_type] = []
         full_data_frames[property_type] = None
@@ -225,13 +247,15 @@ def _extract_data_from_archives(
                 continue
 
             full_data_frames[property_type] = pandas.concat(
-                [full_data_frames[property_type], data_frame], ignore_index=True, sort=False
+                [full_data_frames[property_type], data_frame],
+                ignore_index=True,
+                sort=False,
             )
 
         current_future.release()
         del current_future
 
-        logging.info(
+        logger.info(
             f"Finished processing {total_futures - len(calculation_futures)} "
             f"out of {total_futures} batches (each of size {files_per_worker})"
         )
@@ -277,9 +301,6 @@ def process_raw_data(
         observed.
     """
 
-    # Set up verbose logging.
-    setup_timestamp_logging()
-
     # Define the directory in which to search for the xml files, and
     # find all xml file paths within that directory.
     archive_paths = glob.glob(os.path.join(directory, "*.xml"))
@@ -307,7 +328,90 @@ def process_raw_data(
         data_frame = data_frames[property_type]
 
         # Save one file for each composition type.
-        for index, data_type in enumerate(["pure", "binary", "ternary"]):
+        for substance_type in [
+            SubstanceType.Pure,
+            SubstanceType.Binary,
+            SubstanceType.Ternary,
+        ]:
 
-            data_subset = data_frame.loc[data_frame["Number Of Components"] == index + 1]
-            data_subset.to_csv(os.path.join(output_directory, f"{property_type}_{data_type}.csv"))
+            number_of_components = substance_type_to_int[substance_type]
+
+            data_subset = data_frame.loc[
+                data_frame["Number Of Components"] == number_of_components
+            ]
+            save_processed_data_set(
+                output_directory, data_subset, property_type, substance_type
+            )
+
+
+def save_processed_data_set(directory, data_set, property_type, substance_type):
+    """Saves a data set of measured physical properties of a specific
+    type which was created using the `process_raw_data` function, with
+    a file name of `PropertyType_SubstanceType.csv`.
+
+    Parameters
+    ----------
+    directory: str
+        The path to the directory to save the data set in.
+    data_set: pandas.DataFrame or PandasDataSet
+        The data set to save.
+    property_type: type of PhysicalProperty or str
+        The type of property in the data set.
+    substance_type: SubstanceType
+        The type of substances in the data set.
+    """
+    os.makedirs(directory, exist_ok=True)
+
+    # Try to load in the pandas data file.
+    if not isinstance(property_type, str):
+        property_type = property_type.__name__
+
+    file_name = f"{property_type}_{str(substance_type.value)}.csv"
+    file_path = os.path.join(directory, file_name)
+
+    if isinstance(data_set, PandasDataSet):
+        PandasDataSet.to_pandas_csv(data_set, file_path)
+
+    elif isinstance(data_set, pandas.DataFrame):
+        data_set.to_csv(file_path)
+
+    else:
+        raise NotImplementedError()
+
+
+def load_processed_data_set(directory, property_type, substance_type):
+    """Loads a data set of measured physical properties of a specific
+    type which was created using the `process_raw_data` function.
+
+    Parameters
+    ----------
+    directory: str
+        The path which contains the data csv files generated
+        by the `process_raw_data` method.
+    property_type: type of PhysicalProperty
+        The property of interest.
+    substance_type: SubstanceType
+        The substance type of interest.
+
+    Returns
+    -------
+    PandasDataSet
+        The loaded data set.
+    """
+
+    assert os.path.isdir(directory)
+
+    # Try to load in the pandas data file.
+    file_name = f"{property_type.__name__}_{str(substance_type.value)}.csv"
+    file_path = os.path.join(directory, file_name)
+
+    if not os.path.isfile(file_path):
+
+        raise ValueError(
+            f"No data file could be found for "
+            f"{substance_type} {property_type}s at {file_path}"
+        )
+
+    data_set = PandasDataSet.from_pandas_csv(file_path, property_type)
+
+    return data_set

@@ -93,6 +93,10 @@ def find_smirks_matches(smirks_of_interest, *smiles_patterns):
         values of lists of smiles patterns which match those
         smirks.
     """
+
+    if len(smirks_of_interest) == 0:
+        return {}
+
     matches_per_smiles = {}
 
     for smiles in smiles_patterns:

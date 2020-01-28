@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from enum import Enum
 
+import cmiles.generator
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError
@@ -111,6 +112,19 @@ def find_smirks_matches(smirks_of_interest, *smiles_patterns):
             matches_per_smirks[smirks].add(smiles)
 
     return matches_per_smirks
+
+
+@functools.lru_cache(3000)
+def standardize_smiles(*smiles_patterns):
+
+    return_values = []
+
+    for smiles_pattern in smiles_patterns:
+
+        identifiers = cmiles.generator.get_molecule_ids(smiles_pattern, strict=False)
+        return_values.append(identifiers["canonical_smiles"])
+
+    return return_values
 
 
 def find_parameter_smirks_matches(parameter_tag="vdW", *smiles_patterns):

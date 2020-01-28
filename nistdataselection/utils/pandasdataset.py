@@ -4,6 +4,7 @@ objects and `pandas.DataFrame` objects.
 """
 import math
 
+import numpy
 import pandas
 from propertyestimator import unit
 from propertyestimator.datasets import PhysicalPropertyDataSet
@@ -102,11 +103,16 @@ class PandasDataSet(PhysicalPropertyDataSet):
             value = None
             uncertainty = None
 
-            if "Value" in row:
+            if "Value" in row and (
+                not isinstance(row["Value"], float) or not numpy.isnan(row["Value"])
+            ):
                 value_string = row["Value"].replace("None", "dimensionless")
                 value = unit(value_string)
 
-            if "Uncertainty" in row:
+            if "Uncertainty" in row and (
+                not isinstance(row["Uncertainty"], float)
+                or not numpy.isnan(row["Uncertainty"])
+            ):
                 uncertainty_string = row["Uncertainty"].replace("None", "dimensionless")
                 uncertainty = unit(uncertainty_string)
 

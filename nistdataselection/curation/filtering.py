@@ -10,6 +10,8 @@ from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
 from propertyestimator import unit
 
+from nistdataselection.utils import standardize_smiles
+
 logger = logging.getLogger(__name__)
 
 
@@ -201,7 +203,9 @@ def filter_charged_molecules(data_set):
     data_set.filter_by_function(filter_function)
 
 
-def filter_by_smiles(data_set, smiles_to_include, smiles_to_exclude):
+def filter_by_smiles(
+    data_set, smiles_to_include, smiles_to_exclude, allow_partial_inclusion=False
+):
     """Filters the data set so that it only contains either a specific set
     of smiles, or does not contain any of a set of specifically exluded smiles.
 
@@ -215,6 +219,10 @@ def filter_by_smiles(data_set, smiles_to_include, smiles_to_exclude):
     smiles_to_exclude: list of str, optional
         The smiles patterns to exclude. This option is mutually
         exclusive with `smiles_to_include`
+    allow_partial_inclusion: bool
+        If False, all the components in a substance must appear in
+        the `smiles_to_include` list, otherwise, only some must appear.
+        This option only applies when `smiles_to_include` is set.
     """
 
     if (smiles_to_include is None and smiles_to_exclude is None) or (
@@ -225,17 +233,30 @@ def filter_by_smiles(data_set, smiles_to_include, smiles_to_exclude):
             "Either a list of smiles to include, or a list of smiles to exclude must be provided, but not both."
         )
 
+    if smiles_to_include is not None:
+        smiles_to_include = standardize_smiles(*smiles_to_include)
+        smiles_to_exclude = []
+    elif smiles_to_exclude is not None:
+        smiles_to_exclude = standardize_smiles(*smiles_to_exclude)
+        smiles_to_include = []
+
     def filter_function(physical_property):
 
-        for component in physical_property.substance.components:
+        component_smiles = [x.smiles for x in physical_property.substance.components]
+        component_smiles = standardize_smiles(*component_smiles)
 
-            if (
-                smiles_to_exclude is not None and component.smiles in smiles_to_exclude
-            ) or (
-                smiles_to_include is not None
-                and component.smiles not in smiles_to_include
-            ):
-                return False
+        if any(x in smiles_to_exclude for x in component_smiles):
+            return False
+
+        if not allow_partial_inclusion and not all(
+            x in smiles_to_include for x in component_smiles
+        ):
+            return False
+
+        if allow_partial_inclusion and not any(
+            x in smiles_to_include for x in component_smiles
+        ):
+            return False
 
         return True
 

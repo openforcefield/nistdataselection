@@ -10,6 +10,7 @@ from .utils import (
     invert_dict_of_list,
     log_filter,
     property_to_type_tuple,
+    smiles_to_pdf,
     standardize_smiles,
     substance_type_to_int,
 )
@@ -26,6 +27,7 @@ __all__ = [
     invert_dict_of_list,
     log_filter,
     property_to_type_tuple,
+    smiles_to_pdf,
     standardize_smiles,
     substance_type_to_int,
 ]

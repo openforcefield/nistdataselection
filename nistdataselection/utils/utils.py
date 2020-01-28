@@ -6,6 +6,7 @@ from collections import defaultdict
 from enum import Enum
 
 import cmiles.generator
+from openeye import oechem, oedepict
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError
@@ -125,6 +126,63 @@ def standardize_smiles(*smiles_patterns):
         return_values.append(identifiers["canonical_smiles"])
 
     return return_values
+
+
+def smiles_to_pdf(smiles, file_path):
+    """Creates a PDF file containing images of a list of molecules
+    described by their SMILES patterns.
+
+    Parameters
+    ----------
+    smiles: list of str
+        The SMILES patterns of the molecules.
+    file_path: str
+        The file path to save the pdf to.
+    """
+
+    oe_mols = []
+
+    for smiles_pattern in smiles:
+        mol = oechem.OEMol()
+        oechem.OEParseSmiles(mol, smiles_pattern)
+        oe_mols.append(mol)
+
+    itf = oechem.OEInterface()
+
+    suppress_h = True
+
+    rows = 10
+    cols = 6
+
+    ropts = oedepict.OEReportOptions(rows, cols)
+    ropts.SetHeaderHeight(25)
+    ropts.SetFooterHeight(25)
+    ropts.SetCellGap(2)
+    ropts.SetPageMargins(10)
+
+    report = oedepict.OEReport(ropts)
+
+    cell_width, cell_height = report.GetCellWidth(), report.GetCellHeight()
+
+    opts = oedepict.OE2DMolDisplayOptions(
+        cell_width, cell_height, oedepict.OEScale_Default * 0.5
+    )
+    opts.SetAromaticStyle(oedepict.OEAromaticStyle_Circle)
+
+    pen = oedepict.OEPen(oechem.OEBlack, oechem.OEBlack, oedepict.OEFill_On, 1.0)
+    opts.SetDefaultBondPen(pen)
+
+    oedepict.OESetup2DMolDisplayOptions(opts, itf)
+
+    for i, mol in enumerate(oe_mols):
+        cell = report.NewCell()
+        mol_copy = oechem.OEMol(mol)
+        oedepict.OEPrepareDepiction(mol_copy, False, suppress_h)
+        disp = oedepict.OE2DMolDisplay(mol_copy, opts)
+
+        oedepict.OERenderMolecule(cell, disp)
+
+    oedepict.OEWriteReport(file_path, report)
 
 
 def find_parameter_smirks_matches(parameter_tag="vdW", *smiles_patterns):

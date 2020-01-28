@@ -2,6 +2,7 @@
 """
 import functools
 import logging
+import math
 from collections import defaultdict
 from enum import Enum
 
@@ -128,59 +129,89 @@ def standardize_smiles(*smiles_patterns):
     return return_values
 
 
-def smiles_to_pdf(smiles, file_path):
+def smiles_to_pdf(smiles, file_path, rows=10, columns=6):
     """Creates a PDF file containing images of a list of molecules
     described by their SMILES patterns.
 
     Parameters
     ----------
-    smiles: list of str
-        The SMILES patterns of the molecules.
+    smiles: list of str or tuple of str
+        The SMILES patterns of the molecules. The list can either contain
+        a list of single SMILES strings, or a tuple of SMILES strings. If
+        tuples of SMILES are provided, these smiles will be grouped together
+        in the output. All tuples in the list must have the same length.
     file_path: str
         The file path to save the pdf to.
+    rows: int
+        The maximum number of rows of molecules to include per page.
+    columns: int
+        The maximum number of molecules to include per row.
     """
 
-    oe_mols = []
+    assert len(smiles) > 0
 
-    for smiles_pattern in smiles:
-        mol = oechem.OEMol()
-        oechem.OEParseSmiles(mol, smiles_pattern)
-        oe_mols.append(mol)
+    # Validate the input type.
+    assert all(isinstance(x, str) for x in smiles) or all(
+        isinstance(x, tuple) for x in smiles
+    )
 
-    itf = oechem.OEInterface()
+    # Make sure the smiles tuples are the same length.
+    molecules_per_group = 1
 
-    suppress_h = True
+    if isinstance(smiles[0], tuple):
 
-    rows = 10
-    cols = 6
+        assert (len(x) == len(smiles[0]) for x in smiles)
+        molecules_per_group = len(smiles[0])
 
-    ropts = oedepict.OEReportOptions(rows, cols)
-    ropts.SetHeaderHeight(25)
-    ropts.SetFooterHeight(25)
-    ropts.SetCellGap(2)
-    ropts.SetPageMargins(10)
+    # Convert the list of tuple to list of strings.
+    if isinstance(smiles[0], tuple):
+        smiles = [".".join(sorted(x)) for x in smiles]
 
-    report = oedepict.OEReport(ropts)
+    # Create OEMol objects for each unique smiles pattern provided.
+    oe_molecules = {}
+
+    unique_smiles = set(smiles)
+
+    for smiles_pattern in unique_smiles:
+
+        molecule = oechem.OEMol()
+        oechem.OEParseSmiles(molecule, smiles_pattern)
+
+        oe_molecules[smiles_pattern] = molecule
+
+    # Take into account that each group may have more than one molecule
+    columns = int(math.floor(columns / molecules_per_group))
+
+    report_options = oedepict.OEReportOptions(rows, columns)
+    report_options.SetHeaderHeight(25)
+    report_options.SetFooterHeight(25)
+    report_options.SetCellGap(4)
+    report_options.SetPageMargins(10)
+
+    report = oedepict.OEReport(report_options)
 
     cell_width, cell_height = report.GetCellWidth(), report.GetCellHeight()
 
-    opts = oedepict.OE2DMolDisplayOptions(
+    display_options = oedepict.OE2DMolDisplayOptions(
         cell_width, cell_height, oedepict.OEScale_Default * 0.5
     )
-    opts.SetAromaticStyle(oedepict.OEAromaticStyle_Circle)
+    display_options.SetAromaticStyle(oedepict.OEAromaticStyle_Circle)
 
     pen = oedepict.OEPen(oechem.OEBlack, oechem.OEBlack, oedepict.OEFill_On, 1.0)
-    opts.SetDefaultBondPen(pen)
+    display_options.SetDefaultBondPen(pen)
 
-    oedepict.OESetup2DMolDisplayOptions(opts, itf)
+    interface = oechem.OEInterface()
+    oedepict.OESetup2DMolDisplayOptions(display_options, interface)
 
-    for i, mol in enumerate(oe_mols):
+    for i, smiles_pattern in enumerate(smiles):
+
         cell = report.NewCell()
-        mol_copy = oechem.OEMol(mol)
-        oedepict.OEPrepareDepiction(mol_copy, False, suppress_h)
-        disp = oedepict.OE2DMolDisplay(mol_copy, opts)
 
-        oedepict.OERenderMolecule(cell, disp)
+        oe_molecule = oechem.OEMol(oe_molecules[smiles_pattern])
+        oedepict.OEPrepareDepiction(oe_molecule, False, True)
+
+        display = oedepict.OE2DMolDisplay(oe_molecule, display_options)
+        oedepict.OERenderMolecule(cell, display)
 
     oedepict.OEWriteReport(file_path, report)
 

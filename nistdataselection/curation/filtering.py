@@ -10,7 +10,7 @@ from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
 from propertyestimator import unit
 
-from nistdataselection.utils import standardize_smiles
+from nistdataselection.utils import find_smirks_matches, standardize_smiles
 
 logger = logging.getLogger(__name__)
 
@@ -256,6 +256,59 @@ def filter_by_smiles(
         if allow_partial_inclusion and not any(
             x in smiles_to_include for x in component_smiles
         ):
+            return False
+
+        return True
+
+    data_set.filter_by_function(filter_function)
+
+
+def filter_by_smirks(data_set, smirks_to_include, smirks_to_exclude):
+    """Filters a data set so that it only contains measurements made
+    for molecules which contain (or don't) a set of chemical environments
+    represented by SMIRKS patterns.
+
+    Parameters
+    ----------
+    data_set: PhysicalPropertyDataSet
+        The data set to filter
+    smirks_to_include: list of str, optional
+        The chemical environments which should be present.
+        This option is mutually exclusive with `smirks_to_exclude`
+    smirks_to_exclude: list of str, optional
+        The chemical environments which should not be present.
+        This option is mutually exclusive with `smirks_to_include`
+    """
+
+    if (smirks_to_include is None and smirks_to_exclude is None) or (
+        smirks_to_include is not None and smirks_to_exclude is not None
+    ):
+
+        raise ValueError(
+            "The `smiles_to_exclude` and `smirks_to_include` arguments are "
+            "mutually exclusive."
+        )
+
+    if smirks_to_include is not None:
+        smirks_to_exclude = []
+    elif smirks_to_exclude is not None:
+        smirks_to_include = []
+
+    def filter_function(physical_property):
+
+        component_smiles = [x.smiles for x in physical_property.substance.components]
+
+        inclusion_matches = find_smirks_matches(
+            tuple(smirks_to_include), *component_smiles
+        )
+        exclusion_matches = find_smirks_matches(
+            tuple(smirks_to_exclude), *component_smiles
+        )
+
+        if any(len(x) > 0 for x in inclusion_matches.values()):
+            return True
+
+        if any(len(x) > 0 for x in exclusion_matches.values()):
             return False
 
         return True

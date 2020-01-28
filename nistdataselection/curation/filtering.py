@@ -203,7 +203,9 @@ def filter_charged_molecules(data_set):
     data_set.filter_by_function(filter_function)
 
 
-def filter_by_smiles(data_set, smiles_to_include, smiles_to_exclude, allow_partial_inclusion=False):
+def filter_by_smiles(
+    data_set, smiles_to_include, smiles_to_exclude, allow_partial_inclusion=False
+):
     """Filters the data set so that it only contains either a specific set
     of smiles, or does not contain any of a set of specifically exluded smiles.
 
@@ -246,10 +248,14 @@ def filter_by_smiles(data_set, smiles_to_include, smiles_to_exclude, allow_parti
         if any(x in smiles_to_exclude for x in component_smiles):
             return False
 
-        if not allow_partial_inclusion and not all(x in smiles_to_include for x in component_smiles):
+        if not allow_partial_inclusion and not all(
+            x in smiles_to_include for x in component_smiles
+        ):
             return False
 
-        if allow_partial_inclusion and not any(x in smiles_to_include for x in component_smiles):
+        if allow_partial_inclusion and not any(
+            x in smiles_to_include for x in component_smiles
+        ):
             return False
 
         return True

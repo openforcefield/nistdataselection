@@ -6,7 +6,6 @@ from collections import defaultdict
 from enum import Enum
 
 import cmiles.generator
-
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError

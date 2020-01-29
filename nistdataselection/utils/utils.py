@@ -3,6 +3,9 @@
 import functools
 import logging
 import math
+import shutil
+import subprocess
+import tempfile
 from collections import defaultdict
 from enum import Enum
 
@@ -357,3 +360,60 @@ class LogFilter(object):
 
 
 log_filter = LogFilter
+
+
+def analyse_functional_groups(smiles):
+    """Employs checkmol to determine which chemical moieties
+    are encoded by a given smiles pattern.
+
+    Notes
+    -----
+    See https://homepage.univie.ac.at/norbert.haider/cheminf/fgtable.pdf
+    for information about the group numbers (i.e moiety types).
+
+    Parameters
+    ----------
+    smiles: str
+        The smiles pattern to examine.
+    Returns
+    -------
+    dict of str and int, optional
+        A dictionary where each key corresponds to the `checkmol` defined group
+        number, and each value if the number of instances of that moiety. If
+        `checkmol` did not execute correctly, returns None.
+    """
+
+    # Make sure the checkmol utility has been installed separately.
+    if shutil.which("checkmol") is None:
+
+        raise FileNotFoundError(
+            "checkmol was not found on this machine. Visit http://merian.pch.univie.ac."
+            "at/~nhaider/cheminf/cmmm.html to obtain it."
+        )
+
+    oe_molecule = cmiles.utils.load_molecule(smiles, toolkit="openeye")
+
+    # Save the smile pattern out as an SDF file, ready to use as input to checkmol.
+    with tempfile.NamedTemporaryFile(suffix=".sdf") as file:
+
+        output_stream = oechem.oemolostream(file.name)
+        output_stream.SetFormat(oechem.OEFormat_SDF)
+
+        oechem.OEWriteMolecule(output_stream, oe_molecule)
+
+        # Execute checkmol.
+        result = subprocess.check_output(
+            ["checkmol", "-p", file.name], stderr=subprocess.STDOUT
+        ).decode()
+
+    if len(result) == 0:
+        return None
+
+    groups = {}
+
+    for group in result.splitlines():
+
+        group_code, group_count, _ = group.split(":")
+        groups[group_code[1:]] = int(group_count)
+
+    return groups

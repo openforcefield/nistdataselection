@@ -1,6 +1,7 @@
 from .pandasdataset import PandasDataSet
 from .utils import (
     SubstanceType,
+    analyse_functional_groups,
     find_parameter_smirks_matches,
     find_smirks_matches,
     get_atom_count,
@@ -18,6 +19,7 @@ from .utils import (
 __all__ = [
     PandasDataSet,
     SubstanceType,
+    analyse_functional_groups,
     find_parameter_smirks_matches,
     find_smirks_matches,
     get_atom_count,

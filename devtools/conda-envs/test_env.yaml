@@ -27,3 +27,4 @@ dependencies:
   - propertyestimator
   - matplotlib
   - tabulate
+  - scikit-learn

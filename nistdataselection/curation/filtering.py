@@ -3,12 +3,14 @@ Utilities for filtering data sets of measured physical properties.
 """
 import logging
 import math
+from collections import defaultdict
 
 import networkx
 import numpy as np
+from evaluator import unit
+from evaluator.attributes import UNDEFINED
 from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
-from propertyestimator import unit
 
 from nistdataselection.utils import find_smirks_matches, standardize_smiles
 
@@ -40,104 +42,74 @@ def filter_duplicates(data_set):
         The processed data set.
     """
 
-    properties_by_substance = {}
+    properties_by_substance = defaultdict(lambda: defaultdict(dict))
 
-    for substance_id in data_set.properties:
+    for physical_property in data_set:
 
-        properties_by_substance[substance_id] = {}
+        property_type = physical_property.__class__.__name__
 
-        for physical_property in data_set.properties[substance_id]:
+        if (
+            physical_property.thermodynamic_state
+            not in properties_by_substance[physical_property.substance][property_type]
+        ):
 
-            property_type = physical_property.__class__.__name__
-
-            # Partition the properties by type.
-            if property_type not in properties_by_substance[substance_id]:
-                properties_by_substance[substance_id][property_type] = {}
-
-            # Partition the properties by state.
-            temperature = physical_property.thermodynamic_state.temperature.to(
-                unit.kelvin
-            ).magnitude
-
-            if physical_property.thermodynamic_state.pressure is None:
-
-                state_tuple = (f"{temperature:.2f}", f"None")
-
-            else:
-
-                pressure = physical_property.thermodynamic_state.pressure.to(
-                    unit.kilopascal
-                ).magnitude
-                state_tuple = (f"{temperature:.2f}", f"{pressure:.3f}")
-
-            if state_tuple not in properties_by_substance[substance_id][property_type]:
-
-                # Handle the easy case where this is the first time a
-                # property at this state has been observed.
-                properties_by_substance[substance_id][property_type][
-                    state_tuple
-                ] = physical_property
-                continue
-
-            existing_property = properties_by_substance[substance_id][property_type][
-                state_tuple
-            ]
-
-            existing_uncertainty = (
-                math.inf
-                if existing_property.uncertainty is None
-                else existing_property.uncertainty
-            )
-            current_uncertainty = (
-                math.inf
-                if physical_property.uncertainty is None
-                else physical_property.uncertainty
-            )
-
-            base_unit = None
-
-            if isinstance(existing_uncertainty, unit.Quantity):
-                base_unit = existing_uncertainty.units
-
-            elif isinstance(current_uncertainty, unit.Quantity):
-                base_unit = current_uncertainty.units
-
-            if base_unit is not None and isinstance(
-                existing_uncertainty, unit.Quantity
-            ):
-                existing_uncertainty = existing_uncertainty.to(base_unit).magnitude
-
-            if base_unit is not None and isinstance(current_uncertainty, unit.Quantity):
-                current_uncertainty = current_uncertainty.to(base_unit).magnitude
-
-            if (
-                math.isinf(existing_uncertainty)
-                and math.isinf(current_uncertainty)
-                or existing_uncertainty < current_uncertainty
-            ):
-
-                # If neither property has an uncertainty, or the existing one has
-                # a lower uncertainty keep that one.
-                continue
-
-            properties_by_substance[substance_id][property_type][
-                state_tuple
+            # Handle the easy case where this is the first time a
+            # property at this state has been observed.
+            properties_by_substance[physical_property.substance][property_type][
+                physical_property.thermodynamic_state
             ] = physical_property
+            continue
+
+        existing_property = properties_by_substance[physical_property.substance][
+            property_type
+        ][physical_property.thermodynamic_state]
+
+        existing_uncertainty = (
+            math.inf
+            if existing_property.uncertainty == UNDEFINED
+            else existing_property.uncertainty
+        )
+        current_uncertainty = (
+            math.inf
+            if physical_property.uncertainty is UNDEFINED
+            else physical_property.uncertainty
+        )
+
+        base_unit = None
+
+        if isinstance(existing_uncertainty, unit.Quantity):
+            base_unit = existing_uncertainty.units
+        if isinstance(current_uncertainty, unit.Quantity):
+            base_unit = current_uncertainty.units
+
+        if base_unit and isinstance(existing_uncertainty, unit.Quantity):
+            existing_uncertainty = existing_uncertainty.to(base_unit).magnitude
+        if base_unit and isinstance(current_uncertainty, unit.Quantity):
+            current_uncertainty = current_uncertainty.to(base_unit).magnitude
+
+        if (
+            math.isinf(existing_uncertainty) and math.isinf(current_uncertainty)
+        ) or existing_uncertainty < current_uncertainty:
+
+            # If neither property has an uncertainty, or the existing one has
+            # a lower uncertainty keep that one.
+            continue
+
+        properties_by_substance[physical_property.substance][property_type][
+            physical_property.thermodynamic_state
+        ] = physical_property
 
     # Rebuild the data set with only unique properties.
     unique_data_set = data_set.__class__()
 
-    for substance_id in properties_by_substance:
+    for substance in properties_by_substance:
 
-        if substance_id not in unique_data_set.properties:
-            unique_data_set.properties[substance_id] = []
+        for property_type in properties_by_substance[substance]:
 
-        for property_type in properties_by_substance[substance_id]:
+            for state in properties_by_substance[substance][property_type]:
 
-            for state_tuple in properties_by_substance[substance_id][property_type]:
-
-                unique_data_set.properties[substance_id].append(
-                    properties_by_substance[substance_id][property_type][state_tuple]
+                unique_data_set.add_properties(
+                    properties_by_substance[substance][property_type][state]
                 )
 
     return unique_data_set
@@ -332,7 +304,7 @@ def filter_by_substance_composition(
     or a aqueous ethanol mix:
 
     >>> # Load in the data set of properties which will be used for comparisons
-    >>> from propertyestimator.datasets import ThermoMLDataSet
+    >>> from evaluator.datasets.thermoml import ThermoMLDataSet
     >>> data_set = ThermoMLDataSet.from_doi('DOI')
     >>>
     >>> filter_by_substance_composition(compositions_to_include=[('CO',),
@@ -342,7 +314,7 @@ def filter_by_substance_composition(
     To excludes measurements made for an aqueous mix of benzene:
 
     >>> # Load in the data set of properties which will be used for comparisons
-    >>> from propertyestimator.datasets import ThermoMLDataSet
+    >>> from evaluator.datasets.thermoml import ThermoMLDataSet
     >>> data_set = ThermoMLDataSet.from_doi('DOI')
     >>>
     >>> filter_by_substance_composition(compositions_to_exclude=[('O', 'C1=CC=CC=C1')])

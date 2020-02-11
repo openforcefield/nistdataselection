@@ -1,9 +1,9 @@
 import logging
 import os
 
+from evaluator import unit
+from evaluator.properties import EnthalpyOfMixing, ExcessMolarVolume
 from pkg_resources import resource_filename
-from propertyestimator import unit
-from propertyestimator.properties import EnthalpyOfMixing, ExcessMolarVolume
 
 from nistdataselection import processing, reporting
 from nistdataselection.curation import filtering, selection

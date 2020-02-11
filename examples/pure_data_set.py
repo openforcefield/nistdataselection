@@ -1,9 +1,9 @@
 import logging
 import os
 
+from evaluator import unit
+from evaluator.properties import Density, EnthalpyOfVaporization
 from pkg_resources import resource_filename
-from propertyestimator import unit
-from propertyestimator.properties import Density, EnthalpyOfVaporization
 
 from nistdataselection import processing, reporting
 from nistdataselection.curation import filtering, selection

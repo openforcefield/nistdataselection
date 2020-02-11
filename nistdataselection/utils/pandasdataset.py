@@ -1,157 +1,169 @@
 """
-A utility for going between `propertyestimator.datasets.PhysicalPropertyDataSet
+A utility for going between `evaluator.datasets.PhysicalPropertyDataSet
 objects and `pandas.DataFrame` objects.
 """
-import math
 
+import evaluator.properties
 import numpy
 import pandas
-from propertyestimator import unit
-from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.properties import (
-    MeasurementSource,
-    PhysicalProperty,
-    PropertyPhase,
-)
-from propertyestimator.substances import Substance
-from propertyestimator.thermodynamics import ThermodynamicState
+from evaluator import unit
+from evaluator.attributes import UNDEFINED
+from evaluator.datasets import MeasurementSource, PhysicalPropertyDataSet, PropertyPhase
+from evaluator.substances import Component, ExactAmount, MoleFraction, Substance
+from evaluator.thermodynamics import ThermodynamicState
 
 
 class PandasDataSet(PhysicalPropertyDataSet):
-    """A helper class for importing and exporting physical property
-    data sets to pandas `DataFrame` objects and csv files.
-
-    Notes
-    -----
-    This class will only work with data sets which contain a single
-    type of property (e.g. only densities).
+    """A helper class for importing and physical property
+    data sets from pandas `DataFrame` objects and csv files.
     """
 
     @classmethod
-    def from_data_frame(cls, data_frame, property_type):
+    def from_pandas(cls, data_frame):
         """Converts a `pandas.DataFrame` to a `PhysicalPropertyDataSet` object.
-        The data frame should only contain values for a single type of property,
-        and should have columns of
-
-        'Temperature (K)', 'Pressure (kPa)', 'Phase', 'Number Of Components', 'Component 1',
-        'Mole Fraction 1', ..., 'Component N', 'Mole Fraction N', 'Value' (optional),
-        'Uncertainty' (optional), 'Source'
-
-        where 'Component X' is a column containing the smiles representation of component X.
+        See the `to_pandas()` function for information on the required columns.
 
         Parameters
         ----------
         data_frame: pandas.DataFrame
             The data frame to convert.
-        property_type: class
-            The type of property stored in the data set.
 
         Returns
         -------
         PhysicalPropertyDataSet
             The converted data set.
-
-        Examples
-        --------
-        To convert a data frame containing densities
-
-        >>> from propertyestimator.properties import Density
-        >>> data_set = PandasDataSet.from_data_frame(data_frame, Density)
         """
-
-        assert issubclass(property_type, PhysicalProperty)
-        assert property_type != PhysicalProperty
 
         return_value = cls()
 
-        sources = set()
+        if len(data_frame) == 0:
+            return return_value
 
-        for index, row in data_frame.iterrows():
+        # Make sure the base columns are present.
+        required_base_columns = [
+            "Temperature",
+            "Pressure",
+            "Phase",
+            "N Components",
+            "Source",
+        ]
+
+        assert all(x in data_frame for x in required_base_columns)
+
+        # Make sure the substance columns are present.
+        max_components = max(int(x) for x in data_frame["N Components"])
+        assert max_components > 0
+
+        required_components_columns = [
+            x
+            for i in range(max_components)
+            for x in [
+                f"Component {i + 1}",
+                f"Role {i + 1}",
+                f"Mole Fraction {i + 1}",
+                f"Exact Amount {i + 1}",
+            ]
+        ]
+
+        assert all(x in data_frame for x in required_components_columns)
+
+        property_types = []
+
+        for column_name in data_frame:
+
+            if " Value" not in column_name:
+                continue
+
+            column_name_split = column_name.split(" ")
+
+            assert len(column_name_split) == 2
+            assert f"{column_name_split[2]} Uncertainty" in data_frame
+
+            property_types.append(column_name_split[0])
+
+        assert all(hasattr(evaluator.properties, x) for x in property_types)
+        assert len(property_types) > 0
+
+        # Make sure we don't have duplicate property columns.
+        assert len(set(property_types)) == len(property_types)
+
+        properties = []
+
+        for _, row in data_frame.iterrows():
 
             # Create the substance from the component columns
-            number_of_components = row["Number Of Components"]
+            number_of_components = row["N Components"]
 
             substance = Substance()
 
             for component_index in range(number_of_components):
 
                 smiles = row[f"Component {component_index + 1}"]
+                role = Component.Role(row[f"Role {component_index + 1}"])
                 mole_fraction = row[f"Mole Fraction {component_index + 1}"]
+                exact_amount = row[f"Exact Amount {component_index + 1}"]
 
-                substance.add_component(
-                    Substance.Component(smiles=smiles),
-                    Substance.MoleFraction(value=mole_fraction),
-                )
+                assert not numpy.isnan(mole_fraction) or not numpy.isnan(exact_amount)
 
-            if substance.identifier not in return_value._properties:
-                return_value.properties[substance.identifier] = []
+                component = Component(smiles, role)
 
-            pressure = row["Pressure (kPa)"]
+                if not numpy.isnan(mole_fraction):
+                    substance.add_component(component, MoleFraction(mole_fraction))
+                if not numpy.isnan(exact_amount):
+                    substance.add_component(component, ExactAmount(exact_amount))
 
-            if math.isnan(pressure):
-                pressure = None
-            else:
-                pressure *= unit.kilopascal
-
-            # Parse the state
-            thermodynamic_state = ThermodynamicState(
-                temperature=row["Temperature (K)"] * unit.kelvin, pressure=pressure
+            # Extract the state
+            pressure = (
+                None if numpy.isnan(row["Pressure"]) else unit.Quantity(row["Pressure"])
             )
+            pressure.ito(unit.kilopascal)
+
+            temperature = unit.Quantity(row["Temperature"])
+            temperature.ito(unit.kelvin)
+
+            thermodynamic_state = ThermodynamicState(temperature, pressure)
 
             phase = PropertyPhase(row["Phase"])
 
-            value = None
-            uncertainty = None
-
-            if "Value" in row and (
-                not isinstance(row["Value"], float) or not numpy.isnan(row["Value"])
-            ):
-                value_string = row["Value"].replace("None", "dimensionless")
-                value = unit(value_string)
-
-            if "Uncertainty" in row and (
-                not isinstance(row["Uncertainty"], float)
-                or not numpy.isnan(row["Uncertainty"])
-            ):
-                uncertainty_string = row["Uncertainty"].replace("None", "dimensionless")
-                uncertainty = unit(uncertainty_string)
-
             source = MeasurementSource(reference=row["Source"])
-            sources.add(source)
 
-            physical_property = property_type(
-                thermodynamic_state=thermodynamic_state,
-                phase=phase,
-                substance=substance,
-                value=value,
-                uncertainty=uncertainty,
-                source=source,
-            )
+            for property_type in property_types:
 
-            return_value.properties[substance.identifier].append(physical_property)
+                if numpy.isnan(row[f"{property_type} Value"]):
+                    continue
 
-        return_value._sources = list(sources)
+                value = unit.Quantity(row[f"{property_type} Value"])
+                uncertainty = (
+                    UNDEFINED
+                    if numpy.isnan(row[f"{property_type} Uncertainty"])
+                    else unit.Quantity(row[f"{property_type} Uncertainty"])
+                )
 
+                property_class = getattr(evaluator.properties, property_type)
+
+                physical_property = property_class(
+                    thermodynamic_state=thermodynamic_state,
+                    phase=phase,
+                    substance=substance,
+                    value=value,
+                    uncertainty=uncertainty,
+                    source=source,
+                )
+
+                properties.append(physical_property)
+
+        return_value.add_properties(*properties)
         return return_value
 
     @classmethod
-    def from_pandas_csv(cls, file_path, property_type):
+    def from_csv(cls, file_path):
         """Converts a pandas csv file to a `PhysicalPropertyDataSet` object.
-        The data file should only contain values for a single type of property,
-        and should have columns of
-
-        'Temperature (K)', 'Pressure (kPa)', 'Phase', 'Number Of Components', 'Component 1',
-        'Mole Fraction 1', ..., 'Component N', 'Mole Fraction N', 'Value' (optional),
-        'Uncertainty' (optional), 'Source'
-
-        where 'Component X' is a column containing the smiles representation of component X.
+        See the `to_pandas()` function for information on the required columns.
 
         Parameters
         ----------
         file_path: str
             The path to the csv data file.
-        property_type: class
-            The type of property stored in the data file.
 
         Returns
         -------
@@ -159,170 +171,16 @@ class PandasDataSet(PhysicalPropertyDataSet):
             The converted data set.
         """
         data_frame = pandas.read_csv(file_path)
-        return cls.from_data_frame(data_frame, property_type)
+        return cls.from_pandas(data_frame)
 
-    @staticmethod
-    def to_pandas_data_frame(data_set):
-        """Converts a `PhysicalPropertyDataSet` to a `pandas.DataFrame` object
-        with columns of
-
-        'Temperature (K)', 'Pressure (kPa)', 'Phase', 'Number Of Components', 'Component 1',
-        'Mole Fraction 1', ..., 'Component N', 'Mole Fraction N', 'Value', 'Uncertainty', 'Source'
-
-        where 'Component X' is a column containing the smiles representation of component X.
+    def to_csv(self, file_path):
+        """Exports a `PhysicalPropertyDataSet` to a pandas csv file. This is convience
+        method which calls `.to_pandas()` and then `to_csv()` on that data frame.
 
         Parameters
         ----------
-        data_set: PhysicalPropertyDataSet
-            The data set to convert.
-
-        Returns
-        -------
-        pandas.DataFrame
-            The create data frame.
-        """
-        data_rows = []
-        property_type = None
-
-        # Determine the maximum number of components for any
-        # given measurements.
-        maximum_number_of_components = 0
-
-        for substance_id in data_set.properties:
-
-            if len(data_set.properties[substance_id]) == 0:
-                continue
-
-            maximum_number_of_components = max(
-                maximum_number_of_components,
-                data_set.properties[substance_id][0].substance.number_of_components,
-            )
-
-        # Make sure the maximum number of components is not zero.
-        if maximum_number_of_components <= 0 and len(data_set.properties) > 0:
-
-            raise ValueError(
-                "The data set did not contain any substances with "
-                "one or more components."
-            )
-
-        # Extract the data from the data set.
-        for substance_id in data_set.properties:
-
-            for physical_property in data_set.properties[substance_id]:
-
-                if property_type is None:
-                    property_type = type(physical_property)
-
-                if property_type != type(physical_property):
-
-                    raise ValueError(
-                        "Only data sets containing a single type of "
-                        "property can be converted to a DataFrame "
-                        "object"
-                    )
-
-                # Extract the measured state.
-                temperature = physical_property.thermodynamic_state.temperature.to(
-                    unit.kelvin
-                ).magnitude
-                pressure = None
-
-                if physical_property.thermodynamic_state.pressure is not None:
-                    pressure = physical_property.thermodynamic_state.pressure.to(
-                        unit.kilopascal
-                    ).magnitude
-
-                phase = physical_property.phase
-
-                # Extract the component data.
-                number_of_components = physical_property.substance.number_of_components
-
-                components = [(None, None)] * maximum_number_of_components
-
-                for index, component in enumerate(
-                    physical_property.substance.components
-                ):
-
-                    amount = next(
-                        iter(physical_property.substance.get_amounts(component))
-                    )
-                    assert isinstance(amount, Substance.MoleFraction)
-
-                    components[index] = (component.smiles, amount.value)
-
-                # Extract the value data as a string.
-                # noinspection PyTypeChecker
-                value = (
-                    None
-                    if physical_property.value is None
-                    else str(physical_property.value)
-                )
-
-                # noinspection PyTypeChecker
-                uncertainty = (
-                    None
-                    if physical_property.uncertainty is None
-                    else str(physical_property.uncertainty)
-                )
-
-                # Extract the data source.
-                source = physical_property.source.reference
-
-                if source is None:
-                    source = physical_property.source.doi
-
-                # Create the data row.
-                data_row = {
-                    "Temperature (K)": temperature,
-                    "Pressure (kPa)": pressure,
-                    "Phase": phase,
-                    "Number Of Components": number_of_components,
-                }
-
-                for index in range(len(components)):
-                    data_row[f"Component {index + 1}"] = components[index][0]
-                    data_row[f"Mole Fraction {index + 1}"] = components[index][1]
-
-                data_row["Value"] = value
-                data_row["Uncertainty"] = uncertainty
-                data_row["Source"] = source
-
-                data_rows.append(data_row)
-
-        # Set up the column headers.
-        data_columns = [
-            "Temperature (K)",
-            "Pressure (kPa)",
-            "Phase",
-            "Number Of Components",
-        ]
-
-        for index in range(maximum_number_of_components):
-            data_columns.append(f"Component {index + 1}")
-            data_columns.append(f"Mole Fraction {index + 1}")
-
-        data_columns.extend(["Value", "Uncertainty", "Source"])
-
-        data_frame = pandas.DataFrame(data_rows, columns=data_columns)
-        return data_frame
-
-    @staticmethod
-    def to_pandas_csv(data_set, file_path):
-        """Exports a `PhysicalPropertyDataSet` to a pandas csv file
-        with columns of
-
-        'Temperature (K)', 'Pressure (kPa)', 'Phase', 'Number Of Components', 'Component 1',
-        'Mole Fraction 1', ..., 'Component N', 'Mole Fraction N', 'Value', 'Uncertainty', 'Source'
-
-        where 'Component X' is a column containing the smiles representation of component X.
-
-        Parameters
-        ----------
-        data_set: PhysicalPropertyDataSet
-            The data set to export.
         file_path: str
             The path to export the file to.
         """
-        data_frame = PandasDataSet.to_pandas_data_frame(data_set)
+        data_frame = self.to_pandas()
         data_frame.to_csv(file_path, index=False)

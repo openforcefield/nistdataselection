@@ -10,9 +10,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Set, Tuple, Type
 
-from propertyestimator import unit
-from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.properties import PhysicalProperty
+from evaluator import unit
+from evaluator.datasets import PhysicalProperty, PhysicalPropertyDataSet
 
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils.utils import (

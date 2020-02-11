@@ -46,7 +46,7 @@ setup(
 
     # Set up the entry point plugin so that the extra ThermoML
     # properties are detected.
-    entry_points={'propertyestimator.plugins': 'nistdataselection = nistdataselection.plugins'},
+    entry_points={'openff-evaluator.plugins': 'nistdataselection = nistdataselection.plugins'},
 
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='http://www.my_package.com',  # Website

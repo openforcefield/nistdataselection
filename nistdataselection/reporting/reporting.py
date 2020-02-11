@@ -9,22 +9,20 @@ import subprocess
 from collections import defaultdict
 
 import pandas
-from propertyestimator.client import PropertyEstimatorOptions
-from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.layers import SimulationLayer
-from propertyestimator.properties import (
+from evaluator.client import RequestOptions
+from evaluator.datasets import MeasurementSource, PhysicalPropertyDataSet
+from evaluator.layers.simulation import SimulationLayer
+from evaluator.properties import (
     Density,
     DielectricConstant,
     EnthalpyOfMixing,
     EnthalpyOfVaporization,
     ExcessMolarVolume,
-    MeasurementSource,
 )
-from propertyestimator.protocols.groups import ConditionalGroup
-from propertyestimator.workflow import WorkflowOptions
+from evaluator.protocols.groups import ConditionalGroup
+from evaluator.storage import LocalFileStorage
 from tabulate import tabulate
 
-from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import (
     find_parameter_smirks_matches,
     int_to_substance_type,
@@ -34,7 +32,7 @@ from nistdataselection.utils.utils import (
 
 
 def _estimate_required_simulations(properties_of_interest, data_set):
-    """Attempt to estimate how many simulations the property estimator
+    """Attempt to estimate how many simulations the evaluator framework
     will try and run to estimate the given data set of properties.
 
     Parameters
@@ -52,36 +50,21 @@ def _estimate_required_simulations(properties_of_interest, data_set):
 
     data_set = PhysicalPropertyDataSet.parse_json(data_set.json())
 
-    options = PropertyEstimatorOptions()
+    options = RequestOptions()
     calculation_layer = "SimulationLayer"
 
     for property_type, _ in properties_of_interest:
 
-        options.workflow_options[property_type.__name__] = {
-            calculation_layer: WorkflowOptions()
-        }
-
-        default_schema = property_type.get_default_workflow_schema(
-            calculation_layer, WorkflowOptions()
-        )
-        options.workflow_schemas[property_type.__name__] = {
-            calculation_layer: default_schema
-        }
-
-    properties = []
-
-    for substance_id in data_set.properties:
-        properties.extend(data_set.properties[substance_id])
+        default_schema = property_type.default_simulation_schema()
+        options.add_schema(calculation_layer, property_type.__name__, default_schema)
 
     workflow_graph = SimulationLayer._build_workflow_graph(
-        "", properties, "", [], options
+        "", LocalFileStorage(), data_set.properties, "", [], options
     )
 
     number_of_simulations = 0
 
-    for protocol_id in workflow_graph._protocols_by_id:
-
-        protocol = workflow_graph._protocols_by_id[protocol_id]
+    for protocol_id, protocol in workflow_graph.protocols.items():
 
         if not isinstance(protocol, ConditionalGroup):
             continue
@@ -446,7 +429,7 @@ def _write_smiles_section(
                     reference=os.path.basename(physical_property.source.reference)
                 )
 
-        pandas_data_frame = PandasDataSet.to_pandas_data_frame(data_set)
+        pandas_data_frame = data_set.to_pandas()
 
         if pandas_data_frame.shape[0] == 0:
             continue

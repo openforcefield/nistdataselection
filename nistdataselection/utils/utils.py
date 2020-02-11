@@ -15,6 +15,8 @@ from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError
 
+logger = logging.getLogger(__name__)
+
 
 class SubstanceType(Enum):
     """An enum which encodes the names used for substances
@@ -362,6 +364,7 @@ class LogFilter(object):
 log_filter = LogFilter
 
 
+@functools.lru_cache(3000)
 def analyse_functional_groups(smiles):
     """Employs checkmol to determine which chemical moieties
     are encoded by a given smiles pattern.
@@ -402,9 +405,14 @@ def analyse_functional_groups(smiles):
         oechem.OEWriteMolecule(output_stream, oe_molecule)
 
         # Execute checkmol.
-        result = subprocess.check_output(
-            ["checkmol", "-p", file.name], stderr=subprocess.STDOUT
-        ).decode()
+        try:
+            result = subprocess.check_output(
+                ["checkmol", "-p", file.name], stderr=subprocess.STDOUT,
+            ).decode()
+
+        except subprocess.CalledProcessError:
+            logger.exception("An exception was raised while calling checkmol.")
+            result = ""
 
     if len(result) == 0:
         return None

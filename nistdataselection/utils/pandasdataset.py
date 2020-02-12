@@ -127,7 +127,9 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
             for property_type in property_types:
 
-                if not isinstance(row[f"{property_type} Value"], str) and numpy.isnan(row[f"{property_type} Value"]):
+                if not isinstance(row[f"{property_type} Value"], str) and numpy.isnan(
+                    row[f"{property_type} Value"]
+                ):
                     continue
 
                 value = unit.Quantity(row[f"{property_type} Value"])

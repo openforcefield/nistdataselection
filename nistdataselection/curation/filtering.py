@@ -9,6 +9,7 @@ import networkx
 import numpy as np
 from evaluator import unit
 from evaluator.attributes import UNDEFINED
+from evaluator.thermodynamics import ThermodynamicState
 from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
 
@@ -48,21 +49,34 @@ def filter_duplicates(data_set):
 
         property_type = physical_property.__class__.__name__
 
+        rounded_temperature = unit.Quantity(
+            f"{physical_property.thermodynamic_state.temperature.to(unit.kelvin):.2f}"
+        )
+        rounded_pressure = None
+
+        if physical_property.thermodynamic_state.pressure != UNDEFINED:
+
+            rounded_pressure = unit.Quantity(
+                f"{physical_property.thermodynamic_state.pressure.to(unit.kilopascal):.2f}"
+            )
+
+        rounded_state = ThermodynamicState(rounded_temperature, rounded_pressure)
+
         if (
-            physical_property.thermodynamic_state
+            rounded_state
             not in properties_by_substance[physical_property.substance][property_type]
         ):
 
             # Handle the easy case where this is the first time a
             # property at this state has been observed.
             properties_by_substance[physical_property.substance][property_type][
-                physical_property.thermodynamic_state
+                rounded_state
             ] = physical_property
             continue
 
         existing_property = properties_by_substance[physical_property.substance][
             property_type
-        ][physical_property.thermodynamic_state]
+        ][rounded_state]
 
         existing_uncertainty = (
             math.inf
@@ -96,23 +110,19 @@ def filter_duplicates(data_set):
             continue
 
         properties_by_substance[physical_property.substance][property_type][
-            physical_property.thermodynamic_state
+            rounded_state
         ] = physical_property
 
     # Rebuild the data set with only unique properties.
-    unique_data_set = data_set.__class__()
+    ids_to_retain = [
+        properties_by_substance[x][y][z].id
+        for x in properties_by_substance
+        for y in properties_by_substance[x]
+        for z in properties_by_substance[x][y]
+    ]
 
-    for substance in properties_by_substance:
-
-        for property_type in properties_by_substance[substance]:
-
-            for state in properties_by_substance[substance][property_type]:
-
-                unique_data_set.add_properties(
-                    properties_by_substance[substance][property_type][state]
-                )
-
-    return unique_data_set
+    data_set.filter_by_function(lambda x: x.id in ids_to_retain)
+    return data_set
 
 
 def filter_property_by_value(data_set, property_type, minimum_value, maximum_value):

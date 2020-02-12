@@ -656,9 +656,7 @@ def generate_report(
             )
         )
 
-        data_count_per_substance[physical_property.substance][
-            property_type_tuple
-        ] += 1
+        data_count_per_substance[physical_property.substance][property_type_tuple] += 1
         data_per_substance[physical_property.substance][property_type_tuple].append(
             physical_property
         )
@@ -716,11 +714,7 @@ def generate_report(
     latex_document = "\n\n".join(
         [
             _write_header(),
-            _write_title(
-                number_of_substances,
-                len(data_set),
-                number_of_simulations,
-            ),
+            _write_title(number_of_substances, len(data_set), number_of_simulations,),
             _write_smirks_exercised_table(
                 all_property_types, all_vdw_smirks_patterns, data_points_per_vdw_smirks
             ),

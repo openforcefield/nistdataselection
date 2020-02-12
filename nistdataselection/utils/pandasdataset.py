@@ -77,7 +77,7 @@ class PandasDataSet(PhysicalPropertyDataSet):
             column_name_split = column_name.split(" ")
 
             assert len(column_name_split) == 2
-            assert f"{column_name_split[2]} Uncertainty" in data_frame
+            assert f"{column_name_split[0]} Uncertainty" in data_frame
 
             property_types.append(column_name_split[0])
 
@@ -99,7 +99,7 @@ class PandasDataSet(PhysicalPropertyDataSet):
             for component_index in range(number_of_components):
 
                 smiles = row[f"Component {component_index + 1}"]
-                role = Component.Role(row[f"Role {component_index + 1}"])
+                role = Component.Role[row[f"Role {component_index + 1}"]]
                 mole_fraction = row[f"Mole Fraction {component_index + 1}"]
                 exact_amount = row[f"Exact Amount {component_index + 1}"]
 
@@ -113,9 +113,7 @@ class PandasDataSet(PhysicalPropertyDataSet):
                     substance.add_component(component, ExactAmount(exact_amount))
 
             # Extract the state
-            pressure = (
-                None if numpy.isnan(row["Pressure"]) else unit.Quantity(row["Pressure"])
-            )
+            pressure = unit.Quantity(row["Pressure"])
             pressure.ito(unit.kilopascal)
 
             temperature = unit.Quantity(row["Temperature"])
@@ -123,13 +121,13 @@ class PandasDataSet(PhysicalPropertyDataSet):
 
             thermodynamic_state = ThermodynamicState(temperature, pressure)
 
-            phase = PropertyPhase(row["Phase"])
+            phase = PropertyPhase[row["Phase"]]
 
             source = MeasurementSource(reference=row["Source"])
 
             for property_type in property_types:
 
-                if numpy.isnan(row[f"{property_type} Value"]):
+                if not isinstance(row[f"{property_type} Value"], str) and numpy.isnan(row[f"{property_type} Value"]):
                     continue
 
                 value = unit.Quantity(row[f"{property_type} Value"])

@@ -578,52 +578,52 @@ def apply_standard_filters(
         The filtered data set.
     """
 
-    current_number_of_properties = data_set.number_of_properties
+    current_number_of_properties = len(data_set)
 
     data_set = filter_duplicates(data_set)
     logger.info(
-        f"{current_number_of_properties - data_set.number_of_properties} duplicate data points were removed."
+        f"{current_number_of_properties - len(data_set)} duplicate data points were removed."
     )
 
-    current_number_of_properties = data_set.number_of_properties
+    current_number_of_properties = len(data_set)
 
     data_set.filter_by_temperature(*temperature_range)
     logger.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"{current_number_of_properties - len(data_set)} "
         f"data points were outside of the temperature range and were removed."
     )
 
-    current_number_of_properties = data_set.number_of_properties
+    current_number_of_properties = len(data_set)
 
     data_set.filter_by_pressure(*pressure_range)
     logger.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"{current_number_of_properties - len(data_set)} "
         f"data points were outside of the pressure range and were removed."
     )
 
-    current_number_of_properties = data_set.number_of_properties
+    current_number_of_properties = len(data_set)
 
     data_set.filter_by_elements(*allowed_elements)
     logger.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"{current_number_of_properties - len(data_set)} "
         f"data points were measured for substances containing unwanted elements and were removed."
     )
 
     # Make sure to only include molecules which have well defined stereochemistry
-    current_number_of_properties = data_set.number_of_properties
+    current_number_of_properties = len(data_set)
 
     filter_undefined_stereochemistry(data_set)
     logger.info(
-        f"{current_number_of_properties - data_set.number_of_properties} "
+        f"{current_number_of_properties - len(data_set)} "
         f"data points were measured for substances with undefined stereochemistry."
     )
 
     # Make sure to only include molecules which don't have a net charge.
-    current_number_of_properties = data_set.number_of_properties
+    current_number_of_properties = len(data_set)
 
     filter_charged_molecules(data_set)
     logger.info(
-        f"{current_number_of_properties - data_set.number_of_properties} data points were measured "
+        f"{current_number_of_properties - len(data_set)} data points were measured "
         f"for substances with a net non-zero charge."
     )
 

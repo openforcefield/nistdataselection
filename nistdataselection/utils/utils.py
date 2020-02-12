@@ -348,14 +348,14 @@ class LogFilter(object):
         self._message = "were removed after filtering" if message is None else message
 
     def __enter__(self):
-        self._initial_number_of_properties = self._data_set.number_of_properties
+        self._initial_number_of_properties = len(self._data_set)
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
 
         logger = logging.getLogger()
 
         logger.info(
-            f"{self._initial_number_of_properties - self._data_set.number_of_properties} {self._message}"
+            f"{self._initial_number_of_properties - len(self._data_set)} {self._message}"
         )
 
         return True

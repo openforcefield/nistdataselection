@@ -418,24 +418,22 @@ def _write_smiles_section(
         data_set.filter_by_function(filter_by_substance_type)
         data_set.filter_by_function(filter_by_smiles_tuple)
 
-        for substance_id in data_set.properties:
+        for physical_property in data_set:
 
-            for physical_property in data_set.properties[substance_id]:
+            if len(physical_property.source.doi) > 0:
+                continue
 
-                if len(physical_property.source.doi) > 0:
-                    continue
-
-                physical_property.source = MeasurementSource(
-                    reference=os.path.basename(physical_property.source.reference)
-                )
+            physical_property.source = MeasurementSource(
+                reference=os.path.basename(physical_property.source.reference)
+            )
 
         pandas_data_frame = data_set.to_pandas()
 
         if pandas_data_frame.shape[0] == 0:
             continue
 
-        headers_to_keep = ["Temperature (K)", "Pressure (kPa)"]
-        header_to_sort = ["Pressure (kPa)", "Temperature (K)"]
+        headers_to_keep = ["Temperature", "Pressure"]
+        header_to_sort = ["Pressure", "Temperature"]
 
         mole_fraction_index = 0
 
@@ -634,41 +632,36 @@ def generate_report(
     data_count_per_substance = defaultdict(lambda: defaultdict(int))
     data_per_substance = defaultdict(lambda: defaultdict(list))
 
-    for substance_id in data_set.properties:
+    for physical_property in data_set:
 
-        if len(data_set.properties[substance_id]) == 0:
-            continue
+        substance_type = int_to_substance_type[
+            physical_property.substance.number_of_components
+        ]
+        property_type_tuple = (type(physical_property), substance_type)
 
-        for physical_property in data_set.properties[substance_id]:
+        all_property_types.add(property_type_tuple)
+        all_substances.add(physical_property.substance)
 
-            substance_type = int_to_substance_type[
-                physical_property.substance.number_of_components
-            ]
-            property_type_tuple = (type(physical_property), substance_type)
+        for component in physical_property.substance.components:
+            all_smiles.add(component.smiles)
 
-            all_property_types.add(property_type_tuple)
-            all_substances.add(physical_property.substance)
-
-            for component in physical_property.substance.components:
-                all_smiles.add(component.smiles)
-
-            all_smiles_tuples.add(
-                tuple(
-                    sorted(
-                        [
-                            component.smiles
-                            for component in physical_property.substance.components
-                        ]
-                    )
+        all_smiles_tuples.add(
+            tuple(
+                sorted(
+                    [
+                        component.smiles
+                        for component in physical_property.substance.components
+                    ]
                 )
             )
+        )
 
-            data_count_per_substance[physical_property.substance][
-                property_type_tuple
-            ] += 1
-            data_per_substance[physical_property.substance][property_type_tuple].append(
-                physical_property
-            )
+        data_count_per_substance[physical_property.substance][
+            property_type_tuple
+        ] += 1
+        data_per_substance[physical_property.substance][property_type_tuple].append(
+            physical_property
+        )
 
     # Determine the number of unique molecules
     number_of_substances = len(all_smiles)
@@ -725,7 +718,7 @@ def generate_report(
             _write_header(),
             _write_title(
                 number_of_substances,
-                data_set.number_of_properties,
+                len(data_set),
                 number_of_simulations,
             ),
             _write_smirks_exercised_table(

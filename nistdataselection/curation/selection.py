@@ -232,14 +232,9 @@ def _build_substance_data(
             data_directory, property_type, substance_type
         )
 
-        for substance_id in data_set.properties:
-
-            if len(data_set.properties[substance_id]) == 0:
-                continue
+        for substance in data_set.substances:
 
             # Extract all of the components of the substance as smiles patterns.
-            substance = data_set.properties[substance_id][0].substance
-
             substance_smiles = [component.smiles for component in substance.components]
             substance_tuple = tuple(sorted(substance_smiles))
 
@@ -596,12 +591,8 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
 
     # Partition the properties by their substance components,
     # filtering out any not chosen substances.
-    for substance_id in data_set.properties:
+    for substance in data_set.substances:
 
-        if len(data_set.properties[substance_id]) == 0:
-            continue
-
-        substance = data_set.properties[substance_id][0].substance
         substance_tuple = tuple(
             sorted([component.smiles for component in substance.components])
         )
@@ -610,7 +601,7 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
             continue
 
         properties_by_substance[substance_tuple].extend(
-            data_set.properties[substance_id]
+            data_set.properties_by_substance(substance)
         )
 
     # Start to choose the state points.
@@ -690,13 +681,6 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
                 if len(properties_per_state[state_point]) == 0:
                     continue
 
-                substance_id = properties_per_state[state_point][0].substance.identifier
-
-                if substance_id not in return_data_set.properties:
-                    return_data_set.properties[substance_id] = []
-
-                return_data_set.properties[substance_id].extend(
-                    properties_per_state[state_point]
-                )
+                return_data_set.add_properties(*properties_per_state[state_point])
 
     return return_data_set

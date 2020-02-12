@@ -78,7 +78,7 @@ def main():
             )
 
         logging.info(
-            f"The filtered data set contains {data_set.number_of_properties} "
+            f"The filtered data set contains {len(data_set)} "
             f"properties."
         )
 

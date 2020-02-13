@@ -2,6 +2,7 @@
 A utility for taking a collection of ThermoML data files, and
 formatting them into a more easily manipulable format.
 """
+import copy
 import functools
 import glob
 import logging
@@ -10,13 +11,11 @@ import os
 from collections import defaultdict
 from multiprocessing.pool import Pool
 
-import pandas
 import tqdm
 from evaluator.attributes import UNDEFINED
 from evaluator.datasets import PhysicalPropertyDataSet
 from evaluator.datasets.thermoml import ThermoMLDataSet
 
-from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import SubstanceType, substance_type_to_int
 
 logger = logging.getLogger(__name__)
@@ -25,7 +24,7 @@ logger = logging.getLogger(__name__)
 def _parse_thermoml_archives(file_paths, retain_values, retain_uncertainties, **_):
     """Loads a number of ThermoML data xml files (making sure to
     catch errors raised by individual files), and concatenates
-    them into a set of pandas csv files, one per property type.
+    them into data sets containing a single type of property.
 
     Parameters
     ----------
@@ -40,11 +39,11 @@ def _parse_thermoml_archives(file_paths, retain_values, retain_uncertainties, **
 
     Returns
     -------
-    dict of str and pandas.DataFrame
+    dict of str and PhysicalPropertyDataSet
         The parsed data frames.
     """
 
-    property_data_sets = defaultdict(PhysicalPropertyDataSet)
+    data_sets = defaultdict(PhysicalPropertyDataSet)
 
     try:
 
@@ -73,15 +72,13 @@ def _parse_thermoml_archives(file_paths, retain_values, retain_uncertainties, **
                     physical_property.uncertainty = UNDEFINED
 
                 property_type = physical_property.__class__.__name__
-                property_data_sets[property_type].add_properties(physical_property)
+                data_sets[property_type].add_properties(physical_property)
 
     except Exception:
         logger.exception(f"An uncaught exception was raised.")
-        property_data_sets = {}
+        data_sets = {}
 
-    data_frames = {x: y.to_pandas() for x, y in property_data_sets.items()}
-
-    return data_frames
+    return data_sets
 
 
 def _extract_data_from_archives(
@@ -114,11 +111,9 @@ def _extract_data_from_archives(
 
     Returns
     -------
-    dict of str and pandas.DataFrame
-        A dictionary of pandas data frames which contain
-        the unfiltered extracted data.
+    dict of str and PhysicalPropertyDataSet
+        A dictionary of data sets which contain the extracted data.
     """
-    data_frames = {}
 
     # Submit the list of data paths to the backend in batches.
     # noinspection PyTypeChecker
@@ -141,7 +136,7 @@ def _extract_data_from_archives(
 
     with Pool(n_processes) as pool:
 
-        all_data_frames = list(
+        all_data_sets = list(
             tqdm.tqdm(
                 pool.imap(
                     functools.partial(
@@ -155,22 +150,21 @@ def _extract_data_from_archives(
             )
         )
 
-    logger.info("Combining data frames")
+    logger.info("Combining data sets")
+    data_sets = {}
 
-    for extracted_data_frames in all_data_frames:
+    for data_sets_per_type in all_data_sets:
 
-        for property_type, data_frame in extracted_data_frames.items():
+        for property_type, data_set in data_sets_per_type.items():
 
-            if property_type not in data_frames:
+            if property_type not in data_sets:
 
-                data_frames[property_type] = data_frame
+                data_sets[property_type] = data_set
                 continue
 
-            data_frames[property_type] = pandas.concat(
-                [data_frames[property_type], data_frame], ignore_index=True, sort=False,
-            )
+            data_sets[property_type].merge(data_set)
 
-    return data_frames
+    return data_sets
 
 
 def process_raw_data(
@@ -211,7 +205,7 @@ def process_raw_data(
     archive_paths = glob.glob(os.path.join(directory, "*.xml"))
 
     # Extract the data from the archives
-    data_frames = _extract_data_from_archives(
+    data_sets = _extract_data_from_archives(
         archive_file_paths=archive_paths,
         retain_values=retain_values,
         retain_uncertainties=retain_uncertainties,
@@ -222,9 +216,9 @@ def process_raw_data(
     # Save the data frames to disk.
     os.makedirs(output_directory, exist_ok=True)
 
-    for property_type in data_frames:
+    for property_type, data_set in data_sets.items():
 
-        data_frame = data_frames[property_type]
+        data_set.json(f"{property_type}.json")
 
         # Save one file for each composition type.
         for substance_type in [
@@ -235,24 +229,24 @@ def process_raw_data(
 
             number_of_components = substance_type_to_int[substance_type]
 
-            data_subset = data_frame.loc[
-                data_frame["N Components"] == number_of_components
-            ]
+            substance_data_set = PhysicalPropertyDataSet.from_json(f"{property_type}.json")
+            substance_data_set.filter_by_components(number_of_components)
+
             save_processed_data_set(
-                output_directory, data_subset, property_type, substance_type
+                output_directory, substance_data_set, property_type, substance_type
             )
 
 
 def save_processed_data_set(directory, data_set, property_type, substance_type):
     """Saves a data set of measured physical properties of a specific
     type which was created using the `process_raw_data` function, with
-    a file name of `PropertyType_SubstanceType.csv`.
+    a file name of `PropertyType_SubstanceType.json`.
 
     Parameters
     ----------
     directory: str
         The path to the directory to save the data set in.
-    data_set: pandas.DataFrame or PandasDataSet
+    data_set: PhysicalPropertyDataSet
         The data set to save.
     property_type: type of PhysicalProperty or str
         The type of property in the data set.
@@ -265,13 +259,15 @@ def save_processed_data_set(directory, data_set, property_type, substance_type):
     if not isinstance(property_type, str):
         property_type = property_type.__name__
 
-    file_name = f"{property_type}_{str(substance_type.value)}.csv"
-    file_path = os.path.join(directory, file_name)
+    csv_file_name = f"{property_type}_{str(substance_type.value)}.csv"
+    csv_file_path = os.path.join(directory, csv_file_name)
 
-    if not isinstance(data_set, (PandasDataSet, pandas.DataFrame)):
-        raise NotImplementedError()
+    data_set.to_pandas().to_csv(csv_file_path, index=False)
 
-    data_set.to_csv(file_path)
+    json_file_name = f"{property_type}_{str(substance_type.value)}.json"
+    json_file_path = os.path.join(directory, json_file_name)
+
+    data_set.json(json_file_path)
 
 
 def load_processed_data_set(directory, property_type, substance_type):
@@ -290,7 +286,7 @@ def load_processed_data_set(directory, property_type, substance_type):
 
     Returns
     -------
-    PandasDataSet
+    PhysicalPropertyDataSet
         The loaded data set.
     """
 
@@ -300,7 +296,7 @@ def load_processed_data_set(directory, property_type, substance_type):
         property_type = property_type.__name__
 
     # Try to load in the pandas data file.
-    file_name = f"{property_type}_{str(substance_type.value)}.csv"
+    file_name = f"{property_type}_{str(substance_type.value)}.json"
     file_path = os.path.join(directory, file_name)
 
     if not os.path.isfile(file_path):
@@ -310,5 +306,5 @@ def load_processed_data_set(directory, property_type, substance_type):
             f"{substance_type} {property_type}s at {file_path}"
         )
 
-    data_set = PandasDataSet.from_csv(file_path)
+    data_set = PhysicalPropertyDataSet.from_json(file_path)
     return data_set

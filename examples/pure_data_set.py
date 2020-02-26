@@ -71,10 +71,7 @@ def main():
             data_set, temperature_range, pressure_range, allowed_elements
         )
 
-        logging.info(
-            f"The filtered data set contains {len(data_set)} "
-            f"properties."
-        )
+        logging.info(f"The filtered data set contains {len(data_set)} " f"properties.")
 
         # Save the filtered data set.
         processing.save_processed_data_set(

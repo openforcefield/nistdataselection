@@ -27,5 +27,6 @@ dependencies:
   - openforcefields
   - openff-evaluator
   - matplotlib
+  - scikit-learn
   - tabulate
   - tqdm

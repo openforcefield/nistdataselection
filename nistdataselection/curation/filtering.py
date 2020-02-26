@@ -4,10 +4,10 @@ Utilities for filtering data sets of measured physical properties.
 import logging
 
 import numpy as np
+from evaluator import unit
 from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
 
-from evaluator import unit
 from nistdataselection.utils import analyse_functional_groups, find_smirks_matches
 
 logger = logging.getLogger(__name__)

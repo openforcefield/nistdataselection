@@ -1,0 +1,44 @@
+{
+    "connection_options": {
+        "server_address": "localhost",
+        "server_port": 8004
+    },
+    "data_set_path": "training_set.json",
+    "denominators": {
+        "Density": {
+            "@type": "evaluator.unit.Quantity",
+            "unit": "g / ml",
+            "value": 0.5189730243471238
+        },
+        "EnthalpyOfMixing": {
+            "@type": "evaluator.unit.Quantity",
+            "unit": "kJ / mol",
+            "value": 1.5943650773897426
+        },
+        "EnthalpyOfVaporization": {
+            "@type": "evaluator.unit.Quantity",
+            "unit": "kJ / mol",
+            "value": 6.191930232165088
+        },
+        "ExcessMolarVolume": {
+            "@type": "evaluator.unit.Quantity",
+            "unit": "cm ** 3 / mol",
+            "value": 1.2398062894729103
+        }
+    },
+    "estimation_options": {
+        "batch_mode": {
+            "@type": "evaluator.client.client.BatchMode",
+            "value": "SharedComponents"
+        },
+        "calculation_layers": [
+            "SimulationLayer"
+        ]
+    },
+    "weights": {
+        "Density": 1.0,
+        "EnthalpyOfMixing": 1.0,
+        "EnthalpyOfVaporization": 1.0,
+        "ExcessMolarVolume": 1.0
+    }
+}

@@ -1,0 +1,4007 @@
+{
+  "@type": "evaluator.datasets.datasets.PhysicalPropertyDataSet",
+  "properties": [
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "f4c8e2bf89ee42359a7d893a71860c17",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je600565m.xml + raw_archives/j.jct.2010.12.027.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5001
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4999
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(C)=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.14754361769544033
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "5447e6c987ea4049b228061950137ec1",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je200595b.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.238
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "6299627dbf614f87b5e6c08a35fced77",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je800899w.xml + raw_archives/je100832h.xml + raw_archives/j.fluid.2014.11.005.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7929
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2071
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(C)=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.1290521345820288
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "19f88e6ef96f4c44afb7d580ff19d6cf",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je200595b.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.25
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.75
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.8590000000000001
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "d3b9e184b5734c22b917c243533420e3",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je800899w.xml + raw_archives/je100832h.xml + raw_archives/j.fluid.2014.11.005.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2836
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7164
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(C)=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.1532840380393452
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "f250474355294137a1a4e8d9c5bb1455",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je200595b.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.75
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.25
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.048
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "0d43137e19fe4d629b4a99580b58e58b",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.jct.2015.02.019.xml + raw_archives/j.jct.2015.02.019.xml + raw_archives/acs.jced.5b00365.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4946
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5054
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.07981547524274646
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "d3eff08bc7904bdbb7f7ba8f2ddad018",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.jct.2015.02.019.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5127
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4873
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.179
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "c70cad53268440abbf8cee7aee36dd30",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.jct.2015.02.019.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.0833
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.9167
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.311
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "5bf74d7c4d374c42af5a72a080e351cd",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.jct.2015.02.019.xml + raw_archives/j.jct.2015.02.019.xml + raw_archives/acs.jced.5b00365.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.0833
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.9167
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.016017622078813076
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "ee767df45c9349a78378a8b4927e5fc2",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.jct.2015.02.019.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7178
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2822
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.105
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "b0d78020705b4b42a329b9f75c42b7ca",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.jct.2015.02.019.xml + raw_archives/j.jct.2015.02.019.xml + raw_archives/acs.jced.5b00365.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7271
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2729
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.0779704053850363
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "248f4303204744bba35f5325cf680ceb",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/je100100n.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.3001
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.6999
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.3391505413382205
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "9a2b14294f174bbf8c254a1742b414d5",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.fluid.2009.11.030.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2492
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7508
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.9069999999999998
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "f9589fe620514e9caabc2ca0174b20ed",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/je100100n.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.3
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.3889953391056479
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "b8f56130070745f49616fe212cf93719",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.fluid.2009.11.030.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7516
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2484
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 2.053
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "5fc422634cd34ed7b62a6a55fd08ab24",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/je100100n.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4999
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5001
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.4223704434297204
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "ee02d25a5f334e99a9eb14185795b8c8",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.fluid.2009.11.030.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5019
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4981
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 2.542
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "4b67b5b0f7ae450dabbeb794b3743567",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/acs.jced.5b01023.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2999
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7001
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.3168067282716436
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "aa54d742af7c4b30995b2bdef1e368fa",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2492
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7508
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.804
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "df98d0f37a1f4268b46040b4d8892204",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/acs.jced.5b01023.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5001
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4999
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.3721489531952287
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "4df7af86a15d477f9fbb5178968a4f2c",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4997
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5003
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 2.369
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "1786c7a811fb4e20a27ca9bee9ae7684",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/acs.jced.5b01023.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.8
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.26624539407202263
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "c2156cf349e84a3aafe91a22a938d686",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7506
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2494
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.955
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "69129fd1c84247b9ba025c85928a471d",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je034290l.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2279
+            }
+          ],
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7721
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.32
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.811
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "ba79de4bf49f4fe1ba2ea5257bc5035d",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je034290l.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2618
+            }
+          ],
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7382
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.8339999999999999
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "731ef54e13ee4d9797f95387396bacb6",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je034290l.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4967
+            }
+          ],
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5033
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.32
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 2.4856
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "aea8651e173943c1960599fde88d813b",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je034290l.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5024
+            }
+          ],
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4976
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 1.0679999999999998
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "4df6daffbe324a8da57731b9c86f3175",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je034290l.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7127
+            }
+          ],
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2873
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.32
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.8888
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "9f75ec23ab86466e9e704f1b14b98cc6",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je034290l.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7581
+            }
+          ],
+          "COC=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2419
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "COC=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.8669999999999999
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "1fa76e84d8a6483d8991179a87acefe7",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0497350.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4973
+            }
+          ],
+          "CCCCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5027
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 303.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.6639999999999999
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "204f964c7fd44eaea81f1c18d0b01fcf",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0497350.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4947
+            }
+          ],
+          "CCCCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5053
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.8338
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "0f9ee64978b24b13b9ea3be59a8a976f",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0497350.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2394
+            }
+          ],
+          "CCCCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7606
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 303.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.4619999999999999
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "e9dd6980c5d6491e9118b3bc1228c00c",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0497350.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2394
+            }
+          ],
+          "CCCCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7606
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.3567
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "ed280fd718274af7afcb57fa4bac5596",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0497350.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7538
+            }
+          ],
+          "CCCCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2462
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 303.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.539
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "770aa8088ca64d9bbda3d51b4807c75b",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0497350.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(C)(C)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7354
+            }
+          ],
+          "CCCCOC(C)=O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2646
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(C)(C)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCOC(C)=O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 299.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.3646
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "aad9bc4911e94ac5a09149c6679e3ced",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2001
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7999
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.0036212708440857
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "d864f5134efd465f8e98cc7c758a6ae1",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2507
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7493
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.446
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "64d70fa7022d441da678fd90df8d1606",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4999
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5001
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.05737387812808593
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "ddc4ccd3c05244f2927da1d635e7255b",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4985
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5015
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.848
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "faa57ed4b9144f9986295f8d5279843c",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7497
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2503
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.07288933102296014
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "b2b4b7657d8046e385ec0246156a26c0",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7465
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2535
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.473
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "c9bfc1d4c1ca48008e71f805627e73c0",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCCCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.3974578198463092
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "3b254a7406674f4eaa9428c0dc5877b9",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.fluid.2009.11.030.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCCCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 2.325
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "c58edda3f5f049b89a095530bc616406",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCCCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2002
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7998
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.2454377035134918
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "d2dccc318ddc437dbb9fdd061fa7cb60",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.fluid.2009.11.030.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCCCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.251
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7490000000000001
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.784
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "07ebc3a0a7924bd1bb01facd4c1f3765",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCCCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7998
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2002
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.2869031980959562
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "5c14f575162e400492934e74a65f8881",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/j.fluid.2009.11.030.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCCCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7501
+            }
+          ],
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2499
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCCCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.834
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "02d8871d5c254eedb29373806cebc29b",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2501
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7499
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.2108498144115778
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "6b51a011c0454beda054664daef20d67",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2515
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7485
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.083
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "692fa421fc474af8a160fc36fe0b5a7a",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5004
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4996
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.194141892914832
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "69249121c25249d485d8775442d4e2f9",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4993
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5007
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.426
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "8e8b9db2d88c497ab95cd4e67d5ac447",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je100100n.xml + raw_archives/je100100n.xml + raw_archives/j.jct.2010.05.016.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7978
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2022
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.08519257781293453
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "dca6f8f6dc904013a19b9ff9ffe9ce06",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je9003806.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CCOC(=O)CC(=O)OCC{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7453
+            }
+          ],
+          "CO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2547
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCOC(=O)CC(=O)OCC"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.2
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 1.1840000000000002
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "010bf4c6b731419cab8fca1e177d8ab1",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0342825.xml + raw_archives/j.fluid.2008.07.001.xml + raw_archives/j.fluid.2014.11.005.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(=O)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7031
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2969
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(=O)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.4374756241071118
+      }
+    },
+    {
+      "@type": "evaluator.properties.enthalpy.EnthalpyOfMixing",
+      "gradients": [],
+      "id": "2847201763554f50b2a32d58c14a6648",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je200595b.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(=O)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(=O)O"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 100.0
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "kJ / mol",
+        "value": 0.0
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "95b301edb2544d20b25fb8781037e692",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0342825.xml + raw_archives/j.fluid.2008.07.001.xml + raw_archives/j.fluid.2014.11.005.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(=O)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.4961
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.5039
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(=O)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.4691196354165861
+      }
+    },
+    {
+      "@type": "evaluator.properties.density.ExcessMolarVolume",
+      "gradients": [],
+      "id": "09a6c8bf67374317bf8b38803003dbf9",
+      "phase": 2,
+      "source": {
+        "@type": "evaluator.datasets.provenance.MeasurementSource",
+        "doi": "",
+        "reference": "raw_archives/je0342825.xml + raw_archives/j.fluid.2008.07.001.xml + raw_archives/j.fluid.2014.11.005.xml"
+      },
+      "substance": {
+        "@type": "evaluator.substances.substances.Substance",
+        "amounts": {
+          "CC(=O)O{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.2971
+            }
+          ],
+          "CCO{solv}": [
+            {
+              "@type": "evaluator.substances.amounts.MoleFraction",
+              "value": 0.7029
+            }
+          ]
+        },
+        "components": [
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CC(=O)O"
+          },
+          {
+            "@type": "evaluator.substances.components.Component",
+            "role": {
+              "@type": "evaluator.substances.components.Component.Role",
+              "value": "solv"
+            },
+            "smiles": "CCO"
+          }
+        ]
+      },
+      "thermodynamic_state": {
+        "@type": "evaluator.thermodynamics.ThermodynamicState",
+        "pressure": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "kPa",
+          "value": 101.3
+        },
+        "temperature": {
+          "@type": "evaluator.unit.Quantity",
+          "unit": "K",
+          "value": 298.15
+        }
+      },
+      "uncertainty": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": 0.0
+      },
+      "value": {
+        "@type": "evaluator.unit.Quantity",
+        "unit": "cm ** 3 / mol",
+        "value": -0.3709762198426958
+      }
+    }
+  ]
+}

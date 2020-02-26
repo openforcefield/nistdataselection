@@ -432,8 +432,8 @@ def _write_smiles_section(
         if pandas_data_frame.shape[0] == 0:
             continue
 
-        headers_to_keep = ["Temperature", "Pressure"]
-        header_to_sort = ["Pressure", "Temperature"]
+        headers_to_keep = ["Temperature (K)", "Pressure (kPa)"]
+        header_to_sort = ["Pressure (kPa)", "Temperature (K)"]
 
         mole_fraction_index = 0
 

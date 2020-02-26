@@ -9,6 +9,8 @@ import subprocess
 from collections import defaultdict
 
 import pandas
+from tabulate import tabulate
+
 from evaluator.client import RequestOptions
 from evaluator.datasets import MeasurementSource, PhysicalPropertyDataSet
 from evaluator.layers.simulation import SimulationLayer
@@ -21,8 +23,6 @@ from evaluator.properties import (
 )
 from evaluator.protocols.groups import ConditionalGroup
 from evaluator.storage import LocalFileStorage
-from tabulate import tabulate
-
 from nistdataselection.utils.utils import (
     find_parameter_smirks_matches,
     int_to_substance_type,
@@ -58,7 +58,7 @@ def _estimate_required_simulations(properties_of_interest, data_set):
         default_schema = property_type.default_simulation_schema()
         options.add_schema(calculation_layer, property_type.__name__, default_schema)
 
-    workflow_graph = SimulationLayer._build_workflow_graph(
+    workflow_graph, _ = SimulationLayer._build_workflow_graph(
         "", LocalFileStorage(), data_set.properties, "", [], options
     )
 

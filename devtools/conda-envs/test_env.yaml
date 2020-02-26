@@ -28,3 +28,4 @@ dependencies:
   - openff-evaluator
   - matplotlib
   - tabulate
+  - tqdm

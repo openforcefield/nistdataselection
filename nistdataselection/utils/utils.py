@@ -3,6 +3,7 @@
 import functools
 import logging
 import math
+import re
 import shutil
 import subprocess
 import tempfile
@@ -14,6 +15,8 @@ from openeye import oechem, oedepict
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError
+
+from evaluator.utils.openmm import openmm_quantity_to_pint
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +66,26 @@ def property_to_type_tuple(physical_property):
     )
 
 
+def property_to_snake_case(property_type):
+    """Converts a property type to a snake case name.
+
+    Parameters
+    ----------
+    property_type: type of PhysicalProperty of str
+        The property type to convert.
+
+    Returns
+    -------
+    str
+        The property type as a snake case string.
+    """
+
+    if not isinstance(property_type, str):
+        property_type = property_type.__name__
+
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", property_type).lower()
+
+
 @functools.lru_cache(3000)
 def get_atom_count(smiles):
     return Molecule.from_smiles(smiles, allow_undefined_stereo=True).n_atoms
@@ -74,6 +97,22 @@ def get_heavy_atom_count(smiles):
     molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
     heavy_atoms = [atom for atom in molecule.atoms if atom.element.symbol != "H"]
     return len(heavy_atoms)
+
+
+@functools.lru_cache(3000)
+def get_molecular_weight(smiles):
+
+    from simtk import unit as simtk_unit
+    from openforcefield.topology import Molecule
+
+    molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+
+    molecular_weight = 0.0 * simtk_unit.dalton
+
+    for atom in molecule.atoms:
+        molecular_weight += atom.mass
+
+    return openmm_quantity_to_pint(molecular_weight)
 
 
 @functools.lru_cache()
@@ -225,6 +264,34 @@ def smiles_to_pdf(smiles, file_path, rows=10, columns=6):
     oedepict.OEWriteReport(file_path, report)
 
 
+def data_frame_to_pdf(data_frame, file_path, rows=10, columns=6):
+    """Creates a PDF file containing images of a the of substances
+    contained in a data frame.
+
+    Parameters
+    ----------
+    data_frame: pandas.DataFrame
+        The data frame containing the different substances.
+    file_path: str
+        The file path to save the pdf to.
+    rows: int
+        The maximum number of rows of molecules to include per page.
+    columns: int
+        The maximum number of molecules to include per row.
+    """
+
+    n_components = data_frame[f"N Components"].max()
+
+    all_smiles = [
+        data_frame[f"Component {i + 1}"].tolist() for i in range(n_components)
+    ]
+
+    smiles_tuples = list(zip(*all_smiles))
+    smiles_tuples = list(set(tuple(sorted(x)) for x in smiles_tuples))
+
+    smiles_to_pdf(smiles_tuples, file_path, rows, columns)
+
+
 def find_parameter_smirks_matches(parameter_tag="vdW", *smiles_patterns):
     """Finds those force field parameters with a given tag which
     would be assigned to a specified set of molecules defined by
@@ -334,34 +401,6 @@ def invert_dict_of_list(dictionary):
         The inverted dictionary
     """
     return invert_dict_of_iterable(dictionary, list)
-
-
-class LogFilter(object):
-    """
-
-    """
-
-    def __init__(self, data_set, message=None):
-
-        self._initial_number_of_properties = -1
-        self._data_set = data_set
-        self._message = "were removed after filtering" if message is None else message
-
-    def __enter__(self):
-        self._initial_number_of_properties = len(self._data_set)
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-
-        logger = logging.getLogger()
-
-        logger.info(
-            f"{self._initial_number_of_properties - len(self._data_set)} {self._message}"
-        )
-
-        return True
-
-
-log_filter = LogFilter
 
 
 @functools.lru_cache(3000)

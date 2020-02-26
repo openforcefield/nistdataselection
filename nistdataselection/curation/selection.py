@@ -12,7 +12,6 @@ from typing import Set, Tuple, Type
 
 from evaluator import unit
 from evaluator.datasets import PhysicalProperty, PhysicalPropertyDataSet
-
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils.utils import (
     SubstanceType,

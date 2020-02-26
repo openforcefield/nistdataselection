@@ -1,3 +1,4 @@
+from .pandas import data_set_from_data_frame
 from .utils import (
     SubstanceType,
     analyse_functional_groups,
@@ -5,10 +6,10 @@ from .utils import (
     find_smirks_matches,
     get_atom_count,
     get_heavy_atom_count,
+    get_molecular_weight,
     int_to_substance_type,
     invert_dict_of_iterable,
     invert_dict_of_list,
-    log_filter,
     property_to_type_tuple,
     smiles_to_pdf,
     standardize_smiles,
@@ -18,14 +19,15 @@ from .utils import (
 __all__ = [
     SubstanceType,
     analyse_functional_groups,
+    data_set_from_data_frame,
     find_parameter_smirks_matches,
     find_smirks_matches,
     get_atom_count,
     get_heavy_atom_count,
+    get_molecular_weight,
     int_to_substance_type,
     invert_dict_of_iterable,
     invert_dict_of_list,
-    log_filter,
     property_to_type_tuple,
     smiles_to_pdf,
     standardize_smiles,

@@ -61,7 +61,9 @@ def main():
         SubstanceType.Binary,
     )
 
-    data_frame_to_pdf(h_mix_with_v_excess, os.path.join("common_data", "h_mix_and_v_excess.pdf"))
+    data_frame_to_pdf(
+        h_mix_with_v_excess, os.path.join("common_data", "h_mix_and_v_excess.pdf")
+    )
 
     # Save those data points for which we have both hmix and binary density
     h_mix_binary_density_overlap = h_mix_substances.intersection(
@@ -98,7 +100,8 @@ def main():
     )
 
     data_frame_to_pdf(
-        h_mix_with_binary_density, os.path.join("common_data", "h_mix_and_binary_density.pdf")
+        h_mix_with_binary_density,
+        os.path.join("common_data", "h_mix_and_binary_density.pdf"),
     )
 
 

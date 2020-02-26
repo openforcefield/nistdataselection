@@ -3,9 +3,8 @@ A utility for going between `evaluator.datasets.PhysicalPropertyDataSet
 objects and `pandas.DataFrame` objects.
 """
 
-import numpy
-
 import evaluator.properties
+import numpy
 from evaluator import unit
 from evaluator.datasets import MeasurementSource, PhysicalPropertyDataSet, PropertyPhase
 from evaluator.substances import Component, ExactAmount, MoleFraction, Substance

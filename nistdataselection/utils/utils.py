@@ -11,12 +11,12 @@ from collections import defaultdict
 from enum import Enum
 
 import cmiles.generator
+from evaluator.utils.openmm import openmm_quantity_to_pint
 from openeye import oechem, oedepict
 from openforcefield.topology import Molecule, Topology
 from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError
 
-from evaluator.utils.openmm import openmm_quantity_to_pint
 from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
 
 logger = logging.getLogger(__name__)

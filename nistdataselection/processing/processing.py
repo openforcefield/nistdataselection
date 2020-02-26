@@ -12,11 +12,11 @@ from multiprocessing.pool import Pool
 
 import pandas
 import tqdm
-
 from evaluator import unit
 from evaluator.attributes import UNDEFINED
 from evaluator.datasets import PhysicalPropertyDataSet
 from evaluator.datasets.thermoml import ThermoMLDataSet
+
 from nistdataselection.utils.utils import (
     SubstanceType,
     property_to_snake_case,

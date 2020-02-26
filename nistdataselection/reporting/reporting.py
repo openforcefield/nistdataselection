@@ -9,8 +9,6 @@ import subprocess
 from collections import defaultdict
 
 import pandas
-from tabulate import tabulate
-
 from evaluator.client import RequestOptions
 from evaluator.datasets import MeasurementSource, PhysicalPropertyDataSet
 from evaluator.layers.simulation import SimulationLayer
@@ -23,6 +21,8 @@ from evaluator.properties import (
 )
 from evaluator.protocols.groups import ConditionalGroup
 from evaluator.storage import LocalFileStorage
+from tabulate import tabulate
+
 from nistdataselection.utils.utils import (
     find_parameter_smirks_matches,
     int_to_substance_type,

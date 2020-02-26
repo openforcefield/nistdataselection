@@ -7,13 +7,13 @@ import logging
 import math
 import sys
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Set, Tuple, Type
 
 import pandas
-
+from dataclasses import dataclass
 from evaluator import unit
 from evaluator.datasets import PhysicalProperty, PhysicalPropertyDataSet
+
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils import data_set_from_data_frame
 from nistdataselection.utils.pandas import data_frame_to_smiles_tuples

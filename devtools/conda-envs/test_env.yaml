@@ -22,6 +22,7 @@ dependencies:
 
     # Main Requirements
   - cmiles
+  - forcebalance
   - pandas
   - openforcefield
   - openforcefields

@@ -79,11 +79,9 @@ def filter_duplicates(data_set):
         uncertainty_header = header
 
     if uncertainty_header in data_set:
-        data_set.sort_values(uncertainty_header)
+        data_set = data_set.sort_values(uncertainty_header)
 
-    return data_set.drop_duplicates(
-        subset=subset_columns, keep="last"
-    )
+    return data_set.drop_duplicates(subset=subset_columns, keep="last")
 
 
 def filter_by_temperature(data_set, min_temperature, max_temperature):

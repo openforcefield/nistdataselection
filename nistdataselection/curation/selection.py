@@ -7,14 +7,16 @@ import logging
 import math
 import sys
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Set, Tuple, Type
 
-from propertyestimator import unit
-from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.properties import PhysicalProperty
+import pandas
+from dataclasses import dataclass
+from evaluator import unit
+from evaluator.datasets import PhysicalProperty, PhysicalPropertyDataSet
 
 from nistdataselection.processing import load_processed_data_set
+from nistdataselection.utils import data_set_from_data_frame
+from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
 from nistdataselection.utils.utils import (
     SubstanceType,
     find_parameter_smirks_matches,
@@ -229,23 +231,17 @@ def _build_substance_data(
     for property_type, substance_type in target_substances_per_property:
 
         # Load the full data sets from the processed data file
-        data_set = load_processed_data_set(
+        data_frame = load_processed_data_set(
             data_directory, property_type, substance_type
         )
 
-        for substance_id in data_set.properties:
+        substance_tuples = data_frame_to_smiles_tuples(data_frame)
 
-            if len(data_set.properties[substance_id]) == 0:
-                continue
-
-            # Extract all of the components of the substance as smiles patterns.
-            substance = data_set.properties[substance_id][0].substance
-
-            substance_smiles = [component.smiles for component in substance.components]
-            substance_tuple = tuple(sorted(substance_smiles))
-
+        for substance_tuple in substance_tuples:
             all_substance_tuples[substance_tuple].add((property_type, substance_type))
-            all_smiles_patterns.update(substance_tuple)
+
+        substance_smiles = set(x for y in substance_tuples for x in y)
+        all_smiles_patterns.update(substance_smiles)
 
     # Build the list of substances which we can choose from
     all_substance_data = []
@@ -584,25 +580,24 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
     """
 
     # Load the full data set from the processed data files
-    data_set = PhysicalPropertyDataSet()
+    data_frames = []
 
     for property_type, substance_type in target_state_points:
 
-        property_data_set = load_processed_data_set(
+        data_frame = load_processed_data_set(
             data_directory, property_type, substance_type
         )
-        data_set.merge(property_data_set)
+        data_frames.append(data_frame)
+
+    full_data_frame = pandas.concat(data_frames, ignore_index=True, sort=False)
+    data_set = data_set_from_data_frame(full_data_frame)
 
     properties_by_substance = defaultdict(list)
 
     # Partition the properties by their substance components,
     # filtering out any not chosen substances.
-    for substance_id in data_set.properties:
+    for substance in data_set.substances:
 
-        if len(data_set.properties[substance_id]) == 0:
-            continue
-
-        substance = data_set.properties[substance_id][0].substance
         substance_tuple = tuple(
             sorted([component.smiles for component in substance.components])
         )
@@ -611,7 +606,7 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
             continue
 
         properties_by_substance[substance_tuple].extend(
-            data_set.properties[substance_id]
+            data_set.properties_by_substance(substance)
         )
 
     # Start to choose the state points.
@@ -691,13 +686,6 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
                 if len(properties_per_state[state_point]) == 0:
                     continue
 
-                substance_id = properties_per_state[state_point][0].substance.identifier
-
-                if substance_id not in return_data_set.properties:
-                    return_data_set.properties[substance_id] = []
-
-                return_data_set.properties[substance_id].extend(
-                    properties_per_state[state_point]
-                )
+                return_data_set.add_properties(*properties_per_state[state_point])
 
     return return_data_set

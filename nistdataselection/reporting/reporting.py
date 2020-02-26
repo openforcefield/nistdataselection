@@ -9,22 +9,20 @@ import subprocess
 from collections import defaultdict
 
 import pandas
-from propertyestimator.client import PropertyEstimatorOptions
-from propertyestimator.datasets import PhysicalPropertyDataSet
-from propertyestimator.layers import SimulationLayer
-from propertyestimator.properties import (
+from evaluator.client import RequestOptions
+from evaluator.datasets import MeasurementSource, PhysicalPropertyDataSet
+from evaluator.layers.simulation import SimulationLayer
+from evaluator.properties import (
     Density,
     DielectricConstant,
     EnthalpyOfMixing,
     EnthalpyOfVaporization,
     ExcessMolarVolume,
-    MeasurementSource,
 )
-from propertyestimator.protocols.groups import ConditionalGroup
-from propertyestimator.workflow import WorkflowOptions
+from evaluator.protocols.groups import ConditionalGroup
+from evaluator.storage import LocalFileStorage
 from tabulate import tabulate
 
-from nistdataselection.utils import PandasDataSet
 from nistdataselection.utils.utils import (
     find_parameter_smirks_matches,
     int_to_substance_type,
@@ -34,7 +32,7 @@ from nistdataselection.utils.utils import (
 
 
 def _estimate_required_simulations(properties_of_interest, data_set):
-    """Attempt to estimate how many simulations the property estimator
+    """Attempt to estimate how many simulations the evaluator framework
     will try and run to estimate the given data set of properties.
 
     Parameters
@@ -52,36 +50,21 @@ def _estimate_required_simulations(properties_of_interest, data_set):
 
     data_set = PhysicalPropertyDataSet.parse_json(data_set.json())
 
-    options = PropertyEstimatorOptions()
+    options = RequestOptions()
     calculation_layer = "SimulationLayer"
 
     for property_type, _ in properties_of_interest:
 
-        options.workflow_options[property_type.__name__] = {
-            calculation_layer: WorkflowOptions()
-        }
+        default_schema = property_type.default_simulation_schema()
+        options.add_schema(calculation_layer, property_type.__name__, default_schema)
 
-        default_schema = property_type.get_default_workflow_schema(
-            calculation_layer, WorkflowOptions()
-        )
-        options.workflow_schemas[property_type.__name__] = {
-            calculation_layer: default_schema
-        }
-
-    properties = []
-
-    for substance_id in data_set.properties:
-        properties.extend(data_set.properties[substance_id])
-
-    workflow_graph = SimulationLayer._build_workflow_graph(
-        "", properties, "", [], options
+    workflow_graph, _ = SimulationLayer._build_workflow_graph(
+        "", LocalFileStorage(), data_set.properties, "", [], options
     )
 
     number_of_simulations = 0
 
-    for protocol_id in workflow_graph._protocols_by_id:
-
-        protocol = workflow_graph._protocols_by_id[protocol_id]
+    for protocol_id, protocol in workflow_graph.protocols.items():
 
         if not isinstance(protocol, ConditionalGroup):
             continue
@@ -435,18 +418,16 @@ def _write_smiles_section(
         data_set.filter_by_function(filter_by_substance_type)
         data_set.filter_by_function(filter_by_smiles_tuple)
 
-        for substance_id in data_set.properties:
+        for physical_property in data_set:
 
-            for physical_property in data_set.properties[substance_id]:
+            if len(physical_property.source.doi) > 0:
+                continue
 
-                if len(physical_property.source.doi) > 0:
-                    continue
+            physical_property.source = MeasurementSource(
+                reference=os.path.basename(physical_property.source.reference)
+            )
 
-                physical_property.source = MeasurementSource(
-                    reference=os.path.basename(physical_property.source.reference)
-                )
-
-        pandas_data_frame = PandasDataSet.to_pandas_data_frame(data_set)
+        pandas_data_frame = data_set.to_pandas()
 
         if pandas_data_frame.shape[0] == 0:
             continue
@@ -651,41 +632,34 @@ def generate_report(
     data_count_per_substance = defaultdict(lambda: defaultdict(int))
     data_per_substance = defaultdict(lambda: defaultdict(list))
 
-    for substance_id in data_set.properties:
+    for physical_property in data_set:
 
-        if len(data_set.properties[substance_id]) == 0:
-            continue
+        substance_type = int_to_substance_type[
+            physical_property.substance.number_of_components
+        ]
+        property_type_tuple = (type(physical_property), substance_type)
 
-        for physical_property in data_set.properties[substance_id]:
+        all_property_types.add(property_type_tuple)
+        all_substances.add(physical_property.substance)
 
-            substance_type = int_to_substance_type[
-                physical_property.substance.number_of_components
-            ]
-            property_type_tuple = (type(physical_property), substance_type)
+        for component in physical_property.substance.components:
+            all_smiles.add(component.smiles)
 
-            all_property_types.add(property_type_tuple)
-            all_substances.add(physical_property.substance)
-
-            for component in physical_property.substance.components:
-                all_smiles.add(component.smiles)
-
-            all_smiles_tuples.add(
-                tuple(
-                    sorted(
-                        [
-                            component.smiles
-                            for component in physical_property.substance.components
-                        ]
-                    )
+        all_smiles_tuples.add(
+            tuple(
+                sorted(
+                    [
+                        component.smiles
+                        for component in physical_property.substance.components
+                    ]
                 )
             )
+        )
 
-            data_count_per_substance[physical_property.substance][
-                property_type_tuple
-            ] += 1
-            data_per_substance[physical_property.substance][property_type_tuple].append(
-                physical_property
-            )
+        data_count_per_substance[physical_property.substance][property_type_tuple] += 1
+        data_per_substance[physical_property.substance][property_type_tuple].append(
+            physical_property
+        )
 
     # Determine the number of unique molecules
     number_of_substances = len(all_smiles)
@@ -740,11 +714,7 @@ def generate_report(
     latex_document = "\n\n".join(
         [
             _write_header(),
-            _write_title(
-                number_of_substances,
-                data_set.number_of_properties,
-                number_of_simulations,
-            ),
+            _write_title(number_of_substances, len(data_set), number_of_simulations,),
             _write_smirks_exercised_table(
                 all_property_types, all_vdw_smirks_patterns, data_points_per_vdw_smirks
             ),

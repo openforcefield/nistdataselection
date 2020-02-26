@@ -2,6 +2,7 @@ name: test
 channels:
   - conda-forge
   - omnia
+  - omnia/label/beta
   - openeye
 dependencies:
     # Base depends
@@ -24,7 +25,8 @@ dependencies:
   - pandas
   - openforcefield
   - openforcefields
-  - propertyestimator
+  - openff-evaluator
   - matplotlib
-  - tabulate
   - scikit-learn
+  - tabulate
+  - tqdm

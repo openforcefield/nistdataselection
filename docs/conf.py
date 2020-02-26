@@ -56,7 +56,7 @@ extensions = [
 autosummary_generate = True
 autodoc_default_flags = ['members', 'inherited-members']
 autodoc_member_order = 'bysource' # preserve ordering in source
-autodoc_mock_imports = ['propertyestimator', 'openforcefield']
+autodoc_mock_imports = ['evaluator', 'openforcefield']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -91,7 +91,7 @@ todo_include_todos = True
 intersphinx_mapping = {
     'python': ('https://docs.python.org/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'propertyestimator': ('https://property-estimator.readthedocs.io/en/latest/', None),
+    'evaluator': ('https://openff-evaluator.readthedocs.io/en/latest/', None),
 }
 
 

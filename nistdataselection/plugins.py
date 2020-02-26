@@ -1,250 +1,285 @@
 """
 Extends the number of properties which can be understood and parsed by
-the `propertyestimator.datasets.ThermoMLDataSet` object.
+the `evaluator.datasets.ThermoMLDataSet` object.
 """
+from evaluator import unit
+from evaluator.datasets import PhysicalProperty, PropertyPhase
+from evaluator.datasets.thermoml import thermoml_property
 
-from propertyestimator.datasets.plugins import register_thermoml_property
-from propertyestimator.properties import PhysicalProperty, PropertyPhase
 
-
-@register_thermoml_property(
-    "Specific volume, m3/kg", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Specific volume, m3/kg", supported_phases=PropertyPhase.Liquid)
 class SpecificVolume(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.meter ** 3 / unit.kilogram
 
 
-@register_thermoml_property(
-    "Amount density, mol/m3", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Amount density, mol/m3", supported_phases=PropertyPhase.Liquid)
 class AmountDensity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.mol / unit.meter ** 3
 
 
-@register_thermoml_property(
-    "Molar volume, m3/mol", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Molar volume, m3/mol", supported_phases=PropertyPhase.Liquid)
 class MolarVolume(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.meter ** 3 / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Partial molar volume, m3/mol", supported_phases=PropertyPhase.Liquid
 )
 class PartialMolarVolume(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.meter ** 3 / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Apparent molar enthalpy, kJ/mol", supported_phases=PropertyPhase.Liquid
 )
 class ApparentMolarEnthalpy(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilojoule / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Molar enthalpy of solution, kJ/mol", supported_phases=PropertyPhase.Liquid
 )
 class MolarEnthalpyOfSolution(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilojoule / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Molar enthalpy of dilution, kJ/mol", supported_phases=PropertyPhase.Liquid
 )
 class MolarEnthalpyOfDilution(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilojoule / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Molar enthalpy of mixing with solvent, kJ/mol",
     supported_phases=PropertyPhase.Liquid.Gas,
 )
 class EnthalpyOfMixingWithSolvent(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilojoule / unit.mole
 
 
-@register_thermoml_property(
-    "Activity coefficient", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Activity coefficient", supported_phases=PropertyPhase.Liquid)
 class ActivityCoefficient(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.dimensionless
 
 
-@register_thermoml_property(
-    "Mean ionic activity, (mol/dm3)^n", supported_phases=PropertyPhase.Liquid
-)
-class MeanIonicActivity(PhysicalProperty):
-    pass
-
-
-@register_thermoml_property(
+@thermoml_property(
     "Mean ionic activity coefficient", supported_phases=PropertyPhase.Liquid
 )
 class MeanIonicActivityCoefficient(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.dimensionless
 
 
-@register_thermoml_property(
-    "Osmotic pressure, kPa", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Osmotic pressure, kPa", supported_phases=PropertyPhase.Liquid)
 class OsmoticPressure(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilopascal
 
 
-@register_thermoml_property(
-    "Osmotic coefficient", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Osmotic coefficient", supported_phases=PropertyPhase.Liquid)
 class OsmoticCoefficient(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.dimensionless
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Molar heat capacity at constant pressure, J/K/mol",
     supported_phases=PropertyPhase.Liquid,
 )
 class IsobaricMolarHeatCapacity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.joule / unit.kelvin / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Specific heat capacity at constant pressure, J/K/kg",
     supported_phases=PropertyPhase.Liquid,
 )
 class IsobaricSpecificHeatCapacity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.joule / unit.kelvin / unit.kilogram
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Heat capacity at constant pressure per volume, J/K/m3",
     supported_phases=PropertyPhase.Liquid,
 )
 class IsobaricHeatCapacity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.joule / unit.kelvin / unit.meter ** 3
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Molar heat capacity at constant volume, J/K/mol",
     supported_phases=PropertyPhase.Liquid,
 )
 class IsochoricMolarHeatCapacity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.joule / unit.kelvin / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Specific heat capacity at constant volume, J/K/kg",
     supported_phases=PropertyPhase.Liquid,
 )
 class IsochoricSpecificHeatCapacity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.joule / unit.kelvin / unit.kilogram
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Heat capacity at constant volume per volume, J/K/m3",
     supported_phases=PropertyPhase.Liquid,
 )
 class IsochoricHeatCapacity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.joule / unit.kelvin / unit.meter ** 3
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Apparent molar heat capacity, J/K/mol", supported_phases=PropertyPhase.Liquid
 )
 class ApparentMolarHeatCapacity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.joule / unit.kelvin / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Isothermal compressibility, 1/kPa", supported_phases=PropertyPhase.Liquid
 )
 class IsothermalCompressibility(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return (1.0 / unit.kilopascal).units
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Excess isothermal compressibility, 1/kPa", supported_phases=PropertyPhase.Liquid
 )
 class ExcessIsothermalCompressibility(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return (1.0 / unit.kilopascal).units
 
 
-@register_thermoml_property(
-    "Compressibility factor", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Compressibility factor", supported_phases=PropertyPhase.Liquid)
 class CompressibilityFactor(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.dimensionless
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Isobaric coefficient of expansion, 1/K", supported_phases=PropertyPhase.Liquid
 )
 class IsobaricCoefficientOfExpansion(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return (1.0 / unit.kelvin).units
 
 
-@register_thermoml_property(
-    "Speed of sound, m/s", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Speed of sound, m/s", supported_phases=PropertyPhase.Liquid)
 class SpeedOfSound(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.meter / unit.second
 
 
-@register_thermoml_property(
-    "Excess speed of sound, m/s", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("Excess speed of sound, m/s", supported_phases=PropertyPhase.Liquid)
 class ExcessSpeedOfSound(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.meter / unit.second
 
 
-@register_thermoml_property(
-    "2nd virial coefficient, m3/mol", supported_phases=PropertyPhase.Gas
-)
+@thermoml_property("2nd virial coefficient, m3/mol", supported_phases=PropertyPhase.Gas)
 class SecondVirialCoefficient(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.meter ** 3 / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Surface tension liquid-gas, N/m",
     supported_phases=PropertyPhase.Liquid | PropertyPhase.Gas,
 )
 class LiquidGasSurfaceTension(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.newton / unit.meter
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Henry's Law constant (mole fraction scale), kPa",
     supported_phases=PropertyPhase.Liquid | PropertyPhase.Gas,
 )
 class HenrysLawConstantMoleFractionScale(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilopascal
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Henry's Law constant (molality scale), kPa*kg/mol",
     supported_phases=PropertyPhase.Liquid | PropertyPhase.Gas,
 )
 class HenrysLawConstantMolalityScale(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilopascal * unit.kilogram / unit.mole
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Henry's Law constant (amount concentration scale), kPa*dm3/mol",
     supported_phases=PropertyPhase.Liquid | PropertyPhase.Gas,
 )
 class HenrysLawConstantAmountConcentrationScale(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilopascal * unit.decimeter ** 3 / unit.mole
 
 
-@register_thermoml_property(
-    "(Relative) activity", supported_phases=PropertyPhase.Liquid
-)
+@thermoml_property("(Relative) activity", supported_phases=PropertyPhase.Liquid)
 class RelativeActivity(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.dimensionless
 
 
-@register_thermoml_property(
+@thermoml_property(
     "Vapor or sublimation pressure, kPa",
     supported_phases=PropertyPhase.Liquid | PropertyPhase.Gas,
 )
 class VaporPressure(PhysicalProperty):
-    pass
+    @classmethod
+    def default_unit(cls):
+        return unit.kilopascal

@@ -1,9 +1,9 @@
 import logging
 import os
 
+from evaluator import unit
+from evaluator.properties import Density
 from pkg_resources import resource_filename
-from propertyestimator import unit
-from propertyestimator.properties import Density, EnthalpyOfVaporization
 
 from nistdataselection import processing, reporting
 from nistdataselection.curation import filtering, selection
@@ -47,7 +47,6 @@ def main():
     # type of property of interest.
     target_substances_per_property = {
         (Density, SubstanceType.Pure): 1,
-        (EnthalpyOfVaporization, SubstanceType.Pure): 1,
     }
 
     # Create a directory to store the filtered data in.
@@ -71,10 +70,7 @@ def main():
             data_set, temperature_range, pressure_range, allowed_elements
         )
 
-        logging.info(
-            f"The filtered data set contains {data_set.number_of_properties} "
-            f"properties."
-        )
+        logging.info(f"The filtered data set contains {len(data_set)} " f"properties.")
 
         # Save the filtered data set.
         processing.save_processed_data_set(
@@ -118,14 +114,9 @@ def main():
         selection.StatePoint(298.15 * unit.kelvin, 101.325 * unit.kilopascal, (1.0,)),
         selection.StatePoint(318.15 * unit.kelvin, 101.325 * unit.kilopascal, (1.0,)),
     ]
-    hvap_target_state_points = [
-        selection.StatePoint(298.15 * unit.kelvin, 101.325 * unit.kilopascal, (1.0,)),
-        selection.StatePoint(318.15 * unit.kelvin, 101.325 * unit.kilopascal, (1.0,)),
-    ]
 
     target_property_state_points = {
         (Density, SubstanceType.Pure): density_target_state_points,
-        (EnthalpyOfVaporization, SubstanceType.Pure): hvap_target_state_points,
     }
 
     # Set the output path to the data set.

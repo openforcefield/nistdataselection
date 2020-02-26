@@ -120,6 +120,9 @@ def data_set_from_data_frame(data_frame):
             default_unit = property_type.default_unit()
             value_header = f"{property_type.__name__} Value ({default_unit:~})"
 
+            if numpy.isnan(row[value_header]):
+                continue
+
             value = row[value_header] * default_unit
             uncertainty = 0.0 * default_unit
 
@@ -136,3 +139,29 @@ def data_set_from_data_frame(data_frame):
 
     return_value.add_properties(*properties)
     return return_value
+
+
+def data_frame_to_smiles_tuples(data_frame):
+    """Extracts the smiles patterns of the components in each
+    substance in a given data frame.
+
+    Parameters
+    ----------
+    data_frame: pandas.DataFrame
+        The data frame to extract the component smiles from.
+
+    Returns
+    -------
+    list of tuple of str
+        The smiles patterns of the measured substances.
+    """
+    n_components = data_frame[f"N Components"].max()
+
+    all_smiles = [
+        data_frame[f"Component {i + 1}"].tolist() for i in range(n_components)
+    ]
+
+    smiles_tuples = list(zip(*all_smiles))
+    smiles_tuples = list(set(tuple(sorted(x)) for x in smiles_tuples))
+
+    return smiles_tuples

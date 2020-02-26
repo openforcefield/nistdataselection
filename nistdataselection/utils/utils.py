@@ -17,6 +17,7 @@ from openforcefield.typing.engines.smirnoff import ForceField
 from openforcefield.utils import UndefinedStereochemistryError
 
 from evaluator.utils.openmm import openmm_quantity_to_pint
+from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
 
 logger = logging.getLogger(__name__)
 
@@ -280,15 +281,7 @@ def data_frame_to_pdf(data_frame, file_path, rows=10, columns=6):
         The maximum number of molecules to include per row.
     """
 
-    n_components = data_frame[f"N Components"].max()
-
-    all_smiles = [
-        data_frame[f"Component {i + 1}"].tolist() for i in range(n_components)
-    ]
-
-    smiles_tuples = list(zip(*all_smiles))
-    smiles_tuples = list(set(tuple(sorted(x)) for x in smiles_tuples))
-
+    smiles_tuples = data_frame_to_smiles_tuples(data_frame)
     smiles_to_pdf(smiles_tuples, file_path, rows, columns)
 
 

@@ -10,9 +10,13 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Set, Tuple, Type
 
+import pandas
+
 from evaluator import unit
 from evaluator.datasets import PhysicalProperty, PhysicalPropertyDataSet
 from nistdataselection.processing import load_processed_data_set
+from nistdataselection.utils import data_set_from_data_frame
+from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
 from nistdataselection.utils.utils import (
     SubstanceType,
     find_parameter_smirks_matches,
@@ -227,18 +231,17 @@ def _build_substance_data(
     for property_type, substance_type in target_substances_per_property:
 
         # Load the full data sets from the processed data file
-        data_set = load_processed_data_set(
+        data_frame = load_processed_data_set(
             data_directory, property_type, substance_type
         )
 
-        for substance in data_set.substances:
+        substance_tuples = data_frame_to_smiles_tuples(data_frame)
 
-            # Extract all of the components of the substance as smiles patterns.
-            substance_smiles = [component.smiles for component in substance.components]
-            substance_tuple = tuple(sorted(substance_smiles))
-
+        for substance_tuple in substance_tuples:
             all_substance_tuples[substance_tuple].add((property_type, substance_type))
-            all_smiles_patterns.update(substance_tuple)
+
+        substance_smiles = set(x for y in substance_tuples for x in y)
+        all_smiles_patterns.update(substance_smiles)
 
     # Build the list of substances which we can choose from
     all_substance_data = []
@@ -577,14 +580,17 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
     """
 
     # Load the full data set from the processed data files
-    data_set = PhysicalPropertyDataSet()
+    data_frames = []
 
     for property_type, substance_type in target_state_points:
 
-        property_data_set = load_processed_data_set(
+        data_frame = load_processed_data_set(
             data_directory, property_type, substance_type
         )
-        data_set.merge(property_data_set)
+        data_frames.append(data_frame)
+
+    full_data_frame = pandas.concat(data_frames, ignore_index=True, sort=False)
+    data_set = data_set_from_data_frame(full_data_frame)
 
     properties_by_substance = defaultdict(list)
 

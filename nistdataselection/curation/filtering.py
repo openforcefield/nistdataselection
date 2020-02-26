@@ -8,11 +8,7 @@ from openforcefield.topology import Molecule
 from openforcefield.utils import UndefinedStereochemistryError
 
 from evaluator import unit
-from nistdataselection.utils import (
-    analyse_functional_groups,
-    find_smirks_matches,
-    standardize_smiles,
-)
+from nistdataselection.utils import analyse_functional_groups, find_smirks_matches
 
 logger = logging.getLogger(__name__)
 
@@ -344,10 +340,8 @@ def filter_by_smiles(
         )
 
     if smiles_to_include is not None:
-        smiles_to_include = standardize_smiles(*smiles_to_include)
         smiles_to_exclude = []
     elif smiles_to_exclude is not None:
-        smiles_to_exclude = standardize_smiles(*smiles_to_exclude)
         smiles_to_include = []
 
     def filter_function(data_row):
@@ -357,7 +351,6 @@ def filter_by_smiles(
         component_smiles = [
             data_row[f"Component {index + 1}"] for index in range(n_components)
         ]
-        component_smiles = standardize_smiles(*component_smiles)
 
         if any(x in smiles_to_exclude for x in component_smiles):
             return False

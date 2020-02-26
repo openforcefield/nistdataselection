@@ -2,7 +2,7 @@
 #
 # Set the job name and wall time limit
 #BSUB -J h_m_v_e
-#BSUB -W 76:00
+#BSUB -W 168:00
 #
 # Set the output and error output paths.
 #BSUB -o  %J.o

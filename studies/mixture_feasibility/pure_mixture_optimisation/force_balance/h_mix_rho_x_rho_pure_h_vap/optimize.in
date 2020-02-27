@@ -18,16 +18,19 @@ jobtype optimize
 forcefield openff-1.0.0.offxml
 
 # (int) Maximum number of steps in an optimization
-maxstep 100
+maxstep 12
 
 # (float) Convergence criterion of step size (just needs to fall below this threshold)
 convergence_step 0.1
 
 # (float) Convergence criterion of objective function (in MainOptimizer this is the stdev of x2 over 10 steps)
-convergence_objective 0.1
+convergence_objective 0.0001
 
 # (float) Convergence criterion of gradient norm
-convergence_gradient 0.1
+convergence_gradient 0.001
+
+# The number of convergence criteria that must be met for main optimizer to converge
+criteria 3
 
 # (float) Minimum eigenvalue for applying steepest descent correction in the MainOptimizer
 eig_lowerbound 0.01

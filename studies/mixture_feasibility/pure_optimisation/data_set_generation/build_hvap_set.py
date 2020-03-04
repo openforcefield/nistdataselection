@@ -20,8 +20,8 @@ def main():
             ),
             phase=h_vap_phase,
             substance=Substance.from_components("OC=O"),
-            value=20.1 * unit.kilojoule / unit.mole,
-            uncertainty=0.02 * unit.kilojoule / unit.mole,
+            value=46.3 * unit.kilojoule / unit.mole,
+            uncertainty=0.25 * unit.kilojoule / unit.mole,
             source=MeasurementSource(doi="10.3891/acta.chem.scand.24-2612"),
         ),
         # Acetic Acid
@@ -31,8 +31,8 @@ def main():
             ),
             phase=h_vap_phase,
             substance=Substance.from_components("CC(O)=O"),
-            value=23.36 * unit.kilojoule / unit.mole,
-            uncertainty=0.05 * unit.kilojoule / unit.mole,
+            value=51.6 * unit.kilojoule / unit.mole,
+            uncertainty=0.75 * unit.kilojoule / unit.mole,
             source=MeasurementSource(doi="10.3891/acta.chem.scand.24-2612"),
         ),
         # Propionic Acid
@@ -42,8 +42,8 @@ def main():
             ),
             phase=h_vap_phase,
             substance=Substance.from_components("CCC(O)=O"),
-            value=31.14 * unit.kilojoule / unit.mole,
-            uncertainty=0.01 * unit.kilojoule / unit.mole,
+            value=55 * unit.kilojoule / unit.mole,
+            uncertainty=1 * unit.kilojoule / unit.mole,
             source=MeasurementSource(doi="10.3891/acta.chem.scand.24-2612"),
         ),
         # Butyric Acid
@@ -53,8 +53,8 @@ def main():
             ),
             phase=h_vap_phase,
             substance=Substance.from_components("CCCC(O)=O"),
-            value=40.45 * unit.kilojoule / unit.mole,
-            uncertainty=0.03 * unit.kilojoule / unit.mole,
+            value=58 * unit.kilojoule / unit.mole,
+            uncertainty=2 * unit.kilojoule / unit.mole,
             source=MeasurementSource(doi="10.3891/acta.chem.scand.24-2612"),
         ),
         # Isobutyric Acid
@@ -64,19 +64,8 @@ def main():
             ),
             phase=h_vap_phase,
             substance=Substance.from_components("CC(C)C(O)=O"),
-            value=35.3 * unit.kilojoule / unit.mole,
-            uncertainty=0.04 * unit.kilojoule / unit.mole,
-            source=MeasurementSource(doi="10.3891/acta.chem.scand.24-2612"),
-        ),
-        # Isovaleric Acid
-        EnthalpyOfVaporization(
-            thermodynamic_state=ThermodynamicState(
-                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
-            ),
-            phase=h_vap_phase,
-            substance=Substance.from_components("CC(C)CC(O)=O"),
-            value=46.91 * unit.kilojoule / unit.mole,
-            uncertainty=0.09 * unit.kilojoule / unit.mole,
+            value=53 * unit.kilojoule / unit.mole,
+            uncertainty=2 * unit.kilojoule / unit.mole,
             source=MeasurementSource(doi="10.3891/acta.chem.scand.24-2612"),
         ),
         # Water

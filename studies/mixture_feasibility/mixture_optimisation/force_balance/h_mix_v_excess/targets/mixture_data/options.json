@@ -13,7 +13,7 @@
         "ExcessMolarVolume": {
             "@type": "evaluator.unit.Quantity",
             "unit": "cm ** 3 / mol",
-            "value": 0.12398062894729103
+            "value": 0.392061173213643
         }
     },
     "estimation_options": {

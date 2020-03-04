@@ -2,6 +2,7 @@
 comparison study.
 """
 import argparse
+import json
 import os
 from collections import defaultdict
 from glob import glob
@@ -14,6 +15,7 @@ from evaluator.client import RequestResult
 from evaluator.datasets import PhysicalPropertyDataSet
 from evaluator.substances import MoleFraction
 from forcebalance.evaluator_io import Evaluator_SMIRNOFF
+from forcebalance.nifty import lp_load
 
 from nistdataselection.utils.utils import property_to_snake_case
 
@@ -157,6 +159,8 @@ def main(options_path, data_set_path, output_directory):
     # Determine how many iterations ForceBalance has completed.
     n_iterations = len(glob(f"optimize.tmp/{target_name}/iter*"))
 
+    objective_function = []
+
     for iteration in range(n_iterations):
 
         folder_name = "iter_" + str(iteration).zfill(4)
@@ -177,6 +181,16 @@ def main(options_path, data_set_path, output_directory):
                 output_directory, f"{folder_name}_{property_type}.csv"
             )
             data_frame.to_csv(output_path, index=False)
+
+        # Pull out the objective function
+        file_path = f"optimize.tmp/{target_name}/{folder_name}/objective.p"
+
+        statistics = lp_load(file_path)
+        objective_function.append(statistics["X"])
+
+    # Save out the objective function
+    with open(os.path.join(output_directory, "objective_function.json"), "w") as file:
+        json.dump(objective_function, file)
 
 
 if __name__ == "__main__":

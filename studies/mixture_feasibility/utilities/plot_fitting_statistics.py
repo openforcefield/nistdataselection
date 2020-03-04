@@ -15,7 +15,9 @@ from matplotlib import pyplot
 from nistdataselection.utils.utils import property_to_snake_case
 
 
-def plot_average_contribution_per_property(training_data_set, statistics_directory, output_directory):
+def plot_average_contribution_per_property(
+    training_data_set, statistics_directory, output_directory
+):
     """Plots the average contribution of each property to the
     objective function at each iteration.
 
@@ -30,7 +32,9 @@ def plot_average_contribution_per_property(training_data_set, statistics_directo
     """
 
     # Determine how many iterations ForceBalance has completed.
-    n_iterations = len(glob(f"{statistics_directory}/iter*")) / len(training_data_set.property_types)
+    n_iterations = len(glob(f"{statistics_directory}/iter*")) / len(
+        training_data_set.property_types
+    )
 
     contributions_per_property = defaultdict(list)
     contribution_std_per_property = defaultdict(list)
@@ -67,7 +71,7 @@ def plot_average_contribution_per_property(training_data_set, statistics_directo
             contributions_per_property[property_type],
             yerr=contribution_std_per_property[property_type],
             marker="o",
-            label=property_type
+            label=property_type,
         )
 
     axis.legend(
@@ -151,7 +155,7 @@ if __name__ == "__main__":
         type=str,
         help="The directory to store the output plots in.",
         required=False,
-        default="plots"
+        default="plots",
     )
 
     args = parser.parse_args()

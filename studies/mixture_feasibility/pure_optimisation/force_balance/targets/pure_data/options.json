@@ -13,7 +13,7 @@
         "EnthalpyOfVaporization": {
             "@type": "evaluator.unit.Quantity",
             "unit": "kJ / mol",
-            "value": 6.191930232165088
+            "value": 5.742931305317869
         }
     },
     "estimation_options": {

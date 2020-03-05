@@ -90,13 +90,16 @@ jobs:
         run: |
           isort --recursive --check-only nistdataselection
           isort --recursive --check-only examples
+          isort --recursive --check-only studies
 
       - name: Run black
         run: |
           black nistdataselection --check
           black examples --check
+          black studies --check
 
       - name: Run flake8
         run: |
           flake8 nistdataselection
           flake8 examples
+          flake8 studies

@@ -7,6 +7,10 @@ In particular, the:
   measurements made for alcohols, esters and acids, and for substances only composed of C, H and O elements. The output 
   is stored in the ``all_alcohol_ester_data`` folder.
 
+* ``filter_alcohol_alcohol.py`` applies filters to the the processed data in the ``shared`` folder, retaining only those
+  measurements made for pairs of alcohols and for substances only composed of C, H and O elements. The output 
+  is stored in the ``all_alcohol_alcohol_data`` folder.
+
 * ``convert_density_data.py`` script inter-converts all excess molar volume data into binary mass density data
   and vice versa in those cases where pure density measurements are available.
   

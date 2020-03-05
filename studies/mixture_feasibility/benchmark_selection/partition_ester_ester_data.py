@@ -51,9 +51,7 @@ def main():
     ]:
 
         full_data_frame = load_processed_data_set(
-            os.path.join("filtered_data", "ester_ester"),
-            property_type,
-            substance_type,
+            os.path.join("filtered_data", "ester_ester"), property_type, substance_type,
         )
 
         property_type = property_to_snake_case(property_type)
@@ -71,9 +69,7 @@ def main():
         os.makedirs(base_directory, exist_ok=True)
 
         data_frame.to_csv(os.path.join(base_directory, file_name + ".csv"), index=False)
-        data_frame_to_pdf(
-            data_frame, os.path.join(base_directory, file_name + ".pdf")
-        )
+        data_frame_to_pdf(data_frame, os.path.join(base_directory, file_name + ".pdf"))
 
         # Extract properties where only one component appears in
         # in the training set.
@@ -92,9 +88,7 @@ def main():
         os.makedirs(base_directory, exist_ok=True)
 
         data_frame.to_csv(os.path.join(base_directory, file_name + ".csv"), index=False)
-        data_frame_to_pdf(
-            data_frame, os.path.join(base_directory, file_name + ".pdf")
-        )
+        data_frame_to_pdf(data_frame, os.path.join(base_directory, file_name + ".pdf"))
 
         # Extract properties where neither component appears in
         # in the training set.
@@ -107,9 +101,7 @@ def main():
         os.makedirs(base_directory, exist_ok=True)
 
         data_frame.to_csv(os.path.join(base_directory, file_name + ".csv"), index=False)
-        data_frame_to_pdf(
-            data_frame, os.path.join(base_directory, file_name + ".pdf")
-        )
+        data_frame_to_pdf(data_frame, os.path.join(base_directory, file_name + ".pdf"))
 
 
 if __name__ == "__main__":

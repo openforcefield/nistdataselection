@@ -1,3 +1,5 @@
+import os
+
 from evaluator import unit
 from evaluator.datasets import MeasurementSource, PhysicalPropertyDataSet, PropertyPhase
 from evaluator.properties import EnthalpyOfVaporization
@@ -444,7 +446,15 @@ def main():
         ),
     )
 
-    h_vap_data_set.to_pandas().to_csv("alcohol_ester_h_vap.csv", index=False)
+    output_directory = "sourced_h_vap_data"
+    os.makedirs(output_directory, exist_ok=True)
+
+    h_vap_data_set.to_pandas().to_csv(
+        os.path.join(output_directory, "alcohol_ester_h_vap.csv"), index=False
+    )
+    h_vap_data_set.json(
+        os.path.join(output_directory, "alcohol_ester_h_vap.json"), format=True
+    )
 
 
 if __name__ == "__main__":

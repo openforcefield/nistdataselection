@@ -64,7 +64,7 @@ def main():
     ]
     training_smiles = set(tuple(sorted(x)) for x in training_smiles)
 
-    for pair_types in ["alcohol_alcohol", "alcohol_ester"]:
+    for pair_types in ["alcohol_alcohol", "alcohol_ester", "ester_ester"]:
 
         pair_directory = os.path.join(output_directory, pair_types)
         os.makedirs(pair_directory, exist_ok=True)

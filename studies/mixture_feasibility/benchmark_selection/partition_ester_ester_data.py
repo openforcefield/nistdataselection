@@ -1,7 +1,7 @@
-"""This script partitions all available alcohol-alcohol
-mixture data into mixture where both components where
-in the training set, one component was in the training
-set and neither component was in the training set.
+"""This script partitions all available ester(/acid)-ester(/acid)
+mixture data into mixture where both components where in the training
+set, one component was in the training set and neither component was
+in the training set.
 """
 import os
 
@@ -14,13 +14,13 @@ from nistdataselection.utils import SubstanceType
 from nistdataselection.utils.utils import data_frame_to_pdf, property_to_snake_case
 
 chemical_environment_codes = {
-    "hydroxy": "027",
-    "alcohol": "028",
+    "caboxylic_acid": "076",
+    "ester": "078",
 }
 
 
 def main():
-    output_directory = "partitioned_alcohol_only_data"
+    output_directory = "partitioned_ester_ester_data"
     os.makedirs(output_directory, exist_ok=True)
 
     # Find those alcohols which were included in the training set
@@ -36,7 +36,10 @@ def main():
     )
     pure_alcohol_set = filter_by_checkmol(
         pure_training_set.to_pandas(),
-        [chemical_environment_codes["hydroxy"], chemical_environment_codes["alcohol"]],
+        [
+            chemical_environment_codes["caboxylic_acid"],
+            chemical_environment_codes["ester"],
+        ],
     )
 
     training_smiles = {*pure_alcohol_set["Component 1"]}
@@ -46,8 +49,9 @@ def main():
         (EnthalpyOfMixing, SubstanceType.Binary),
         (ExcessMolarVolume, SubstanceType.Binary),
     ]:
+
         full_data_frame = load_processed_data_set(
-            os.path.join("filtered_data", "alcohol_alcohol"),
+            os.path.join("filtered_data", "ester_ester"),
             property_type,
             substance_type,
         )

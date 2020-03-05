@@ -17,6 +17,8 @@ from nistdataselection.utils.utils import data_frame_to_pdf, property_to_snake_c
 chemical_environment_codes = {
     "caboxylic_acid": "076",
     "ester": "078",
+    "hydroxy": "027",
+    "alcohol": "028",
 }
 
 
@@ -38,6 +40,8 @@ def main():
     pure_alcohol_set = filter_by_checkmol(
         pure_training_set.to_pandas(),
         [
+            chemical_environment_codes["hydroxy"],
+            chemical_environment_codes["alcohol"],
             chemical_environment_codes["caboxylic_acid"],
             chemical_environment_codes["ester"],
         ],
@@ -72,12 +76,9 @@ def main():
         os.makedirs(base_directory, exist_ok=True)
 
         data_frame.to_csv(os.path.join(base_directory, file_name + ".csv"), index=False)
-
-        if len(data_frame) > 0:
-
-            data_frame_to_pdf(
-                data_frame, os.path.join(base_directory, file_name + ".pdf")
-            )
+        data_frame_to_pdf(
+            data_frame, os.path.join(base_directory, file_name + ".pdf")
+        )
 
         # Extract properties where only one component appears in
         # in the training set.
@@ -96,12 +97,9 @@ def main():
         os.makedirs(base_directory, exist_ok=True)
 
         data_frame.to_csv(os.path.join(base_directory, file_name + ".csv"), index=False)
-
-        if len(data_frame) > 0:
-
-            data_frame_to_pdf(
-                data_frame, os.path.join(base_directory, file_name + ".pdf")
-            )
+        data_frame_to_pdf(
+            data_frame, os.path.join(base_directory, file_name + ".pdf")
+        )
 
         # Extract properties where neither component appears in
         # in the training set.
@@ -114,12 +112,9 @@ def main():
         os.makedirs(base_directory, exist_ok=True)
 
         data_frame.to_csv(os.path.join(base_directory, file_name + ".csv"), index=False)
-
-        if len(data_frame) > 0:
-
-            data_frame_to_pdf(
-                data_frame, os.path.join(base_directory, file_name + ".pdf")
-            )
+        data_frame_to_pdf(
+            data_frame, os.path.join(base_directory, file_name + ".pdf")
+        )
 
 
 if __name__ == "__main__":

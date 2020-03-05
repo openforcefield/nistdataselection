@@ -281,6 +281,9 @@ def data_frame_to_pdf(data_frame, file_path, rows=10, columns=6):
         The maximum number of molecules to include per row.
     """
 
+    if len(data_frame) == 0:
+        return
+
     smiles_tuples = data_frame_to_smiles_tuples(data_frame)
     smiles_to_pdf(smiles_tuples, file_path, rows, columns)
 

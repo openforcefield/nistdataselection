@@ -1,7 +1,7 @@
-"""The purpose of this script is to extract all of the binary density, vexcess and
-hmix data which was measured for pairs of alcohols.
+"""The purpose of this script is to extract all of the density (pure and binary), hvap,
+vexcess and hmix data which was measured for only esters and acids.
 
-The found data will be stored in a `all_alcohol_alcohol_data` collection for use by
+The found data will be stored in a `all_ester_ester_data` collection for use by
 other scripts.
 """
 
@@ -18,8 +18,8 @@ from nistdataselection.utils.utils import data_frame_to_pdf, property_to_snake_c
 logger = logging.getLogger(__name__)
 
 chemical_environment_codes = {
-    "hydroxy": "027",
-    "alcohol": "028",
+    "caboxylic_acid": "076",
+    "ester": "078",
 }
 
 
@@ -38,20 +38,21 @@ def main():
     ]
 
     chemical_environments = {
+        SubstanceType.Pure: [[*chemical_environment_codes.values()]],
         SubstanceType.Binary: [
             [
-                chemical_environment_codes["hydroxy"],
-                chemical_environment_codes["alcohol"],
+                chemical_environment_codes["caboxylic_acid"],
+                chemical_environment_codes["ester"],
             ],
             [
-                chemical_environment_codes["hydroxy"],
-                chemical_environment_codes["alcohol"],
+                chemical_environment_codes["caboxylic_acid"],
+                chemical_environment_codes["ester"],
             ],
         ],
     }
 
     # Make directories to store the data in.
-    output_directory = "all_alcohol_alcohol_data"
+    output_directory = "all_ester_ester_data"
     os.makedirs(output_directory, exist_ok=True)
 
     for property_tuple in properties_of_interest:
@@ -79,7 +80,8 @@ def main():
         file_name = f"{property_type}_{str(substance_type.value)}.pdf"
         file_path = os.path.join(output_directory, file_name)
 
-        data_frame_to_pdf(data_set, file_path)
+        if len(data_set) > 0:
+            data_frame_to_pdf(data_set, file_path)
 
 
 if __name__ == "__main__":

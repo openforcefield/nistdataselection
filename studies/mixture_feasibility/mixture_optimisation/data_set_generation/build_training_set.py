@@ -52,7 +52,9 @@ def filter_common_data(output_directory):
     ]:
 
         data_frame = load_processed_data_set(
-            os.path.join("../../data_availability/common_data", "h_mix_and_binary_density"),
+            os.path.join(
+                "../../data_availability/common_data", "h_mix_and_binary_density"
+            ),
             property_type,
             substance_type,
         )

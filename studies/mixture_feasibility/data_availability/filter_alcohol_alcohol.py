@@ -8,11 +8,7 @@ other scripts.
 import logging
 import os
 
-from evaluator.properties import (
-    Density,
-    EnthalpyOfMixing,
-    ExcessMolarVolume,
-)
+from evaluator.properties import Density, EnthalpyOfMixing, ExcessMolarVolume
 
 from nistdataselection import processing
 from nistdataselection.curation.filtering import filter_by_checkmol, filter_by_elements

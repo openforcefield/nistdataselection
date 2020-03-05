@@ -566,8 +566,9 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
     data_directory: str
         The directory which contains the processed pandas
         data sets
-    chosen_substances: list of tuple of str
-        The substances to choose data points for.
+    chosen_substances: list of tuple of str, optional
+        The substances to choose data points for. If None,
+        no filtering of substances will be performed by this function.
     target_state_points: dict of tuple of type and SubstanceType and list of StatePoint
         A list of the state points for which we would ideally have data
         points for. The value tuple should be of the form
@@ -602,7 +603,7 @@ def select_data_points(data_directory, chosen_substances, target_state_points):
             sorted([component.smiles for component in substance.components])
         )
 
-        if substance_tuple not in chosen_substances:
+        if chosen_substances is not None and substance_tuple not in chosen_substances:
             continue
 
         properties_by_substance[substance_tuple].extend(

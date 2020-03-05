@@ -60,7 +60,7 @@ priors
 $end
 
 $target
-name mixture_data
+name pure_data
 type Evaluator_SMIRNOFF
 weight 1.0
 evaluator_input options.json

@@ -32,7 +32,9 @@ def main():
     smiles = [Component(x).smiles for x in training_set_smiles]
 
     # Load in the Hvap data
-    h_vap_data_frame = pandas.read_csv("alcohol_ester_h_vap.csv")
+    h_vap_data_frame = pandas.read_csv(
+        "../../data_availability/sourced_h_vap_data/alcohol_ester_h_vap.csv"
+    )
     h_vap_data_frame = filter_by_smiles(
         h_vap_data_frame, smiles_to_include=smiles, smiles_to_exclude=None
     )

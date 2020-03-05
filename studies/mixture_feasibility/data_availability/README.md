@@ -16,3 +16,13 @@ In particular, the:
   places (in K) when comparing if two states are the same.
   
   The converted data is stored in the ``converted_density_data`` folder.
+  
+* ``find_common_data.py`` script finds those systems for which their is both enthalpy of mixing and excess molar volume
+  or both  enthalpy of mixing and binary mass density data available. The common data is stored in a ``common_data``
+  directory.
+  
+  **Note** This script does check whether the different types of properties were measured at the same states (i.e
+  temperature, pressure and mole fraction).
+  
+* ``source_h_vap_data.py`` scripts builds a new data set of enthalpy of vaporization measurements source from the
+  literature. The output set is stored in the ``sourced_h_vap_data`` folder.

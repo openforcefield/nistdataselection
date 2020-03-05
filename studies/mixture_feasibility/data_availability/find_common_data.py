@@ -16,13 +16,13 @@ def main():
     logging.basicConfig(level=logging.INFO)
 
     h_mix_data_frame = pandas.read_csv(
-        "../../data_availability/all_alcohol_ester_data/enthalpy_of_mixing_binary.csv"
+        "all_alcohol_ester_data/enthalpy_of_mixing_binary.csv"
     )
     v_excess_data_frame = pandas.read_csv(
-        "../../data_availability/converted_density_data/excess_molar_volume_binary.csv"
+        "converted_density_data/excess_molar_volume_binary.csv"
     )
     binary_density_data_frame = pandas.read_csv(
-        "../../data_availability/converted_density_data/density_binary.csv"
+        "converted_density_data/density_binary.csv"
     )
 
     h_mix_substances = set(data_frame_to_smiles_tuples(h_mix_data_frame))

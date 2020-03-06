@@ -357,6 +357,8 @@ def filter_by_smiles(
 
         if any(x in smiles_to_exclude for x in component_smiles):
             return False
+        elif len(smiles_to_exclude) > 0:
+            return True
 
         if not allow_partial_inclusion and not all(
             x in smiles_to_include for x in component_smiles

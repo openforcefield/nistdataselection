@@ -154,13 +154,21 @@ def data_frame_to_smiles_tuples(data_frame):
     list of tuple of str
         The smiles patterns of the measured substances.
     """
-    n_components = int(data_frame[f"N Components"].max())
+    max_n_components = int(data_frame[f"N Components"].max())
 
-    all_smiles = [
-        data_frame[f"Component {i + 1}"].tolist() for i in range(n_components)
-    ]
+    all_smiles_tuples = []
 
-    smiles_tuples = list(zip(*all_smiles))
-    smiles_tuples = list(set(tuple(sorted(x)) for x in smiles_tuples))
+    for n_components in range(1, max_n_components + 1):
 
-    return smiles_tuples
+        data_subset = data_frame[data_frame["N Components"] == n_components]
+
+        all_smiles = [
+            data_subset[f"Component {i + 1}"].tolist() for i in range(n_components)
+        ]
+
+        smiles_tuples = list(zip(*all_smiles))
+        all_smiles_tuples.extend(tuple(sorted(x)) for x in smiles_tuples)
+
+    all_smiles_tuples = list(set(all_smiles_tuples))
+
+    return all_smiles_tuples

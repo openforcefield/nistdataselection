@@ -1,14 +1,11 @@
 """A script to filter out all of the training set
 compounds from the available data.
 """
-import functools
 import os
-from collections import defaultdict
 from tempfile import TemporaryDirectory
 
 import pandas
 from evaluator import unit
-from evaluator.datasets import PhysicalPropertyDataSet
 from evaluator.properties import (
     Density,
     EnthalpyOfMixing,
@@ -23,118 +20,12 @@ from nistdataselection.processing import (
     save_processed_data_set,
 )
 from nistdataselection.utils import SubstanceType
-from nistdataselection.utils.pandas import (
-    data_frame_to_smiles_tuples,
-    data_set_from_data_frame,
+from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
+from nistdataselection.utils.utils import (
+    data_frame_to_pdf,
+    property_to_snake_case,
+    substance_type_to_int,
 )
-from nistdataselection.utils.utils import data_frame_to_pdf, smiles_to_pdf
-
-
-def build_pure_set():
-
-    # Load in the Hvap data
-    h_vap_data_frame = load_processed_data_set(
-        "filtered_data", EnthalpyOfVaporization, SubstanceType.Pure
-    )
-
-    # Filter out water
-    h_vap_data_frame = filter_by_smiles(
-        h_vap_data_frame, smiles_to_include=None, smiles_to_exclude=["O"]
-    )
-
-    h_vap_data_set = data_set_from_data_frame(h_vap_data_frame)
-
-    density_data_frame = load_processed_data_set(
-        "filtered_data", Density, SubstanceType.Pure
-    )
-    density_data_set = data_set_from_data_frame(density_data_frame)
-
-    # Retain the density measurements which were made closest to 298.15K and 1 atm.
-    target_state_point = StatePoint(
-        temperature=298.15 * unit.kelvin,
-        pressure=1.0 * unit.atmosphere,
-        mole_fractions=(1.0,),
-    )
-
-    final_data_set = PhysicalPropertyDataSet()
-
-    for substance in density_data_set.substances:
-
-        properties_per_state = defaultdict(list)
-
-        # Refactor the properties into more convenient data structures.
-        for physical_property in density_data_set.properties_by_substance(substance):
-
-            state_point = StatePoint.from_physical_property(physical_property)
-            properties_per_state[state_point].append(physical_property)
-
-        # Sort the state points based on their distance to the target state.
-        sorted_states_points = list(
-            sorted(
-                properties_per_state.keys(),
-                key=functools.partial(
-                    StatePoint.individual_distances, target_state_point
-                ),
-            )
-        )
-
-        final_data_set.add_properties(properties_per_state[sorted_states_points[0]][0])
-
-    final_data_set.merge(h_vap_data_set)
-
-    return final_data_set
-
-
-def build_mixture_set():
-
-    # Pull out data for all of the mixtures whereby neither component was
-    # in the training set.
-    with TemporaryDirectory() as working_directory:
-
-        for property_type, substance_type in [
-            (EnthalpyOfMixing, SubstanceType.Binary),
-            (ExcessMolarVolume, SubstanceType.Binary),
-            (Density, SubstanceType.Binary),
-        ]:
-
-            pair_data_frames = []
-
-            for pair_type in ["alcohol_only", "alcohol_ester", "ester_ester"]:
-
-                data_directory = os.path.join(
-                    f"partitioned_{pair_type}_data", "neither_in_training"
-                )
-                pair_data_frames.append(
-                    load_processed_data_set(
-                        data_directory, property_type, substance_type
-                    )
-                )
-
-            pair_data_frame = pandas.concat(
-                pair_data_frames, ignore_index=True, sort=False
-            )
-
-            save_processed_data_set(
-                working_directory, pair_data_frame, property_type, substance_type
-            )
-
-        target_states = [
-            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.25, 0.75)),
-            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.50, 0.50)),
-            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.75, 0.25)),
-        ]
-
-        mixture_set = select_data_points(
-            data_directory=working_directory,
-            chosen_substances=None,
-            target_state_points={
-                (EnthalpyOfMixing, SubstanceType.Binary): target_states,
-                (ExcessMolarVolume, SubstanceType.Binary): target_states,
-                (Density, SubstanceType.Binary): target_states,
-            },
-        )
-
-    return mixture_set
 
 
 def main():
@@ -142,58 +33,133 @@ def main():
     output_directory = "test_sets"
     os.makedirs(output_directory, exist_ok=True)
 
-    # Select a pure test set
-    pure_test_set = build_pure_set()
-    pure_test_set.json(os.path.join(output_directory, "pure_set.json"))
+    # Define the types of property which are of interest.
+    data_of_interest = {
+        (EnthalpyOfMixing, SubstanceType.Binary): {
+            "alcohol_alcohol": ["one_in_training", "not_in_training"],
+            "alcohol_ester": ["not_in_training"],
+            "ester_ester": ["both_in_training", "not_in_training"],
+        },
+        (ExcessMolarVolume, SubstanceType.Binary): {
+            "alcohol_alcohol": ["both_in_training", "not_in_training"],
+            "alcohol_ester": ["not_in_training"],
+            "ester_ester": ["both_in_training", "not_in_training"],
+        },
+        (Density, SubstanceType.Binary): {
+            "alcohol_alcohol": ["both_in_training", "not_in_training"],
+            "alcohol_ester": ["not_in_training"],
+            "ester_ester": ["both_in_training", "not_in_training"],
+        },
+        (Density, SubstanceType.Pure): {
+            "alcohol_alcohol": ["not_in_training"],
+            "alcohol_ester": ["not_in_training"],
+            "ester_ester": ["not_in_training"],
+        },
+        (EnthalpyOfVaporization, SubstanceType.Pure): {
+            "alcohol_alcohol": ["not_in_training"],
+            "alcohol_ester": ["not_in_training"],
+            "ester_ester": ["not_in_training"],
+        },
+    }
 
-    pure_test_pandas = pure_test_set.to_pandas()
+    properties_of_interest = [*data_of_interest]
 
-    pure_test_pandas.to_csv(os.path.join(output_directory, "pure_set.csv"), index=False)
-    data_frame_to_pdf(
-        pure_test_pandas, os.path.join(output_directory, "pure_set.pdf"),
+    # Define the state points of interest
+    target_states = {
+        SubstanceType.Pure: [
+            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (1.0,)),
+        ],
+        SubstanceType.Binary: [
+            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.25, 0.75)),
+            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.50, 0.50)),
+            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.75, 0.25)),
+        ],
+    }
+
+    target_states = {(x, y): target_states[y] for x, y in properties_of_interest}
+
+    # Load in all of the available data which is of interest.
+    data_frames_by_property_type = {}
+
+    for property_type in data_of_interest:
+
+        data_frames = []
+
+        for environment_type in data_of_interest[property_type]:
+
+            for partition_of_interest in data_of_interest[property_type][environment_type]:
+
+                data_directory = os.path.join(
+                    "partitioned_data", environment_type, partition_of_interest
+                )
+                data_frames.append(
+                    load_processed_data_set(data_directory, *property_type)
+                )
+
+        data_frames_by_property_type[property_type] = pandas.concat(
+            data_frames, ignore_index=True, sort=False
+        )
+
+    # Apply a rough filter to cut down on the amount of pure density data
+    smiles_to_include = []
+
+    for property_tuple, data_frame in data_frames_by_property_type.items():
+
+        property_type, substance_type = property_tuple
+
+        if property_type == Density and substance_type == SubstanceType.Pure:
+            continue
+
+        substance_smiles = data_frame_to_smiles_tuples(data_frame)
+        smiles_to_include.extend(x for y in substance_smiles for x in y)
+
+    smiles_to_include = set(smiles_to_include)
+
+    data_frames_by_property_type[(Density, SubstanceType.Pure)] = filter_by_smiles(
+        data_frames_by_property_type[(Density, SubstanceType.Pure)],
+        smiles_to_include,
+        None
     )
 
-    # Select a mixture test set
-    mixture_test_set = build_mixture_set()
-    mixture_test_set.json(os.path.join(output_directory, "mixture_set.json"))
+    # Select the data points to include.
+    with TemporaryDirectory() as working_directory:
 
-    mixture_test_pandas = mixture_test_set.to_pandas()
+        for property_type, data_frame in data_frames_by_property_type.items():
+            save_processed_data_set(working_directory, data_frame, *property_type)
 
-    mixture_test_pandas.to_csv(
-        os.path.join(output_directory, "mixture_set.csv"), index=False
-    )
-    data_frame_to_pdf(
-        mixture_test_pandas, os.path.join(output_directory, "mixture_set.pdf"),
-    )
+        full_data_set = select_data_points(
+            data_directory=working_directory,
+            chosen_substances=None,
+            target_state_points=target_states,
+        )
 
-    # Combine the two sets
-    full_data_set = PhysicalPropertyDataSet()
-    full_data_set.merge(pure_test_set)
-    full_data_set.merge(mixture_test_set)
+    full_data_frame = full_data_set.to_pandas()
+    full_data_frame.to_csv(os.path.join(output_directory, "full_set.csv"), index=False)
 
+    # Save out the data set
     full_data_set.json(os.path.join(output_directory, "full_set.json"))
 
-    full_set_pandas = full_data_set.to_pandas()
-    full_set_pandas.to_csv(os.path.join(output_directory, "full_set.csv"), index=False)
+    # Create views of the data in the data set.
+    for property_type, substance_type in properties_of_interest:
 
-    # Find the overlap of components of the pure and mixture sets.
-    unique_pure_systems = data_frame_to_smiles_tuples(pure_test_pandas)
-    unique_pure_components = set(x for y in unique_pure_systems for x in y)
+        n_components = substance_type_to_int[substance_type]
 
-    unique_mixture_systems = data_frame_to_smiles_tuples(mixture_test_pandas)
-    unique_mixture_components = set(x for y in unique_mixture_systems for x in y)
+        # Filter by number of components
+        data_frame = full_data_frame[full_data_frame["N Components"] == n_components]
+        data_frame = data_frame.dropna(axis=1, how="all")
 
-    smiles_to_pdf(
-        [*unique_mixture_components],
-        os.path.join(output_directory, "mixture_set_only_components.pdf"),
-    )
+        property_header = (
+            f"{property_type.__name__} Value ({property_type.default_unit():~})"
+        )
+        data_frame = data_frame.dropna(axis=0, how="all", subset=[property_header])
 
-    common_components = unique_pure_components.intersection(unique_mixture_components)
+        property_name = property_to_snake_case(property_type)
 
-    smiles_to_pdf(
-        [*common_components],
-        os.path.join(output_directory, "pure_and_mixture_components.pdf"),
-    )
+        file_name = f"{property_name}_{str(substance_type.value)}"
+        file_path = os.path.join(output_directory, file_name)
+
+        data_frame.to_csv(f"{file_path}.csv", index=False)
+        data_frame_to_pdf(data_frame, f"{file_path}.pdf")
 
 
 if __name__ == "__main__":

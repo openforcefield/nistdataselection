@@ -1,108 +1,119 @@
+"""This script finds those substances for which their is data
+of multiple specific types available (i.e those substances which
+have both binary mass density and enthalpy of mixing data available).
+
+All data for such substances is then extracted and stored in the
+`data_by_environments/{environment_1}_{environment_2}/common_data`
+directory.
+"""
 import logging
 import os
+from glob import glob
 
-import pandas
 from evaluator.properties import Density, EnthalpyOfMixing, ExcessMolarVolume
 
 from nistdataselection.curation.filtering import filter_by_substance_composition
-from nistdataselection.processing import save_processed_data_set
+from nistdataselection.processing import (
+    load_processed_data_set,
+    save_processed_data_set,
+)
 from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
-from nistdataselection.utils.utils import SubstanceType, data_frame_to_pdf
+from nistdataselection.utils.utils import SubstanceType, smiles_to_pdf
 
 
 def main():
 
+    root_output_directory = "data_by_environments"
+
     # Set up logging
     logging.basicConfig(level=logging.INFO)
 
-    h_mix_data_frame = pandas.read_csv(
-        "all_alcohol_ester_data/enthalpy_of_mixing_binary.csv"
-    )
-    v_excess_data_frame = pandas.read_csv(
-        "converted_density_data/excess_molar_volume_binary.csv"
-    )
-    binary_density_data_frame = pandas.read_csv(
-        "converted_density_data/density_binary.csv"
-    )
+    # Define the types of data to find.
+    properties_of_interest = [
+        [(EnthalpyOfMixing, SubstanceType.Binary), (Density, SubstanceType.Binary)],
+        [
+            (EnthalpyOfMixing, SubstanceType.Binary),
+            (ExcessMolarVolume, SubstanceType.Binary),
+        ],
+        [
+            (EnthalpyOfMixing, SubstanceType.Binary),
+            (Density, SubstanceType.Binary),
+            (ExcessMolarVolume, SubstanceType.Binary),
+        ],
+    ]
 
-    h_mix_substances = set(data_frame_to_smiles_tuples(h_mix_data_frame))
-    v_excess_substances = set(data_frame_to_smiles_tuples(v_excess_data_frame))
-    binary_density_substances = set(
-        data_frame_to_smiles_tuples(binary_density_data_frame)
-    )
+    # Define some shorter file names to use:
+    type_to_file_name = {
+        (Density, SubstanceType.Binary): "rho_x",
+        (EnthalpyOfMixing, SubstanceType.Binary): "h_mix",
+        (ExcessMolarVolume, SubstanceType.Binary): "v_excess",
+    }
 
-    # Save those data points for which we have both hmix and vexcess
-    h_mix_v_excess_overlap = h_mix_substances.intersection(v_excess_substances)
+    # Define which types of mixtures we are interested in, e.g.
+    # alcohol-alcohol, alcohol-ester etc.
+    environments_of_interest = [
+        os.path.basename(x) for x in glob("data_by_environments/*")
+    ]
 
-    h_mix_with_v_excess = filter_by_substance_composition(
-        h_mix_data_frame,
-        compositions_to_include=h_mix_v_excess_overlap,
-        compositions_to_exclude=None,
-    )
-    v_excess_with_h_mix = filter_by_substance_composition(
-        v_excess_data_frame,
-        compositions_to_include=h_mix_v_excess_overlap,
-        compositions_to_exclude=None,
-    )
+    for environment_of_interest in environments_of_interest:
 
-    h_mix_v_excess_directory = os.path.join("common_data", "h_mix_and_v_excess")
-    os.makedirs(h_mix_v_excess_directory, exist_ok=True)
+        data_directory = os.path.join(
+            "data_by_environments", environment_of_interest, "all_data"
+        )
 
-    save_processed_data_set(
-        h_mix_v_excess_directory,
-        h_mix_with_v_excess,
-        EnthalpyOfMixing,
-        SubstanceType.Binary,
-    )
-    save_processed_data_set(
-        h_mix_v_excess_directory,
-        v_excess_with_h_mix,
-        ExcessMolarVolume,
-        SubstanceType.Binary,
-    )
+        os.makedirs(
+            os.path.join(root_output_directory, environment_of_interest, "common_data"),
+            exist_ok=True,
+        )
 
-    data_frame_to_pdf(
-        h_mix_with_v_excess, os.path.join("common_data", "h_mix_and_v_excess.pdf")
-    )
+        for property_type_set in properties_of_interest:
 
-    # Save those data points for which we have both hmix and binary density
-    h_mix_binary_density_overlap = h_mix_substances.intersection(
-        binary_density_substances
-    )
+            # Find the set of substances which are common to all of the
+            # specified property types.
+            all_substance_smiles = []
 
-    h_mix_with_binary_density = filter_by_substance_composition(
-        h_mix_data_frame,
-        compositions_to_include=h_mix_binary_density_overlap,
-        compositions_to_exclude=None,
-    )
-    binary_density_with_h_mix = filter_by_substance_composition(
-        binary_density_data_frame,
-        compositions_to_include=h_mix_binary_density_overlap,
-        compositions_to_exclude=None,
-    )
+            for property_type, substance_type in property_type_set:
 
-    h_mix_binary_density_directory = os.path.join(
-        "common_data", "h_mix_and_binary_density"
-    )
-    os.makedirs(h_mix_binary_density_directory, exist_ok=True)
+                data_frame = load_processed_data_set(
+                    data_directory, property_type, substance_type
+                )
 
-    save_processed_data_set(
-        h_mix_binary_density_directory,
-        h_mix_with_binary_density,
-        EnthalpyOfMixing,
-        SubstanceType.Binary,
-    )
-    save_processed_data_set(
-        h_mix_binary_density_directory,
-        binary_density_with_h_mix,
-        Density,
-        SubstanceType.Binary,
-    )
+                substance_smiles = set(data_frame_to_smiles_tuples(data_frame))
+                all_substance_smiles.append(substance_smiles)
 
-    data_frame_to_pdf(
-        h_mix_with_binary_density,
-        os.path.join("common_data", "h_mix_and_binary_density.pdf"),
-    )
+            common_substance_smiles = set.intersection(*all_substance_smiles)
+
+            # Save the common substances to a pdf file.
+            file_name = "_".join(type_to_file_name[x] for x in property_type_set)
+
+            file_path = os.path.join(
+                root_output_directory,
+                environment_of_interest,
+                "common_data",
+                f"{file_name}.pdf",
+            )
+
+            if len(common_substance_smiles) > 0:
+                smiles_to_pdf(list(common_substance_smiles), file_path)
+
+            # Output the common data to the `common_data` directory.
+            output_directory = os.path.join(
+                root_output_directory, environment_of_interest, "common_data", file_name
+            )
+
+            for property_type, substance_type in property_type_set:
+
+                data_frame = load_processed_data_set(
+                    data_directory, property_type, substance_type
+                )
+
+                data_frame = filter_by_substance_composition(
+                    data_frame, common_substance_smiles, None
+                )
+
+                save_processed_data_set(
+                    output_directory, data_frame, property_type, substance_type
+                )
 
 
 if __name__ == "__main__":

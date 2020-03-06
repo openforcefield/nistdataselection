@@ -87,7 +87,9 @@ def main():
 
         for environment_type in data_of_interest[property_type]:
 
-            for partition_of_interest in data_of_interest[property_type][environment_type]:
+            for partition_of_interest in data_of_interest[property_type][
+                environment_type
+            ]:
 
                 data_directory = os.path.join(
                     "partitioned_data", environment_type, partition_of_interest
@@ -118,7 +120,7 @@ def main():
     data_frames_by_property_type[(Density, SubstanceType.Pure)] = filter_by_smiles(
         data_frames_by_property_type[(Density, SubstanceType.Pure)],
         smiles_to_include,
-        None
+        None,
     )
 
     # Select the data points to include.

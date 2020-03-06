@@ -200,10 +200,13 @@ def convert_v_excess_to_density(v_excess_data_set):
 
 def main():
 
+    output_directory = "converted_density_data"
+    os.makedirs(output_directory, exist_ok=True)
+
     # Set up logging
     logging.basicConfig(level=logging.INFO)
 
-    root_data_directory = "all_alcohol_ester_data"
+    root_data_directory = os.path.join("..", "..", "shared", "filtered_data")
 
     # Load in the data sets of interest
     pure_density_data = load_processed_data_set(
@@ -239,9 +242,6 @@ def main():
     # Filter out any duplicate data points.
     full_binary_data = filter_duplicates(full_binary_data)
     full_v_excess_data = filter_duplicates(full_v_excess_data)
-
-    output_directory = "converted_density_data"
-    os.makedirs(output_directory, exist_ok=True)
 
     save_processed_data_set(
         output_directory, full_binary_data, Density, SubstanceType.Binary

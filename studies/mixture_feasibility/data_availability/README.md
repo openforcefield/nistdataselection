@@ -1,19 +1,7 @@
-The purpose of the scripts within this directory is to extract all density (pure and binary), enthalpy of vaporization,
-enthalpy of mixing and excess molar volume measurements made for alcohols, esters and acids.
+The purpose of the scripts within this folder is to extract all density (pure and binary), enthalpy of vaporization,
+enthalpy of mixing and excess molar volume measurements made for different chemical environments.
 
 In particular, the:
-  
-* ``filter_alcohol_ester.py`` applies filters to the the processed data in the ``shared`` folder, retaining only those
-  measurements made for alcohols, esters and acids, and for substances only composed of C, H and O elements. The output 
-  is stored in the ``all_alcohol_ester_data`` folder.
-
-* ``filter_alcohol_alcohol.py`` applies filters to the the processed data in the ``shared`` folder, retaining only those
-  measurements made for pairs of alcohols and for substances only composed of C, H and O elements. The output 
-  is stored in the ``all_alcohol_alcohol_data`` folder.
-  
-* ``filter_ester_ester.py`` applies filters to the the processed data in the ``shared`` folder, retaining only those
-  measurements made for pairs of esters or acids and for substances only composed of C, H and O elements. The output 
-  is stored in the ``all_ester_ester_data`` folder.
 
 * ``convert_density_data.py`` script inter-converts all excess molar volume data into binary mass density data
   and vice versa in those cases where pure density measurements are available.
@@ -25,11 +13,19 @@ In particular, the:
   
   The converted data is stored in the ``converted_density_data`` folder.
   
-* ``find_common_data.py`` script finds those systems for which their is both enthalpy of mixing and excess molar volume
-  or both  enthalpy of mixing and binary mass density data available. The common data is stored in a ``common_data``
-  directory.
+* ``filter_data.py`` applies filters to the the processed data in the ``shared`` and `converted_density_data`
+  folders, retaining only those measurements made for components containing a specified set of chemical moieties, 
+  and for substances only composed of C, H and O elements. 
   
-  **Note** This script does check whether the different types of properties were measured at the same states (i.e
+  The output is partitioned into the  `data_by_environments/{environment_1}_{environment_2}/all_data` folders.
+
+* ``find_common_data.py`` script finds those substances for which their is data available for multiple types of property 
+  (i.e those substances which have both binary mass density and enthalpy of mixing data available).
+
+  All data for such substances is extracted and partitioned into the `data_by_environments/{environment_1}_{environment_2}/common_data` 
+  folders.
+  
+  **Note** This script does *not* check whether the different types of properties were measured at the same states (i.e
   temperature, pressure and mole fraction).
   
 * ``source_h_vap_data.py`` scripts builds a new data set of enthalpy of vaporization measurements source from the

@@ -4,55 +4,49 @@ compounds from the available data.
 import functools
 import os
 from collections import defaultdict
+from tempfile import TemporaryDirectory
 
 import pandas
 from evaluator import unit
 from evaluator.datasets import PhysicalPropertyDataSet
-from evaluator.properties import Density, EnthalpyOfMixing, ExcessMolarVolume
-
-from nistdataselection.curation.filtering import (
-    filter_by_smiles,
-    filter_by_substance_composition,
-    filter_by_temperature,
+from evaluator.properties import (
+    Density,
+    EnthalpyOfMixing,
+    EnthalpyOfVaporization,
+    ExcessMolarVolume,
 )
+
+from nistdataselection.curation.filtering import filter_by_smiles
 from nistdataselection.curation.selection import StatePoint, select_data_points
 from nistdataselection.processing import (
     load_processed_data_set,
     save_processed_data_set,
 )
-from nistdataselection.utils import SubstanceType, data_set_from_data_frame
-from nistdataselection.utils.utils import data_frame_to_pdf
+from nistdataselection.utils import SubstanceType
+from nistdataselection.utils.pandas import (
+    data_frame_to_smiles_tuples,
+    data_set_from_data_frame,
+)
+from nistdataselection.utils.utils import data_frame_to_pdf, smiles_to_pdf
 
 
-def build_pure_set(pure_training_set_smiles):
+def build_pure_set():
 
     # Load in the Hvap data
-    h_vap_data_frame = pandas.read_csv(
-        os.path.join(
-            "..", "data_availability", "sourced_h_vap_data", "alcohol_ester_h_vap.csv"
-        )
+    h_vap_data_frame = load_processed_data_set(
+        "filtered_data", EnthalpyOfVaporization, SubstanceType.Pure
     )
+
+    # Filter out water
     h_vap_data_frame = filter_by_smiles(
-        h_vap_data_frame,
-        smiles_to_include=None,
-        smiles_to_exclude=pure_training_set_smiles,
+        h_vap_data_frame, smiles_to_include=None, smiles_to_exclude=["O"]
     )
 
     h_vap_data_set = data_set_from_data_frame(h_vap_data_frame)
 
-    # Pull out the chosen smiles patterns
-    chosen_smiles = [*h_vap_data_frame["Component 1"]]
-
-    # # Load in the density data
-    density_data_frame = pandas.read_csv(
-        os.path.join(
-            "..", "data_availability", "all_alcohol_ester_data", "density_pure.csv"
-        )
+    density_data_frame = load_processed_data_set(
+        "filtered_data", Density, SubstanceType.Pure
     )
-    density_data_frame = filter_by_smiles(
-        density_data_frame, smiles_to_include=chosen_smiles, smiles_to_exclude=None
-    )
-
     density_data_set = data_set_from_data_frame(density_data_frame)
 
     # Retain the density measurements which were made closest to 298.15K and 1 atm.
@@ -91,111 +85,65 @@ def build_pure_set(pure_training_set_smiles):
     return final_data_set
 
 
-def filter_common_data(mixture_training_set_smiles, output_directory):
-    """Filter the common data to a smaller temperature range - this
-    seems to help the state selection method get closer to the target
-    states.
-    """
-    os.makedirs(os.path.join(output_directory), exist_ok=True)
+def build_mixture_set():
 
-    for property_type, substance_type in [
-        (EnthalpyOfMixing, SubstanceType.Binary),
-        (ExcessMolarVolume, SubstanceType.Binary),
-        (Density, SubstanceType.Binary),
-    ]:
+    # Pull out data for all of the mixtures whereby neither component was
+    # in the training set.
+    with TemporaryDirectory() as working_directory:
 
-        folder_name = (
-            "h_mix_and_v_excess"
-            if property_type != Density
-            else "h_mix_and_binary_density"
+        for property_type, substance_type in [
+            (EnthalpyOfMixing, SubstanceType.Binary),
+            (ExcessMolarVolume, SubstanceType.Binary),
+            (Density, SubstanceType.Binary),
+        ]:
+
+            pair_data_frames = []
+
+            for pair_type in ["alcohol_only", "alcohol_ester", "ester_ester"]:
+
+                data_directory = os.path.join(
+                    f"partitioned_{pair_type}_data", "neither_in_training"
+                )
+                pair_data_frames.append(
+                    load_processed_data_set(
+                        data_directory, property_type, substance_type
+                    )
+                )
+
+            pair_data_frame = pandas.concat(
+                pair_data_frames, ignore_index=True, sort=False
+            )
+
+            save_processed_data_set(
+                working_directory, pair_data_frame, property_type, substance_type
+            )
+
+        target_states = [
+            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.25, 0.75)),
+            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.50, 0.50)),
+            StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.75, 0.25)),
+        ]
+
+        mixture_set = select_data_points(
+            data_directory=working_directory,
+            chosen_substances=None,
+            target_state_points={
+                (EnthalpyOfMixing, SubstanceType.Binary): target_states,
+                (ExcessMolarVolume, SubstanceType.Binary): target_states,
+                (Density, SubstanceType.Binary): target_states,
+            },
         )
-
-        data_frame = load_processed_data_set(
-            os.path.join("..", "data_availability", "common_data", folder_name),
-            property_type,
-            substance_type,
-        )
-        data_frame = filter_by_temperature(
-            data_frame, 290.0 * unit.kelvin, 305 * unit.kelvin
-        )
-        data_frame = filter_by_substance_composition(
-            data_frame, None, mixture_training_set_smiles
-        )
-
-        save_processed_data_set(
-            output_directory, data_frame, property_type, substance_type,
-        )
-
-
-def build_mixture_set(mixture_training_set_smiles):
-
-    target_states = [
-        StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.25, 0.75)),
-        StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.50, 0.50)),
-        StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.75, 0.25)),
-    ]
-
-    filtered_directory = "filtered_mixture_data"
-    filter_common_data(mixture_training_set_smiles, filtered_directory)
-
-    output_directory = "training_sets"
-    os.makedirs(output_directory, exist_ok=True)
-
-    mixture_set = select_data_points(
-        data_directory=filtered_directory,
-        chosen_substances=None,
-        target_state_points={
-            (EnthalpyOfMixing, SubstanceType.Binary): target_states,
-            (ExcessMolarVolume, SubstanceType.Binary): target_states,
-            (Density, SubstanceType.Binary): target_states,
-        },
-    )
 
     return mixture_set
 
 
 def main():
 
-    output_directory = "selected_sets"
+    output_directory = "test_sets"
     os.makedirs(output_directory, exist_ok=True)
 
-    # Determine which compounds were used during training.
-    h_mix_v_excess_set = PhysicalPropertyDataSet.from_json(
-        os.path.join(
-            "..",
-            "pure_mixture_optimisation",
-            "force_balance",
-            "h_mix_v_excess_rho_pure_h_vap",
-            "targets",
-            "mixture_data",
-            "training_set.json",
-        )
-    )
-    h_mix_rho_x_set = PhysicalPropertyDataSet.from_json(
-        os.path.join(
-            "..",
-            "pure_mixture_optimisation",
-            "force_balance",
-            "h_mix_rho_x_rho_pure_h_vap",
-            "targets",
-            "mixture_data",
-            "training_set.json",
-        )
-    )
-
-    all_substance_smiles = [
-        *((x.smiles for x in y) for y in h_mix_v_excess_set.substances),
-        *((x.smiles for x in y) for y in h_mix_rho_x_set.substances),
-    ]
-    all_substance_smiles = [tuple(sorted(x)) for x in all_substance_smiles]
-
-    unique_substance_smiles = set(all_substance_smiles)
-
-    pure_substance_smiles = [x for x in unique_substance_smiles if len(x) == 1]
-    binary_substance_smiles = [x for x in unique_substance_smiles if len(x) == 2]
-
     # Select a pure test set
-    pure_test_set = build_pure_set(pure_substance_smiles)
+    pure_test_set = build_pure_set()
     pure_test_set.json(os.path.join(output_directory, "pure_set.json"))
 
     pure_test_pandas = pure_test_set.to_pandas()
@@ -206,7 +154,7 @@ def main():
     )
 
     # Select a mixture test set
-    mixture_test_set = build_mixture_set(binary_substance_smiles)
+    mixture_test_set = build_mixture_set()
     mixture_test_set.json(os.path.join(output_directory, "mixture_set.json"))
 
     mixture_test_pandas = mixture_test_set.to_pandas()
@@ -226,8 +174,26 @@ def main():
     full_data_set.json(os.path.join(output_directory, "full_set.json"))
 
     full_set_pandas = full_data_set.to_pandas()
-
     full_set_pandas.to_csv(os.path.join(output_directory, "full_set.csv"), index=False)
+
+    # Find the overlap of components of the pure and mixture sets.
+    unique_pure_systems = data_frame_to_smiles_tuples(pure_test_pandas)
+    unique_pure_components = set(x for y in unique_pure_systems for x in y)
+
+    unique_mixture_systems = data_frame_to_smiles_tuples(mixture_test_pandas)
+    unique_mixture_components = set(x for y in unique_mixture_systems for x in y)
+
+    smiles_to_pdf(
+        [*unique_mixture_components],
+        os.path.join(output_directory, "mixture_set_only_components.pdf"),
+    )
+
+    common_components = unique_pure_components.intersection(unique_mixture_components)
+
+    smiles_to_pdf(
+        [*common_components],
+        os.path.join(output_directory, "pure_and_mixture_components.pdf"),
+    )
 
 
 if __name__ == "__main__":

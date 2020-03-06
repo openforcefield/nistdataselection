@@ -10,7 +10,12 @@ import logging
 import os
 from tempfile import TemporaryDirectory
 
-from evaluator.properties import Density, EnthalpyOfMixing, ExcessMolarVolume
+from evaluator.properties import (
+    Density,
+    EnthalpyOfMixing,
+    EnthalpyOfVaporization,
+    ExcessMolarVolume,
+)
 
 from nistdataselection import processing
 from nistdataselection.curation.filtering import filter_by_checkmol, filter_by_elements
@@ -90,6 +95,7 @@ def main():
     # Define the properties and environments we are interested in.
     pure_properties_of_interest = [
         (Density, SubstanceType.Pure),
+        (EnthalpyOfVaporization, SubstanceType.Pure),
     ]
     mixture_properties_of_interest = [
         (Density, SubstanceType.Binary),
@@ -123,10 +129,6 @@ def main():
         # interest
         for property_type, substance_type in properties_of_interest:
 
-            data_set = load_processed_data_set(
-                root_data_directory, property_type, substance_type
-            )
-
             if (
                 property_type in [Density, ExcessMolarVolume]
                 and substance_type == SubstanceType.Binary
@@ -136,6 +138,18 @@ def main():
                 # data.
                 data_set = load_processed_data_set(
                     "converted_density_data", property_type, substance_type
+                )
+
+            elif property_type == EnthalpyOfVaporization:
+
+                data_set = load_processed_data_set(
+                    "sourced_h_vap_data", property_type, substance_type
+                )
+
+            else:
+
+                data_set = load_processed_data_set(
+                    root_data_directory, property_type, substance_type
                 )
 
             save_processed_data_set(

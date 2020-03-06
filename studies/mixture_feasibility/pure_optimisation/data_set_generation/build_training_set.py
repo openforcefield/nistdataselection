@@ -39,7 +39,7 @@ def main():
             "..",
             "data_availability",
             "sourced_h_vap_data",
-            "alcohol_ester_h_vap.csv",
+            "enthalpy_of_vaporization_pure.csv",
         )
     )
     h_vap_data_frame = filter_by_smiles(

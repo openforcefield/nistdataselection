@@ -1,3 +1,4 @@
+import logging
 import os
 
 from evaluator import unit
@@ -6,8 +7,18 @@ from evaluator.properties import EnthalpyOfVaporization
 from evaluator.substances import Substance
 from evaluator.thermodynamics import ThermodynamicState
 
+from nistdataselection.curation.filtering import filter_undefined_stereochemistry
+from nistdataselection.processing import save_processed_data_set
+from nistdataselection.utils import SubstanceType
+from nistdataselection.utils.utils import data_frame_to_pdf
+
+logger = logging.getLogger(__name__)
+
 
 def main():
+
+    # Set up logging
+    logging.basicConfig(level=logging.INFO)
 
     # Build a data set containing the training set Hvap measurements sourced
     # from the literature.
@@ -69,17 +80,6 @@ def main():
             value=53 * unit.kilojoule / unit.mole,
             uncertainty=2 * unit.kilojoule / unit.mole,
             source=MeasurementSource(doi="10.3891/acta.chem.scand.24-2612"),
-        ),
-        # Water
-        EnthalpyOfVaporization(
-            thermodynamic_state=ThermodynamicState(
-                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
-            ),
-            phase=h_vap_phase,
-            substance=Substance.from_components("O"),
-            value=43.98 * unit.kilojoule / unit.mole,
-            uncertainty=0.02199 * unit.kilojoule / unit.mole,
-            source=MeasurementSource(doi="10.1016/S0021-9614(71)80108-8"),
         ),
         # Methanol
         EnthalpyOfVaporization(
@@ -449,12 +449,27 @@ def main():
     output_directory = "sourced_h_vap_data"
     os.makedirs(output_directory, exist_ok=True)
 
-    h_vap_data_set.to_pandas().to_csv(
-        os.path.join(output_directory, "alcohol_ester_h_vap.csv"), index=False
+    data_frame = h_vap_data_set.to_pandas()
+
+    # Check for undefined stereochemistry
+    filtered_data_frame = filter_undefined_stereochemistry(data_frame)
+
+    filtered_components = {*data_frame["Component 1"]} - {
+        *filtered_data_frame["Component 1"]
+    }
+    logger.info(
+        f"Compounds without stereochemistry were removed: {filtered_components}"
     )
-    h_vap_data_set.json(
-        os.path.join(output_directory, "alcohol_ester_h_vap.json"), format=True
+
+    save_processed_data_set(
+        output_directory,
+        filtered_data_frame,
+        EnthalpyOfVaporization,
+        SubstanceType.Pure,
     )
+
+    file_path = os.path.join(output_directory, "enthalpy_of_vaporization_pure.pdf")
+    data_frame_to_pdf(filtered_data_frame, file_path)
 
 
 if __name__ == "__main__":

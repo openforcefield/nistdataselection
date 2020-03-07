@@ -1,4 +1,5 @@
 import functools
+import os
 from collections import defaultdict
 
 import pandas
@@ -33,7 +34,13 @@ def main():
 
     # Load in the Hvap data
     h_vap_data_frame = pandas.read_csv(
-        "../../data_availability/sourced_h_vap_data/alcohol_ester_h_vap.csv"
+        os.path.join(
+            "..",
+            "..",
+            "data_availability",
+            "sourced_h_vap_data",
+            "enthalpy_of_vaporization_pure.csv",
+        )
     )
     h_vap_data_frame = filter_by_smiles(
         h_vap_data_frame, smiles_to_include=smiles, smiles_to_exclude=None
@@ -43,7 +50,15 @@ def main():
 
     # # Load in the density data
     density_data_frame = pandas.read_csv(
-        "../../data_availability/all_alcohol_ester_data/density_pure.csv"
+        os.path.join(
+            "..",
+            "..",
+            "data_availability",
+            "data_by_environments",
+            "alcohol_ester",
+            "all_data",
+            "density_pure.csv",
+        )
     )
     density_data_frame = filter_by_smiles(
         density_data_frame, smiles_to_include=smiles, smiles_to_exclude=None

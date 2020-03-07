@@ -32,7 +32,15 @@ def filter_common_data(output_directory):
     ]:
 
         data_frame = load_processed_data_set(
-            os.path.join("../../data_availability/common_data", "h_mix_and_v_excess"),
+            os.path.join(
+                "..",
+                "..",
+                "data_availability",
+                "data_by_environments",
+                "alcohol_ester",
+                "common_data",
+                "h_mix_v_excess",
+            ),
             property_type,
             substance_type,
         )
@@ -53,7 +61,13 @@ def filter_common_data(output_directory):
 
         data_frame = load_processed_data_set(
             os.path.join(
-                "../../data_availability/common_data", "h_mix_and_binary_density"
+                "..",
+                "..",
+                "data_availability",
+                "data_by_environments",
+                "alcohol_ester",
+                "common_data",
+                "h_mix_rho_x",
             ),
             property_type,
             substance_type,

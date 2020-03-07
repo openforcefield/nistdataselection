@@ -57,8 +57,7 @@ def main():
             client = EvaluatorClient(ConnectionOptions(server_port=8000))
 
             request, _ = client.request_estimate(
-                property_set=data_set,
-                force_field_source=force_field_source,
+                property_set=data_set, force_field_source=force_field_source,
             )
 
             # Wait for the results.

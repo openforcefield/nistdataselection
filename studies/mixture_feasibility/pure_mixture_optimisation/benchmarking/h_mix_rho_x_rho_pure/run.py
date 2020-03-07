@@ -48,13 +48,13 @@ def main():
         server = EvaluatorServer(
             calculation_backend=calculation_backend,
             working_directory=working_directory,
-            port=8000,
+            port=8001,
         )
 
         with server:
 
             # Request the estimates.
-            client = EvaluatorClient(ConnectionOptions(server_port=8000))
+            client = EvaluatorClient(ConnectionOptions(server_port=8001))
 
             request, _ = client.request_estimate(
                 property_set=data_set,

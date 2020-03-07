@@ -10,7 +10,6 @@
 #
 # Set any queue options.
 #BSUB -q cpuqueue
-#BSUB -M 8
 
 . ~/.bashrc
 

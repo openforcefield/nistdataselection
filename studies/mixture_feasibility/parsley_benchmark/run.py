@@ -13,7 +13,7 @@ def main():
     setup_timestamp_logging()
 
     # Load in the force field
-    force_field_path = "openff-1.0.0-refit.offxml"
+    force_field_path = "openff-1.0.0.offxml"
     force_field_source = SmirnoffForceFieldSource.from_path(force_field_path)
 
     # Load in the test set.
@@ -48,13 +48,13 @@ def main():
         server = EvaluatorServer(
             calculation_backend=calculation_backend,
             working_directory=working_directory,
-            port=8003,
+            port=8004,
         )
 
         with server:
 
             # Request the estimates.
-            client = EvaluatorClient(ConnectionOptions(server_port=8003))
+            client = EvaluatorClient(ConnectionOptions(server_port=8004))
 
             request, _ = client.request_estimate(
                 property_set=data_set,

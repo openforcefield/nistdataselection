@@ -24,6 +24,7 @@ from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
 from nistdataselection.utils.utils import (
     data_frame_to_pdf,
     property_to_snake_case,
+    smiles_to_pdf,
     substance_type_to_int,
 )
 
@@ -162,6 +163,21 @@ def main():
 
         data_frame.to_csv(f"{file_path}.csv", index=False)
         data_frame_to_pdf(data_frame, f"{file_path}.pdf")
+
+    # Extract all of the components present in the mixture set and pure set.
+    mixture_data_frame = full_data_frame[full_data_frame["N Components"] == 2]
+    mixture_components = list(
+        {*mixture_data_frame["Component 1"], *mixture_data_frame["Component 2"]}
+    )
+    smiles_to_pdf(
+        mixture_components, os.path.join(output_directory, "mixture_components.pdf")
+    )
+
+    pure_data_frame = full_data_frame[full_data_frame["N Components"] == 1]
+    pure_components = list({*pure_data_frame["Component 1"]})
+    smiles_to_pdf(
+        pure_components, os.path.join(output_directory, "pure_components.pdf")
+    )
 
 
 if __name__ == "__main__":

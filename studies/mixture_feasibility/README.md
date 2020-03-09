@@ -25,3 +25,6 @@ In particular, the:
   on the benchmarking results.
 
 * ``average_uncertainties`` folder contains a script to extract the average uncertainty in each property of interest.
+
+* ``parsley_benchmark`` folder which contains the scripts to benchmark the openff-1.0.0 force field against the
+  test set.

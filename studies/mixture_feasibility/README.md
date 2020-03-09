@@ -21,6 +21,7 @@ In particular, the:
   optimizing against condensed phase properties of pure and binary substances, to run ``ForceBalance`` on that 
   training set, and to benchmark against the test set.
 
-* ``benchmark_selection`` folder contains the scripts used to compile the benchmark data set.
+* ``benchmarking`` folder contains the scripts used to compile the benchmark test data set, and to perform analysis
+  on the benchmarking results.
 
 * ``average_uncertainties`` folder contains a script to extract the average uncertainty in each property of interest.

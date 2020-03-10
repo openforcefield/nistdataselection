@@ -571,7 +571,7 @@ def filter_by_checkmol(data_set, *checkmol_codes):
     """
 
     n_components = data_set["N Components"].min()
-    assert n_components == data_set["N Components"].max()
+    assert n_components == int(data_set["N Components"].max())
 
     assert len(checkmol_codes) == n_components
 

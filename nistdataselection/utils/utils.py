@@ -88,7 +88,9 @@ def property_to_snake_case(property_type):
     return re.sub(r"(?<!^)(?=[A-Z])", "_", property_type).lower()
 
 
-def property_to_title(property_type, substance_type, property_unit=None, latex_unit=False):
+def property_to_title(
+    property_type, substance_type, property_unit=None, latex_unit=False
+):
     """Converts a property type to a title case, e.g `ExcessMolarVolume`
     and `SubstanceType.Binary` becomes `Binary Excess Molar Volume`
 
@@ -114,9 +116,7 @@ def property_to_title(property_type, substance_type, property_unit=None, latex_u
 
     property_name = " ".join(
         re.sub(
-            "([A-Z][a-z]+)",
-            r" \1",
-            re.sub("([A-Z]+)", r" \1", property_type),
+            "([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", property_type),
         ).split()
     )
 

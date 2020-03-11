@@ -178,7 +178,10 @@ def plot_data(
         nrows=n_rows,
         ncols=1,
         dpi=dots_per_inch,
-        figsize=(sub_plot_size * n_columns, sub_plot_size * n_rows + 0.2 + 0.4 * n_rows),
+        figsize=(
+            sub_plot_size * n_columns,
+            sub_plot_size * n_rows + 0.2 + 0.4 * n_rows,
+        ),
     )
 
     if include_row_title:
@@ -295,7 +298,14 @@ def plot_data(
                     )
 
             axis_box = axis.get_position()
-            axis.set_position([axis_box.x0, axis_box.y0, axis_box.width * 0.95, axis_box.height * 0.95])
+            axis.set_position(
+                [
+                    axis_box.x0,
+                    axis_box.y0,
+                    axis_box.width * 0.95,
+                    axis_box.height * 0.95,
+                ]
+            )
 
             if statistics is None:
                 continue

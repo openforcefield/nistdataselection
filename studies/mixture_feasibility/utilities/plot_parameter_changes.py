@@ -22,7 +22,7 @@ def plot_paramter_changes(original_parameters, optimized_parameters, output_path
         "#2196F3",
         "#1E88E5",
         "#1976D2",
-        "#1565C0"
+        "#1565C0",
     ]
 
     study_names = [*next(iter(original_parameters.values())).keys()]
@@ -32,7 +32,8 @@ def plot_paramter_changes(original_parameters, optimized_parameters, output_path
         x_values = numpy.arange(len(original_parameters))
 
         default_unit = getattr(
-            next(iter(next(iter(original_parameters.values())).values())), attribute_type
+            next(iter(next(iter(original_parameters.values())).values())),
+            attribute_type,
         ).unit
 
         for smirks_index, smirks in enumerate(original_parameters):
@@ -59,13 +60,16 @@ def plot_paramter_changes(original_parameters, optimized_parameters, output_path
                     width=bar_height,
                     color=study_colors[study_index],
                     align="center",
-                    label=study_name
+                    label=study_name,
                 )
                 axis.plot(
-                    [x_values[smirks_index] - bar_height * 0.5, x_values[smirks_index] + 1 - bar_height * 1.5],
+                    [
+                        x_values[smirks_index] - bar_height * 0.5,
+                        x_values[smirks_index] + 1 - bar_height * 1.5,
+                    ],
                     [initial_value, initial_value],
                     ":",
-                    color="gray"
+                    color="gray",
                 )
 
         axis.set_ylabel(f"{attribute_type} ({default_unit})")

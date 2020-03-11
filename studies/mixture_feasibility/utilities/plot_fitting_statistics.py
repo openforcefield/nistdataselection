@@ -84,6 +84,7 @@ def plot_average_contribution_per_property(
 
     figure.tight_layout()
     figure.savefig(os.path.join(output_directory, "avg_contribution.pdf"))
+    figure.savefig(os.path.join(output_directory, "avg_contribution.png"))
 
 
 def plot_object_function(statistics_directory, output_directory):
@@ -92,8 +93,6 @@ def plot_object_function(statistics_directory, output_directory):
 
     Parameters
     ----------
-    training_data_set: PhysicalPropertyDataSet
-        The data set which was optimized against.
     statistics_directory: str
         The directory which contains extracted fitting statistics.
     output_directory: str
@@ -112,6 +111,7 @@ def plot_object_function(statistics_directory, output_directory):
 
     figure.tight_layout()
     figure.savefig(os.path.join(output_directory, "objective_function.pdf"))
+    figure.savefig(os.path.join(output_directory, "objective_function.png"))
 
 
 def main(data_set_path, statistics_directory, output_directory):

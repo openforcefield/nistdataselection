@@ -239,7 +239,7 @@ def main():
         for property_tuple, data_frame in data_frames_per_property.items():
 
             file_name = property_to_file_name(*property_tuple)
-            output_path = os.path.join(output_directory, file_name)
+            output_path = os.path.join(output_directory, f"{file_name}.csv")
 
             data_frame.to_csv(output_path, index=False)
 

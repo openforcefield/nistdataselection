@@ -178,7 +178,7 @@ def plot_data(
         nrows=n_rows,
         ncols=1,
         dpi=dots_per_inch,
-        figsize=(sub_plot_size * n_columns, sub_plot_size * n_rows * 1.05),
+        figsize=(sub_plot_size * n_columns, sub_plot_size * n_rows + 0.2 + 0.4 * n_rows),
     )
 
     if include_row_title:
@@ -294,6 +294,9 @@ def plot_data(
                         label=series_label,
                     )
 
+            axis_box = axis.get_position()
+            axis.set_position([axis_box.x0, axis_box.y0, axis_box.width * 0.95, axis_box.height * 0.95])
+
             if statistics is None:
                 continue
 
@@ -307,7 +310,7 @@ def plot_data(
                 all_x_values,
                 all_y_values,
                 statistics=statistics,
-                bootstrap_iterations=100,
+                bootstrap_iterations=1000,
             )
 
             for statistic_index, statistic in enumerate(statistics):
@@ -328,16 +331,15 @@ def plot_data(
         figure.legend(
             handles,
             labels,
-            bbox_to_anchor=(0.25, 0.025, 0.5, 0.2),
+            bbox_to_anchor=(0.1, 0.025, 0.8, 0.2),
             loc="lower left",
             mode="expand",
             borderaxespad=0.0,
             ncol=5,
         )
-        # figure.tight_layout()
+        figure.tight_layout()
 
-        if plot_type == PlotType.Bar:
-            figure.subplots_adjust(bottom=0.2)
+        figure.subplots_adjust(bottom=0.2)
 
     return figure
 
@@ -385,7 +387,7 @@ def plot_full_results(
                 measured_values,
                 estimated_values,
                 statistics=[Statistics.RMSE],
-                bootstrap_iterations=100,
+                bootstrap_iterations=1000,
             )
 
             bar_data["RMSE"][property_label][study_name] = [
@@ -402,9 +404,14 @@ def plot_full_results(
         statistics=[Statistics.RMSE, Statistics.R2],
         x_axis_label="Estimated Value",
         y_axis_label="Experimental Value",
+        include_legend=False,
         share_x=False,
         dots_per_inch=dots_per_inch,
         sub_plot_size=sub_plot_size,
+    )
+    figure.savefig(
+        os.path.join(output_directory, f"estimated_vs_experiment.png"),
+        bbox_inches="tight",
     )
     figure.savefig(
         os.path.join(output_directory, f"estimated_vs_experiment.pdf"),
@@ -417,11 +424,16 @@ def plot_full_results(
     figure = plot_data(
         PlotType.Bar,
         bar_data,
+        y_axis_label="RMSE",
+        include_row_title=False,
         share_x=False,
         share_y=False,
         square_axis=False,
         dots_per_inch=dots_per_inch,
         sub_plot_size=sub_plot_size,
+    )
+    figure.savefig(
+        os.path.join(output_directory, f"rmse_per_property.png"), bbox_inches="tight",
     )
     figure.savefig(
         os.path.join(output_directory, f"rmse_per_property.pdf"), bbox_inches="tight",
@@ -497,7 +509,7 @@ def plot_per_mixture_type(
                         measured_values,
                         estimated_values,
                         statistics=[Statistics.RMSE],
-                        bootstrap_iterations=100,
+                        bootstrap_iterations=1000,
                     )
 
                     bar_data[property_label][mixture_type][study_name] = [
@@ -519,6 +531,10 @@ def plot_per_mixture_type(
             sub_plot_size=sub_plot_size,
         )
         figure.savefig(
+            os.path.join(output_directory, f"{training_restriction}.png"),
+            bbox_inches="tight",
+        )
+        figure.savefig(
             os.path.join(output_directory, f"{training_restriction}.pdf"),
             bbox_inches="tight",
         )
@@ -529,11 +545,16 @@ def plot_per_mixture_type(
         figure = plot_data(
             PlotType.Bar,
             bar_data,
+            y_axis_label="RMSE",
             share_x=False,
-            share_y=False,
+            share_y=True,
             square_axis=False,
             dots_per_inch=dots_per_inch,
             sub_plot_size=sub_plot_size,
+        )
+        figure.savefig(
+            os.path.join(output_directory, f"{training_restriction}_rmse.png"),
+            bbox_inches="tight",
         )
         figure.savefig(
             os.path.join(output_directory, f"{training_restriction}_rmse.pdf"),
@@ -552,6 +573,7 @@ def main():
         "openff-1.0.0",
         "h_mix_rho_x",
         "h_mix_rho_x_rho_pure",
+        "h_mix_rho_x_rho_pure_h_vap",
         "h_mix_v_excess",
         "rho_pure_h_vap",
     ]

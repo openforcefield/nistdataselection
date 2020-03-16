@@ -18,7 +18,7 @@
         "EnthalpyOfVaporization": {
             "@type": "evaluator.unit.Quantity",
             "unit": "kJ / mol",
-            "value": 5.742931305317869
+            "value": 25.6831695776047
         },
         "ExcessMolarVolume": {
             "@type": "evaluator.unit.Quantity",

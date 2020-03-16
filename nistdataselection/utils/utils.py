@@ -11,6 +11,7 @@ from collections import defaultdict
 from enum import Enum
 
 import cmiles.generator
+from evaluator import unit
 from evaluator.utils.openmm import openmm_quantity_to_pint
 from openeye import oechem, oedepict
 from openforcefield.topology import Molecule, Topology
@@ -85,6 +86,75 @@ def property_to_snake_case(property_type):
         property_type = property_type.__name__
 
     return re.sub(r"(?<!^)(?=[A-Z])", "_", property_type).lower()
+
+
+def property_to_title(
+    property_type, substance_type, property_unit=None, latex_unit=False
+):
+    """Converts a property type to a title case, e.g `ExcessMolarVolume`
+    and `SubstanceType.Binary` becomes `Binary Excess Molar Volume`
+
+    Parameters
+    ----------
+    property_type: type of PhysicalProperty of str
+        The property type.
+    substance_type: SubstanceType
+        The substance type.
+    property_unit: pint.Unit, optional
+        The unit to include in the title.
+    latex_unit: bool
+        Whether or not to format the unit as a latex string.
+
+    Returns
+    -------
+    str
+        The property type as a snake case string.
+    """
+
+    if not isinstance(property_type, str):
+        property_type = property_type.__name__
+
+    property_name = " ".join(
+        re.sub(
+            "([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r" \1", property_type),
+        ).split()
+    )
+
+    title = f"{substance_type.value} {property_name}".title()
+
+    if property_unit is not None and property_unit != unit.dimensionless:
+
+        if not latex_unit:
+            title = f"{title} (${property_unit:~}$)"
+        else:
+            title = f"{title} (${property_unit:~L}$)"
+
+    return title
+
+
+def property_to_file_name(property_type, substance_type):
+    """Converts a property type to a unified file name
+    of {property_type}_{substance_type} where the property
+    type is converted to snake case, and the substance type
+    is lower case, e.g density_pure
+
+    Parameters
+    ----------
+    property_type: type of PhysicalProperty of str
+        The property type.
+    substance_type: SubstanceType
+        The substance type.
+
+    Returns
+    -------
+    str
+        The file name.
+    """
+
+    property_name = property_to_snake_case(property_type)
+    file_name = f"{property_name}_{str(substance_type.value)}"
+
+    return file_name
 
 
 @functools.lru_cache(3000)

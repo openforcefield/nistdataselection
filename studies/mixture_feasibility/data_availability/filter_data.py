@@ -5,11 +5,14 @@ chemical environments.
 The extracted mixture data will be partitioned by the environments they exercise
 and stored in the `data_by_environments` directory.
 """
+import functools
 import itertools
 import logging
 import os
+from multiprocessing.pool import Pool
 from tempfile import TemporaryDirectory
 
+import tqdm
 from evaluator.properties import (
     Density,
     EnthalpyOfMixing,
@@ -34,6 +37,14 @@ chemical_environment_codes = {
     "caboxylic_acid": "076",
     "ester": "078",
     "ether": "037",
+    "aldehyde": "004",
+    "ketone": "005",
+    "thiocarbonyl": "006",
+    "phenol": "034",
+    "amine": "047",
+    "halogenated": "061",
+    "amide": "080",
+    "nitro": "150"
 }
 
 
@@ -65,8 +76,10 @@ def filter_data(
             data_directory, property_type, substance_type
         )
 
-        # Start by filtering out any substances not composed of O, C, H
-        data_set = filter_by_elements(data_set, "C", "H", "O")
+        # Start by filtering out any substances not composed of O, C, H, N, F, Cl, Br, S
+        data_set = filter_by_elements(
+            data_set, "C", "H", "O", "N", "F", "Cl", "Br", "S"
+        )
 
         # Next filter out any substances which aren't alcohols, esters or acids.
         data_set = filter_by_checkmol(data_set, *chemical_environments)
@@ -85,9 +98,55 @@ def filter_data(
         data_frame_to_pdf(data_set, file_path)
 
 
+def apply_filters(
+    environment_types,
+    data_directory,
+    environments_of_interest,
+    mixture_properties_of_interest,
+    pure_properties_of_interest,
+    root_output_directory
+):
+
+    environment_type_1, environment_type_2 = environment_types
+
+    output_directory = os.path.join(
+        root_output_directory,
+        f"{environment_type_1}_{environment_type_2}",
+        f"all_data",
+    )
+    os.makedirs(output_directory, exist_ok=True)
+    # Apply the filters to the pure properties.
+    chemical_environments = [
+        {
+            *environments_of_interest[environment_type_1],
+            *environments_of_interest[environment_type_2],
+        }
+    ]
+    filter_data(
+        data_directory,
+        pure_properties_of_interest,
+        chemical_environments,
+        output_directory,
+    )
+    # Apply the filters to mixture properties.
+    chemical_environments = [
+        environments_of_interest[environment_type_1],
+        environments_of_interest[environment_type_2],
+    ]
+    filter_data(
+        data_directory,
+        mixture_properties_of_interest,
+        chemical_environments,
+        output_directory,
+    )
+
+
 def main():
 
     root_output_directory = "data_by_environments"
+
+    # Define the number of processes to parallelize over.
+    n_processes = 1
 
     # Set up logging
     logging.basicConfig(level=logging.INFO)
@@ -113,6 +172,14 @@ def main():
             chemical_environment_codes["ester"],
         ],
         "ether": [chemical_environment_codes["ether"]],
+        "aldehyde": [chemical_environment_codes["aldehyde"]],
+        "ketone": [chemical_environment_codes["ketone"]],
+        "thiocarbonyl": [chemical_environment_codes["thiocarbonyl"]],
+        "phenol": [chemical_environment_codes["phenol"]],
+        "amine": [chemical_environment_codes["amine"]],
+        "halogenated": [chemical_environment_codes["halogenated"]],
+        "amide": [chemical_environment_codes["amide"]],
+        "nitro": [chemical_environment_codes["nitro"]],
     }
 
     properties_of_interest = [
@@ -160,44 +227,26 @@ def main():
         environment_pairs = [(x, x) for x in environments_of_interest]
         environment_pairs.extend(itertools.combinations(environments_of_interest, 2))
 
-        for environment_types in environment_pairs:
+        with Pool(n_processes) as pool:
 
-            environment_type_1, environment_type_2 = environment_types
-
-            output_directory = os.path.join(
-                root_output_directory,
-                f"{environment_type_1}_{environment_type_2}",
-                f"all_data",
-            )
-            os.makedirs(output_directory, exist_ok=True)
-
-            # Apply the filters to the pure properties.
-            chemical_environments = [
-                {
-                    *environments_of_interest[environment_type_1],
-                    *environments_of_interest[environment_type_2],
-                }
-            ]
-
-            filter_data(
-                data_directory,
-                pure_properties_of_interest,
-                chemical_environments,
-                output_directory,
+            x = list(
+                tqdm.tqdm(
+                    pool.imap(
+                        functools.partial(
+                            apply_filters,
+                            data_directory=data_directory,
+                            environments_of_interest=environments_of_interest,
+                            mixture_properties_of_interest=mixture_properties_of_interest,
+                            pure_properties_of_interest=pure_properties_of_interest,
+                            root_output_directory=root_output_directory
+                        ),
+                        environment_pairs,
+                    ),
+                    total=len(environment_pairs),
+                )
             )
 
-            # Apply the filters to mixture properties.
-            chemical_environments = [
-                environments_of_interest[environment_type_1],
-                environments_of_interest[environment_type_2],
-            ]
-
-            filter_data(
-                data_directory,
-                mixture_properties_of_interest,
-                chemical_environments,
-                output_directory,
-            )
+        assert x is not None
 
 
 if __name__ == "__main__":

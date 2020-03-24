@@ -20,17 +20,9 @@ from nistdataselection.utils.utils import (
     SubstanceType,
     int_to_substance_type,
     property_to_file_name,
-)
+    chemical_environment_codes)
 
 logger = logging.getLogger(__name__)
-
-chemical_environment_codes = {
-    "hydroxy": "027",
-    "alcohol": "028",
-    "caboxylic_acid": "076",
-    "ester": "078",
-    "ether": "037",
-}
 
 
 def find_training_smiles():

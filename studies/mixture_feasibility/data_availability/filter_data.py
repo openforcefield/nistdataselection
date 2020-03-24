@@ -27,25 +27,9 @@ from nistdataselection.processing import (
     save_processed_data_set,
 )
 from nistdataselection.utils import SubstanceType
-from nistdataselection.utils.utils import data_frame_to_pdf, property_to_snake_case
+from nistdataselection.utils.utils import data_frame_to_pdf, property_to_snake_case, chemical_environment_codes
 
 logger = logging.getLogger(__name__)
-
-chemical_environment_codes = {
-    "hydroxy": "027",
-    "alcohol": "028",
-    "caboxylic_acid": "076",
-    "ester": "078",
-    "ether": "037",
-    "aldehyde": "004",
-    "ketone": "005",
-    "thiocarbonyl": "006",
-    "phenol": "034",
-    "amine": "047",
-    "halogenated": "061",
-    "amide": "080",
-    "nitro": "150"
-}
 
 
 def filter_data(
@@ -146,7 +130,7 @@ def main():
     root_output_directory = "data_by_environments"
 
     # Define the number of processes to parallelize over.
-    n_processes = 1
+    n_processes = 20
 
     # Set up logging
     logging.basicConfig(level=logging.INFO)

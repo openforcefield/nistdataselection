@@ -48,6 +48,23 @@ int_to_substance_type = {
 cached_smirks_parameters = {}
 
 
+chemical_environment_codes = {
+    "hydroxy": "027",
+    "alcohol": "028",
+    "caboxylic_acid": "076",
+    "ester": "078",
+    "ether": "037",
+    "aldehyde": "004",
+    "ketone": "005",
+    "thiocarbonyl": "006",
+    "phenol": "034",
+    "amine": "047",
+    "halogenated": "061",
+    "amide": "080",
+    "nitro": "150"
+}
+
+
 def property_to_type_tuple(physical_property):
     """Converts a physical property into a tuple of it's
     type, and it's substance type.

@@ -412,7 +412,11 @@ def plot_full_results(
                 "main": [estimated_values, estimated_std, measured_values, None]
             }
 
-            bootstrapped_statistics, _, bootstrapped_ci = compute_bootstrapped_statistics(
+            (
+                bootstrapped_statistics,
+                _,
+                bootstrapped_ci,
+            ) = compute_bootstrapped_statistics(
                 measured_values,
                 None,
                 estimated_values,

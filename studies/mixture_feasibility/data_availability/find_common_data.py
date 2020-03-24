@@ -78,8 +78,16 @@ def main():
                     data_directory, property_type, substance_type
                 )
 
+                if len(data_frame) == 0:
+
+                    all_substance_smiles = []
+                    break
+
                 substance_smiles = set(data_frame_to_smiles_tuples(data_frame))
                 all_substance_smiles.append(substance_smiles)
+
+            if len(all_substance_smiles) == 0:
+                continue
 
             common_substance_smiles = set.intersection(*all_substance_smiles)
 

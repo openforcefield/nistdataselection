@@ -2,6 +2,7 @@ from .pandas import data_set_from_data_frame
 from .utils import (
     SubstanceType,
     analyse_functional_groups,
+    chemical_environment_codes,
     find_parameter_smirks_matches,
     find_smirks_matches,
     get_atom_count,
@@ -19,6 +20,7 @@ from .utils import (
 __all__ = [
     SubstanceType,
     analyse_functional_groups,
+    chemical_environment_codes,
     data_set_from_data_frame,
     find_parameter_smirks_matches,
     find_smirks_matches,

@@ -28,5 +28,8 @@ In particular, the:
   **Note** This script does *not* check whether the different types of properties were measured at the same states (i.e
   temperature, pressure and mole fraction).
   
-* ``source_h_vap_data.py`` scripts builds a new data set of enthalpy of vaporization measurements source from the
+* ``source_h_vap_data.py`` script builds a new data set of enthalpy of vaporization measurements source from the
   literature. The output set is stored in the ``sourced_h_vap_data`` folder.
+
+* ``summarise_data.py`` script summarizes how many unique substances have data for different property types, partioned
+  by the chemical moieties they contain.

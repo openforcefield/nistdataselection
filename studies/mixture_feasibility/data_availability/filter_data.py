@@ -27,7 +27,11 @@ from nistdataselection.processing import (
     save_processed_data_set,
 )
 from nistdataselection.utils import SubstanceType
-from nistdataselection.utils.utils import data_frame_to_pdf, property_to_snake_case, chemical_environment_codes
+from nistdataselection.utils.utils import (
+    chemical_environment_codes,
+    data_frame_to_pdf,
+    property_to_snake_case,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +92,7 @@ def apply_filters(
     environments_of_interest,
     mixture_properties_of_interest,
     pure_properties_of_interest,
-    root_output_directory
+    root_output_directory,
 ):
 
     environment_type_1, environment_type_2 = environment_types
@@ -222,7 +226,7 @@ def main():
                             environments_of_interest=environments_of_interest,
                             mixture_properties_of_interest=mixture_properties_of_interest,
                             pure_properties_of_interest=pure_properties_of_interest,
-                            root_output_directory=root_output_directory
+                            root_output_directory=root_output_directory,
                         ),
                         environment_pairs,
                     ),

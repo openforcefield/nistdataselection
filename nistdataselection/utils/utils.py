@@ -61,7 +61,7 @@ chemical_environment_codes = {
     "amine": "047",
     "halogenated": "061",
     "amide": "080",
-    "nitro": "150"
+    "nitro": "150",
 }
 
 

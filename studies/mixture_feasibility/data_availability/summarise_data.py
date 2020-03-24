@@ -6,15 +6,9 @@ import logging
 import os
 
 import pandas
-from evaluator.properties import (
-    Density,
-    EnthalpyOfMixing,
-    ExcessMolarVolume,
-)
+from evaluator.properties import Density, EnthalpyOfMixing, ExcessMolarVolume
 
-from nistdataselection.processing import (
-    load_processed_data_set,
-)
+from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils import SubstanceType
 from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
 from nistdataselection.utils.utils import chemical_environment_codes
@@ -72,10 +66,7 @@ def main():
 
     for environment_1, environment_2 in environment_pairs:
 
-        data_row = {
-            "Environment 1": environment_1,
-            "Environment 2": environment_2
-        }
+        data_row = {"Environment 1": environment_1, "Environment 2": environment_2}
 
         data_directory = os.path.join(
             root_data_directory, "_".join([environment_1, environment_2]), "all_data"
@@ -111,7 +102,11 @@ def main():
 
         data_rows.append(data_row)
 
-    columns = ["Environment 1", "Environment 2", *[" + ".join([friendly_names[x] for x in y]) for y in property_combinations]]
+    columns = [
+        "Environment 1",
+        "Environment 2",
+        *[" + ".join([friendly_names[x] for x in y]) for y in property_combinations],
+    ]
 
     summary_frame = pandas.DataFrame(data=data_rows, columns=columns)
     summary_frame.fillna(0, inplace=True)

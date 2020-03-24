@@ -18,9 +18,10 @@ from nistdataselection.curation.filtering import filter_by_checkmol
 from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
 from nistdataselection.utils.utils import (
     SubstanceType,
+    chemical_environment_codes,
     int_to_substance_type,
     property_to_file_name,
-    chemical_environment_codes)
+)
 
 logger = logging.getLogger(__name__)
 

@@ -168,6 +168,9 @@ def main():
         "halogenated": [chemical_environment_codes["halogenated"]],
         "amide": [chemical_environment_codes["amide"]],
         "nitro": [chemical_environment_codes["nitro"]],
+        "aromatic": [chemical_environment_codes["aromatic"]],
+        "heterocycle": [chemical_environment_codes["heterocycle"]],
+        "alkane": [""]
     }
 
     properties_of_interest = [

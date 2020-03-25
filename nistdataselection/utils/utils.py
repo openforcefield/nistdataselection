@@ -62,6 +62,8 @@ chemical_environment_codes = {
     "halogenated": "061",
     "amide": "080",
     "nitro": "150",
+    "aromatic": "201",
+    "heterocycle": "202",
 }
 
 
@@ -534,10 +536,12 @@ def analyse_functional_groups(smiles):
 
         except subprocess.CalledProcessError:
             logger.exception("An exception was raised while calling checkmol.")
-            result = ""
+            result = None
 
-    if len(result) == 0:
+    if result is None:
         return None
+    elif len(result) == 0:
+        return {"": 1}
 
     groups = {}
 

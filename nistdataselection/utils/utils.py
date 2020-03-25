@@ -536,7 +536,9 @@ def analyse_functional_groups(smiles):
             ).decode()
 
         except subprocess.CalledProcessError:
-            logger.exception("An exception was raised while calling checkmol.")
+            logger.exception(
+                f"An exception was raised while calling checkmol for {smiles}."
+            )
             result = None
 
     if result is None:

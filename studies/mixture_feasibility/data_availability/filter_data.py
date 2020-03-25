@@ -102,6 +102,10 @@ def apply_filters(
         f"{environment_type_1}_{environment_type_2}",
         f"all_data",
     )
+
+    if os.path.isdir(output_directory):
+        return
+
     os.makedirs(output_directory, exist_ok=True)
     # Apply the filters to the pure properties.
     chemical_environments = [

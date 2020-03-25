@@ -62,6 +62,7 @@ chemical_environment_codes = {
     "halogenated": "061",
     "amide": "080",
     "nitro": "150",
+    "alkene": "199",
     "aromatic": "201",
     "heterocycle": "202",
 }

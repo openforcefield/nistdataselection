@@ -170,7 +170,8 @@ def main():
         "nitro": [chemical_environment_codes["nitro"]],
         "aromatic": [chemical_environment_codes["aromatic"]],
         "heterocycle": [chemical_environment_codes["heterocycle"]],
-        "alkane": [""]
+        "alkane": [""],
+        "alkene": [chemical_environment_codes["alkene"]]
     }
 
     properties_of_interest = [

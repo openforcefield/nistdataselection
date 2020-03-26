@@ -35,6 +35,7 @@ def filter_common_data(output_directory):
             os.path.join(
                 "..",
                 "..",
+                "..",
                 "data_availability",
                 "data_by_environments",
                 "alcohol_ester",
@@ -61,6 +62,7 @@ def filter_common_data(output_directory):
 
         data_frame = load_processed_data_set(
             os.path.join(
+                "..",
                 "..",
                 "..",
                 "data_availability",

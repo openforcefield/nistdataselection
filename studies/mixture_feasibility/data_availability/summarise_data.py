@@ -4,14 +4,14 @@ about which combinations of environments have which data types.
 import itertools
 import logging
 import os
+from glob import glob
 
 import pandas
-from evaluator.properties import Density, EnthalpyOfMixing, ExcessMolarVolume
+from evaluator.properties import Density, EnthalpyOfMixing
 
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils import SubstanceType
 from nistdataselection.utils.pandas import data_frame_to_smiles_tuples
-from nistdataselection.utils.utils import chemical_environment_codes
 
 logger = logging.getLogger(__name__)
 
@@ -24,47 +24,29 @@ def main():
     logging.basicConfig(level=logging.INFO)
 
     # Define the properties and environments we are interested in.
-    environments_of_interest = {
-        "alcohol": [
-            chemical_environment_codes["hydroxy"],
-            chemical_environment_codes["alcohol"],
-        ],
-        "ester": [
-            chemical_environment_codes["caboxylic_acid"],
-            chemical_environment_codes["ester"],
-        ],
-        "ether": [chemical_environment_codes["ether"]],
-        "aldehyde": [chemical_environment_codes["aldehyde"]],
-        "ketone": [chemical_environment_codes["ketone"]],
-        "thiocarbonyl": [chemical_environment_codes["thiocarbonyl"]],
-        "phenol": [chemical_environment_codes["phenol"]],
-        "amine": [chemical_environment_codes["amine"]],
-        "halogenated": [chemical_environment_codes["halogenated"]],
-        "amide": [chemical_environment_codes["amide"]],
-        "nitro": [chemical_environment_codes["nitro"]],
-    }
+    environments_of_interest = [
+        os.path.basename(x) for x in glob("data_by_environments/*")
+    ]
 
     properties_of_interest = [
         (EnthalpyOfMixing, SubstanceType.Binary),
         (Density, SubstanceType.Binary),
-        (ExcessMolarVolume, SubstanceType.Binary),
+        # (ExcessMolarVolume, SubstanceType.Binary),
     ]
     friendly_names = {
         (EnthalpyOfMixing, SubstanceType.Binary): "Hmix(x)",
         (Density, SubstanceType.Binary): "rho(x)",
-        (ExcessMolarVolume, SubstanceType.Binary): "Vexcess(x)",
+        # (ExcessMolarVolume, SubstanceType.Binary): "Vexcess(x)",
     }
 
     property_combinations = [(x,) for x in properties_of_interest]
     property_combinations.extend(itertools.combinations(properties_of_interest, 2))
 
-    # Determine all combinations of the environments of interest.
-    environment_pairs = [(x, x) for x in environments_of_interest]
-    environment_pairs.extend(itertools.combinations(environments_of_interest, 2))
-
     data_rows = []
 
-    for environment_1, environment_2 in environment_pairs:
+    for environment_of_interest in environments_of_interest:
+
+        environment_1, environment_2 = environment_of_interest.split("_")
 
         data_row = {"Environment 1": environment_1, "Environment 2": environment_2}
 

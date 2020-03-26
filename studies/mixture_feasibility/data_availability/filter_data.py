@@ -102,6 +102,10 @@ def apply_filters(
         f"{environment_type_1}_{environment_type_2}",
         f"all_data",
     )
+
+    if os.path.isdir(output_directory):
+        return
+
     os.makedirs(output_directory, exist_ok=True)
     # Apply the filters to the pure properties.
     chemical_environments = [
@@ -168,6 +172,10 @@ def main():
         "halogenated": [chemical_environment_codes["halogenated"]],
         "amide": [chemical_environment_codes["amide"]],
         "nitro": [chemical_environment_codes["nitro"]],
+        "aromatic": [chemical_environment_codes["aromatic"]],
+        "heterocycle": [chemical_environment_codes["heterocycle"]],
+        "alkane": [""],
+        "alkene": [chemical_environment_codes["alkene"]],
     }
 
     properties_of_interest = [

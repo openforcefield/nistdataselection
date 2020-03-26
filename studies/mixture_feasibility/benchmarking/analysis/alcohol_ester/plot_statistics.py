@@ -628,13 +628,17 @@ def main():
     mixture_types = ["alcohol_alcohol", "alcohol_ester", "ester_ester"]
     training_restrictions = ["not_in_training", "one_in_training", "both_in_training"]
 
-    root_results_directory = os.path.join("..", "..", "alcohol_ester", "results", "all_results")
+    root_results_directory = os.path.join(
+        "..", "..", "alcohol_ester", "results", "all_results"
+    )
 
     plot_full_results(
         root_results_directory, study_names, property_types, output_directory
     )
 
-    root_results_directory = os.path.join("..", "..", "alcohol_ester", "results", "partitioned_results")
+    root_results_directory = os.path.join(
+        "..", "..", "alcohol_ester", "results", "partitioned_results"
+    )
 
     property_types = [
         (Density, SubstanceType.Binary),

@@ -143,7 +143,9 @@ def compute_statistics(measured_values, estimated_values, statistics):
 
 def compute_bootstrapped_statistics(
     measured_values,
+    measured_stds,
     estimated_values,
+    estimated_stds,
     statistics=None,
     percentile=0.95,
     bootstrap_iterations=1000,
@@ -160,8 +162,14 @@ def compute_bootstrapped_statistics(
     ----------
     measured_values: numpy.ndarray
         The experimentally measured values with shape=(n_data_points)
+    measured_stds: numpy.ndarray, optional
+        The standard deviations in the experimentally measured values with
+        shape=(number of data points)
     estimated_values: numpy.ndarray
         The computationally estimated values with shape=(n_data_points)
+    estimated_stds: numpy.ndarray, optional
+        The standard deviations in the computationally estimated values with
+        shape=(number of data points)
     statistics: list of Statistics
         The statistics to compute. If `None`, all statistics will be computed
     percentile: float
@@ -187,7 +195,14 @@ def compute_bootstrapped_statistics(
         )
 
         sample_measured_values = measured_values[samples_indices]
+
+        if measured_stds is not None:
+            sample_measured_values += numpy.random.normal(0.0, measured_stds)
+
         sample_estimated_values = estimated_values[samples_indices]
+
+        if estimated_stds is not None:
+            sample_estimated_values += numpy.random.normal(0.0, estimated_stds)
 
         sample_statistics[sample_index], _ = compute_statistics(
             sample_measured_values, sample_estimated_values, statistics

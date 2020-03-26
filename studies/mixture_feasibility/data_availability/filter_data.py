@@ -175,7 +175,7 @@ def main():
         "aromatic": [chemical_environment_codes["aromatic"]],
         "heterocycle": [chemical_environment_codes["heterocycle"]],
         "alkane": [""],
-        "alkene": [chemical_environment_codes["alkene"]]
+        "alkene": [chemical_environment_codes["alkene"]],
     }
 
     properties_of_interest = [

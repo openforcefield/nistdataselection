@@ -252,7 +252,9 @@ def plot_data(
                 )
 
             all_x_values = []
+            all_x_std = []
             all_y_values = []
+            all_y_std = []
 
             for series_label, series in all_series.items():
 
@@ -269,6 +271,11 @@ def plot_data(
 
                 all_x_values.extend(x_values)
                 all_y_values.extend(y_values)
+
+                if x_std is not None:
+                    all_x_std.extend(x_std)
+                if y_std is not None:
+                    all_y_std.extend(y_std)
 
                 if plot_type == PlotType.Scatter:
 
@@ -313,12 +320,22 @@ def plot_data(
             all_x_values = numpy.array(all_x_values)
             all_y_values = numpy.array(all_y_values)
 
+            all_x_std = numpy.array(all_x_std)
+            all_y_std = numpy.array(all_y_std)
+
+            if len(all_x_std) == 0:
+                all_x_std = None
+            if len(all_y_std) == 0:
+                all_y_std = None
+
             if len(all_x_values) == 0 or len(all_y_values) == 0:
                 continue
 
             means, _, ci = compute_bootstrapped_statistics(
                 all_x_values,
+                all_x_std,
                 all_y_values,
+                all_y_std,
                 statistics=statistics,
                 bootstrap_iterations=1000,
             )
@@ -366,6 +383,8 @@ def plot_full_results(
     scatter_data = defaultdict(lambda: defaultdict(dict))
     bar_data = defaultdict(lambda: defaultdict(dict))
 
+    bar_statistics = [Statistics.RMSE, Statistics.R2]
+
     for property_type, substance_type in property_types:
 
         default_unit = property_type.default_unit()
@@ -393,19 +412,27 @@ def plot_full_results(
                 "main": [estimated_values, estimated_std, measured_values, None]
             }
 
-            rmse_values, _, rmse_ci = compute_bootstrapped_statistics(
+            (
+                bootstrapped_statistics,
+                _,
+                bootstrapped_ci,
+            ) = compute_bootstrapped_statistics(
                 measured_values,
+                None,
                 estimated_values,
-                statistics=[Statistics.RMSE],
-                bootstrap_iterations=1000,
+                estimated_std,
+                statistics=bar_statistics,
+                bootstrap_iterations=2500,
             )
 
-            bar_data["RMSE"][property_label][study_name] = [
-                study_index,
-                None,
-                rmse_values[Statistics.RMSE],
-                rmse_ci[Statistics.RMSE],
-            ]
+            for statistic_type in bar_statistics:
+
+                bar_data[statistic_type.value][property_label][study_name] = [
+                    study_index,
+                    None,
+                    bootstrapped_statistics[statistic_type],
+                    bootstrapped_ci[statistic_type],
+                ]
 
     # Plot the scatter data.
     figure = plot_data(
@@ -430,12 +457,12 @@ def plot_full_results(
 
     pyplot.close(figure)
 
-    # Plot the RMSE data.
+    # Plot the bootstrapped data.
     figure = plot_data(
         PlotType.Bar,
         bar_data,
-        y_axis_label="RMSE",
-        include_row_title=False,
+        # y_axis_label="RMSE",
+        include_row_title=True,
         share_x=False,
         share_y=False,
         square_axis=False,
@@ -443,10 +470,10 @@ def plot_full_results(
         sub_plot_size=sub_plot_size,
     )
     figure.savefig(
-        os.path.join(output_directory, f"rmse_per_property.png"), bbox_inches="tight",
+        os.path.join(output_directory, f"stats_per_property.png"), bbox_inches="tight",
     )
     figure.savefig(
-        os.path.join(output_directory, f"rmse_per_property.pdf"), bbox_inches="tight",
+        os.path.join(output_directory, f"stats_per_property.pdf"), bbox_inches="tight",
     )
 
     pyplot.close(figure)

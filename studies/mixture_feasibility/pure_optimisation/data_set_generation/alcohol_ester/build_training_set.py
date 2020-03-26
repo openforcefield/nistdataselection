@@ -37,6 +37,7 @@ def main():
         os.path.join(
             "..",
             "..",
+            "..",
             "data_availability",
             "sourced_h_vap_data",
             "enthalpy_of_vaporization_pure.csv",
@@ -51,6 +52,7 @@ def main():
     # # Load in the density data
     density_data_frame = pandas.read_csv(
         os.path.join(
+            "..",
             "..",
             "..",
             "data_availability",

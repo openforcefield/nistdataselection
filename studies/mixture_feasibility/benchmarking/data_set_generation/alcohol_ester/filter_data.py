@@ -95,6 +95,8 @@ def main():
 
         data_directory = os.path.join(
             "..",
+            "..",
+            "..",
             "data_availability",
             "data_by_environments",
             environment_type,

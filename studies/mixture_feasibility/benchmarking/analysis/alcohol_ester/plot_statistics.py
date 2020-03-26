@@ -15,7 +15,7 @@ from matplotlib import pyplot
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils import SubstanceType
 from nistdataselection.utils.utils import property_to_title
-from studies.mixture_feasibility.benchmarking.analysis.statistics import (
+from studies.mixture_feasibility.benchmarking.analysis.alcohol_ester.statistics import (
     Statistics,
     compute_bootstrapped_statistics,
 )
@@ -544,7 +544,9 @@ def plot_per_mixture_type(
 
                     rmse_values, _, rmse_ci = compute_bootstrapped_statistics(
                         measured_values,
+                        None,
                         estimated_values,
+                        None,
                         statistics=[Statistics.RMSE],
                         bootstrap_iterations=1000,
                     )
@@ -626,13 +628,13 @@ def main():
     mixture_types = ["alcohol_alcohol", "alcohol_ester", "ester_ester"]
     training_restrictions = ["not_in_training", "one_in_training", "both_in_training"]
 
-    root_results_directory = os.path.join("..", "results", "all_results")
+    root_results_directory = os.path.join("..", "..", "alcohol_ester", "results", "all_results")
 
     plot_full_results(
         root_results_directory, study_names, property_types, output_directory
     )
 
-    root_results_directory = os.path.join("..", "results", "partitioned_results")
+    root_results_directory = os.path.join("..", "..", "alcohol_ester", "results", "partitioned_results")
 
     property_types = [
         (Density, SubstanceType.Binary),

@@ -39,8 +39,11 @@ def find_training_smiles():
     training_set = PhysicalPropertyDataSet.from_json(
         os.path.join(
             "..",
+            "..",
+            "..",
             "pure_mixture_optimisation",
             "force_balance",
+            "alcohol_ester",
             "h_mix_rho_x_rho_pure_h_vap",
             "targets",
             "mixture_data",

@@ -544,39 +544,6 @@ def main():
             uncertainty=0.63 * unit.kilojoule / unit.mole,
             source=MeasurementSource(doi="10.1002/hlca.19720550510"),
         ),
-        # ethanol
-        EnthalpyOfVaporization(
-            thermodynamic_state=ThermodynamicState(
-                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
-            ),
-            phase=h_vap_phase,
-            substance=Substance.from_components("CCO"),
-            value=42.46 * unit.kilojoule / unit.mole,
-            uncertainty=0.12738 * unit.kilojoule / unit.mole,
-            source=MeasurementSource(doi="10.1016/0378-3812(85)90026-3"),
-        ),
-        # propanol
-        EnthalpyOfVaporization(
-            thermodynamic_state=ThermodynamicState(
-                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
-            ),
-            phase=h_vap_phase,
-            substance=Substance.from_components("CCCO"),
-            value=47.5 * unit.kilojoule / unit.mole,
-            uncertainty=0.1425 * unit.kilojoule / unit.mole,
-            source=MeasurementSource(doi="10.1016/0378-3812(85)90026-3"),
-        ),
-        # butanol
-        EnthalpyOfVaporization(
-            thermodynamic_state=ThermodynamicState(
-                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
-            ),
-            phase=h_vap_phase,
-            substance=Substance.from_components("CCCCO"),
-            value=52.42 * unit.kilojoule / unit.mole,
-            uncertainty=0.15726 * unit.kilojoule / unit.mole,
-            source=MeasurementSource(doi="10.1016/0378-3812(85)90026-3"),
-        ),
         # cyclohexane
         EnthalpyOfVaporization(
             thermodynamic_state=ThermodynamicState(

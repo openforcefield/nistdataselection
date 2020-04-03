@@ -17,7 +17,7 @@ from nistdataselection.curation.filtering import (
     filter_by_substance_composition,
     filter_by_temperature,
     filter_undefined_stereochemistry,
-)
+    filter_by_elements)
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils import SubstanceType
 from nistdataselection.utils.utils import property_to_file_name, smiles_to_pdf
@@ -69,6 +69,9 @@ def filter_data(data_frame):
             "[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]",
         ],
     )
+
+    allowed_elements = ["H", "C", "O"]
+    data_frame = filter_by_elements(data_frame, *allowed_elements)
 
     # Filter out any molecules with undefined stereochemistry
     data_frame = filter_undefined_stereochemistry(data_frame)
@@ -272,7 +275,34 @@ def main():
             for environment in environments_of_interest:
                 property_environments.append((property_of_interest, environment))
 
-        list(pool.starmap(partial_function, property_environments))
+        # list(pool.starmap(partial_function, property_environments))
+
+    for property_of_interest in properties_of_interest:
+
+        property_name = property_to_file_name(*property_of_interest)
+        chosen_smiles = []
+
+        for environment in environments_of_interest:
+
+            data_path = os.path.join(
+                root_output_directory, environment, f"{property_name}.json"
+            )
+
+            if not os.path.isfile(data_path):
+                continue
+
+            with open(data_path) as file:
+                chosen_smiles.extend(json.load(file))
+
+        chosen_smiles = [*{tuple(sorted(x)) for x in chosen_smiles}]
+
+        with open(os.path.join(root_output_directory, f"{property_name}.json"), "w") as file:
+            json.dump(chosen_smiles, file)
+
+        smiles_to_pdf(
+            chosen_smiles,
+            os.path.join(root_output_directory, f"{property_name}.pdf"),
+        )
 
 
 if __name__ == "__main__":

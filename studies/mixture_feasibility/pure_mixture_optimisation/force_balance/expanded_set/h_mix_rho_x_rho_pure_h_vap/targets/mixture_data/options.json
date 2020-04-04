@@ -28,7 +28,923 @@
         },
         "calculation_layers": [
             "SimulationLayer"
-        ]
+        ],
+        "calculation_schemas": {
+            "EnthalpyOfVaporization": {
+                "SimulationLayer": {
+                    "@type": "evaluator.layers.simulation.SimulationSchema",
+                    "workflow_schema": {
+                        "@type": "evaluator.workflow.schemas.WorkflowSchema",
+                        "final_value_source": {
+                            "@type": "evaluator.workflow.utils.ProtocolPath",
+                            "full_path": "converge_uncertainty/enthalpy_of_vaporization.result"
+                        },
+                        "gradients_sources": [
+                            {
+                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                "full_path": "combine_gradients_$(repl).result"
+                            }
+                        ],
+                        "outputs_to_store": {
+                            "gas_data": {
+                                "@type": "evaluator.storage.data.StoredSimulationData",
+                                "coordinate_file_name": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "converge_uncertainty/production_simulation_gas.output_coordinate_file"
+                                },
+                                "force_field_id": {
+                                    "@type": "evaluator.attributes.attributes.PlaceholderValue"
+                                },
+                                "number_of_molecules": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "build_coordinates_gas.output_number_of_molecules"
+                                },
+                                "property_phase": 4,
+                                "source_calculation_id": {
+                                    "@type": "evaluator.attributes.attributes.PlaceholderValue"
+                                },
+                                "statistical_inefficiency": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "converge_uncertainty/extract_gas_energy.statistical_inefficiency"
+                                },
+                                "statistics_file_name": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "extract_stats_gas.output_statistics_path"
+                                },
+                                "substance": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "build_coordinates_gas.output_substance"
+                                },
+                                "thermodynamic_state": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "global.thermodynamic_state"
+                                },
+                                "trajectory_file_name": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "extract_traj_gas.output_trajectory_path"
+                                }
+                            },
+                            "liquid_data": {
+                                "@type": "evaluator.storage.data.StoredSimulationData",
+                                "coordinate_file_name": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "converge_uncertainty/production_simulation_liquid.output_coordinate_file"
+                                },
+                                "force_field_id": {
+                                    "@type": "evaluator.attributes.attributes.PlaceholderValue"
+                                },
+                                "number_of_molecules": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "build_coordinates_liquid.output_number_of_molecules"
+                                },
+                                "property_phase": 2,
+                                "source_calculation_id": {
+                                    "@type": "evaluator.attributes.attributes.PlaceholderValue"
+                                },
+                                "statistical_inefficiency": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "converge_uncertainty/extract_liquid_energy.statistical_inefficiency"
+                                },
+                                "statistics_file_name": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "extract_stats_liquid.output_statistics_path"
+                                },
+                                "substance": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "build_coordinates_liquid.output_substance"
+                                },
+                                "thermodynamic_state": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "global.thermodynamic_state"
+                                },
+                                "trajectory_file_name": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "extract_traj_liquid.output_trajectory_path"
+                                }
+                            }
+                        },
+                        "protocol_replicators": [
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolReplicator",
+                                "id": "repl",
+                                "template_values": {
+                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                    "full_path": "global.parameter_gradient_keys"
+                                }
+                            }
+                        ],
+                        "protocol_schemas": [
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "build_coordinates_liquid",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".box_aspect_ratio": [
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    ".mass_density": {
+                                        "@type": "evaluator.unit.Quantity",
+                                        "unit": "g / ml",
+                                        "value": 0.95
+                                    },
+                                    ".max_molecules": 1000,
+                                    ".retain_packmol_files": false,
+                                    ".substance": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "global.substance"
+                                    },
+                                    ".verbose_packmol": false
+                                },
+                                "type": "BuildCoordinatesPackmol"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "assign_parameters_liquid",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".coordinate_file_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "build_coordinates_liquid.coordinate_file_path"
+                                    },
+                                    ".force_field_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "global.force_field_path"
+                                    },
+                                    ".substance": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "build_coordinates_liquid.output_substance"
+                                    },
+                                    ".water_model": {
+                                        "@type": "evaluator.protocols.forcefield.BaseBuildSystem.WaterModel",
+                                        "value": "TIP3P"
+                                    }
+                                },
+                                "type": "BaseBuildSystem"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "energy_minimisation_liquid",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".enable_pbc": true,
+                                    ".input_coordinate_file": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "build_coordinates_liquid.coordinate_file_path"
+                                    },
+                                    ".max_iterations": 0,
+                                    ".system_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "assign_parameters_liquid.system_path"
+                                    },
+                                    ".tolerance": {
+                                        "@type": "evaluator.unit.Quantity",
+                                        "unit": "kJ / mol",
+                                        "value": 10.0
+                                    }
+                                },
+                                "type": "OpenMMEnergyMinimisation"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "equilibration_simulation_liquid",
+                                "inputs": {
+                                    ".allow_gpu_platforms": true,
+                                    ".allow_merging": true,
+                                    ".checkpoint_frequency": 10,
+                                    ".enable_pbc": true,
+                                    ".ensemble": {
+                                        "@type": "evaluator.thermodynamics.Ensemble",
+                                        "value": "NPT"
+                                    },
+                                    ".high_precision": false,
+                                    ".input_coordinate_file": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "energy_minimisation_liquid.output_coordinate_file"
+                                    },
+                                    ".output_frequency": 5000,
+                                    ".steps_per_iteration": 100000,
+                                    ".system_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "assign_parameters_liquid.system_path"
+                                    },
+                                    ".thermodynamic_state": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "global.thermodynamic_state"
+                                    },
+                                    ".thermostat_friction": {
+                                        "@type": "evaluator.unit.Quantity",
+                                        "unit": "1 / ps",
+                                        "value": 1.0
+                                    },
+                                    ".timestep": {
+                                        "@type": "evaluator.unit.Quantity",
+                                        "unit": "fs",
+                                        "value": 2.0
+                                    },
+                                    ".total_number_of_iterations": 1
+                                },
+                                "type": "OpenMMSimulation"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "build_coordinates_gas",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".box_aspect_ratio": [
+                                        1.0,
+                                        1.0,
+                                        1.0
+                                    ],
+                                    ".mass_density": {
+                                        "@type": "evaluator.unit.Quantity",
+                                        "unit": "g / ml",
+                                        "value": 0.1
+                                    },
+                                    ".max_molecules": 1,
+                                    ".retain_packmol_files": false,
+                                    ".substance": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "global.substance"
+                                    },
+                                    ".verbose_packmol": false
+                                },
+                                "type": "BuildCoordinatesPackmol"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "assign_parameters_gas",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".coordinate_file_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "build_coordinates_gas.coordinate_file_path"
+                                    },
+                                    ".force_field_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "global.force_field_path"
+                                    },
+                                    ".substance": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "build_coordinates_gas.output_substance"
+                                    },
+                                    ".water_model": {
+                                        "@type": "evaluator.protocols.forcefield.BaseBuildSystem.WaterModel",
+                                        "value": "TIP3P"
+                                    }
+                                },
+                                "type": "BaseBuildSystem"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "energy_minimisation_gas",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".enable_pbc": false,
+                                    ".input_coordinate_file": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "build_coordinates_gas.coordinate_file_path"
+                                    },
+                                    ".max_iterations": 0,
+                                    ".system_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "assign_parameters_gas.system_path"
+                                    },
+                                    ".tolerance": {
+                                        "@type": "evaluator.unit.Quantity",
+                                        "unit": "kJ / mol",
+                                        "value": 10.0
+                                    }
+                                },
+                                "type": "OpenMMEnergyMinimisation"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "equilibration_simulation_gas",
+                                "inputs": {
+                                    ".allow_gpu_platforms": false,
+                                    ".allow_merging": true,
+                                    ".checkpoint_frequency": 10,
+                                    ".enable_pbc": false,
+                                    ".ensemble": {
+                                        "@type": "evaluator.thermodynamics.Ensemble",
+                                        "value": "NVT"
+                                    },
+                                    ".high_precision": true,
+                                    ".input_coordinate_file": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "energy_minimisation_gas.output_coordinate_file"
+                                    },
+                                    ".output_frequency": 5000,
+                                    ".steps_per_iteration": 100000,
+                                    ".system_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "assign_parameters_gas.system_path"
+                                    },
+                                    ".thermodynamic_state": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "global.thermodynamic_state"
+                                    },
+                                    ".thermostat_friction": {
+                                        "@type": "evaluator.unit.Quantity",
+                                        "unit": "1 / ps",
+                                        "value": 1.0
+                                    },
+                                    ".timestep": {
+                                        "@type": "evaluator.unit.Quantity",
+                                        "unit": "fs",
+                                        "value": 2.0
+                                    },
+                                    ".total_number_of_iterations": 1
+                                },
+                                "type": "OpenMMSimulation"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolGroupSchema",
+                                "id": "converge_uncertainty",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".conditions": [],
+                                    ".max_iterations": 100
+                                },
+                                "protocol_schemas": {
+                                    "energy_of_vaporization": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "energy_of_vaporization",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".value_a": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "extract_liquid_energy.value"
+                                            },
+                                            ".value_b": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "extract_gas_energy.value"
+                                            }
+                                        },
+                                        "type": "SubtractValues"
+                                    },
+                                    "enthalpy_of_vaporization": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "enthalpy_of_vaporization",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".values": [
+                                                {
+                                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                    "full_path": "energy_of_vaporization.result"
+                                                },
+                                                {
+                                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                    "full_path": "ideal_volume.result"
+                                                }
+                                            ]
+                                        },
+                                        "type": "AddValues"
+                                    },
+                                    "extract_gas_energy": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "extract_gas_energy",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".bootstrap_iterations": 250,
+                                            ".bootstrap_sample_size": 1.0,
+                                            ".divisor": 1.0,
+                                            ".statistics_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "production_simulation_gas.statistics_file_path"
+                                            },
+                                            ".statistics_type": {
+                                                "@type": "evaluator.utils.statistics.ObservableType",
+                                                "value": "PotentialEnergy"
+                                            }
+                                        },
+                                        "type": "ExtractAverageStatistic"
+                                    },
+                                    "extract_liquid_energy": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "extract_liquid_energy",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".bootstrap_iterations": 250,
+                                            ".bootstrap_sample_size": 1.0,
+                                            ".divisor": 1000,
+                                            ".statistics_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "production_simulation_liquid.statistics_file_path"
+                                            },
+                                            ".statistics_type": {
+                                                "@type": "evaluator.utils.statistics.ObservableType",
+                                                "value": "PotentialEnergy"
+                                            }
+                                        },
+                                        "type": "ExtractAverageStatistic"
+                                    },
+                                    "ideal_volume": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "ideal_volume",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".multiplier": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.thermodynamic_state.temperature"
+                                            },
+                                            ".value": {
+                                                "@type": "evaluator.unit.Quantity",
+                                                "unit": "R",
+                                                "value": 1.0
+                                            }
+                                        },
+                                        "type": "MultiplyValue"
+                                    },
+                                    "production_simulation_gas": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "production_simulation_gas",
+                                        "inputs": {
+                                            ".allow_gpu_platforms": false,
+                                            ".allow_merging": true,
+                                            ".checkpoint_frequency": 100,
+                                            ".enable_pbc": false,
+                                            ".ensemble": {
+                                                "@type": "evaluator.thermodynamics.Ensemble",
+                                                "value": "NVT"
+                                            },
+                                            ".high_precision": true,
+                                            ".input_coordinate_file": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "equilibration_simulation_gas.output_coordinate_file"
+                                            },
+                                            ".output_frequency": 5000,
+                                            ".steps_per_iteration": 15000000,
+                                            ".system_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "assign_parameters_gas.system_path"
+                                            },
+                                            ".thermodynamic_state": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.thermodynamic_state"
+                                            },
+                                            ".thermostat_friction": {
+                                                "@type": "evaluator.unit.Quantity",
+                                                "unit": "1 / ps",
+                                                "value": 1.0
+                                            },
+                                            ".timestep": {
+                                                "@type": "evaluator.unit.Quantity",
+                                                "unit": "fs",
+                                                "value": 2.0
+                                            },
+                                            ".total_number_of_iterations": 1
+                                        },
+                                        "type": "OpenMMSimulation"
+                                    },
+                                    "production_simulation_liquid": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "production_simulation_liquid",
+                                        "inputs": {
+                                            ".allow_gpu_platforms": true,
+                                            ".allow_merging": true,
+                                            ".checkpoint_frequency": 10,
+                                            ".enable_pbc": true,
+                                            ".ensemble": {
+                                                "@type": "evaluator.thermodynamics.Ensemble",
+                                                "value": "NPT"
+                                            },
+                                            ".high_precision": false,
+                                            ".input_coordinate_file": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "equilibration_simulation_liquid.output_coordinate_file"
+                                            },
+                                            ".output_frequency": 2000,
+                                            ".steps_per_iteration": 1000000,
+                                            ".system_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "assign_parameters_liquid.system_path"
+                                            },
+                                            ".thermodynamic_state": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.thermodynamic_state"
+                                            },
+                                            ".thermostat_friction": {
+                                                "@type": "evaluator.unit.Quantity",
+                                                "unit": "1 / ps",
+                                                "value": 1.0
+                                            },
+                                            ".timestep": {
+                                                "@type": "evaluator.unit.Quantity",
+                                                "unit": "fs",
+                                                "value": 2.0
+                                            },
+                                            ".total_number_of_iterations": 1
+                                        },
+                                        "type": "OpenMMSimulation"
+                                    }
+                                },
+                                "type": "ConditionalGroup"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "extract_traj_liquid",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".equilibration_index": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/extract_liquid_energy.equilibration_index"
+                                    },
+                                    ".input_coordinate_file": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/production_simulation_liquid.output_coordinate_file"
+                                    },
+                                    ".input_trajectory_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/production_simulation_liquid.trajectory_file_path"
+                                    },
+                                    ".statistical_inefficiency": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/extract_liquid_energy.statistical_inefficiency"
+                                    }
+                                },
+                                "type": "ExtractUncorrelatedTrajectoryData"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "extract_stats_liquid",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".equilibration_index": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/extract_liquid_energy.equilibration_index"
+                                    },
+                                    ".input_statistics_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/production_simulation_liquid.statistics_file_path"
+                                    },
+                                    ".statistical_inefficiency": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/extract_liquid_energy.statistical_inefficiency"
+                                    }
+                                },
+                                "type": "ExtractUncorrelatedStatisticsData"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "extract_traj_gas",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".equilibration_index": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/extract_gas_energy.equilibration_index"
+                                    },
+                                    ".input_coordinate_file": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/production_simulation_gas.output_coordinate_file"
+                                    },
+                                    ".input_trajectory_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/production_simulation_gas.trajectory_file_path"
+                                    },
+                                    ".statistical_inefficiency": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/extract_gas_energy.statistical_inefficiency"
+                                    }
+                                },
+                                "type": "ExtractUncorrelatedTrajectoryData"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "extract_stats_gas",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".equilibration_index": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/extract_gas_energy.equilibration_index"
+                                    },
+                                    ".input_statistics_path": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/production_simulation_gas.statistics_file_path"
+                                    },
+                                    ".statistical_inefficiency": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "converge_uncertainty/extract_gas_energy.statistical_inefficiency"
+                                    }
+                                },
+                                "type": "ExtractUncorrelatedStatisticsData"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolGroupSchema",
+                                "id": "gradient_group_$(repl)_liquid",
+                                "inputs": {
+                                    ".allow_merging": true
+                                },
+                                "protocol_schemas": {
+                                    "central_difference_$(repl)_liquid": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "central_difference_$(repl)_liquid",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".forward_observable_value": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "forward_reweight_$(repl)_liquid.value"
+                                            },
+                                            ".forward_parameter_value": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "gradient_reduced_potentials_$(repl)_liquid.forward_parameter_value"
+                                            },
+                                            ".parameter_key": {
+                                                "@type": "evaluator.workflow.utils.ReplicatorValue",
+                                                "replicator_id": "repl"
+                                            },
+                                            ".reverse_observable_value": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "reverse_reweight_$(repl)_liquid.value"
+                                            },
+                                            ".reverse_parameter_value": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "gradient_reduced_potentials_$(repl)_liquid.reverse_parameter_value"
+                                            }
+                                        },
+                                        "type": "CentralDifferenceGradient"
+                                    },
+                                    "forward_reweight_$(repl)_liquid": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "forward_reweight_$(repl)_liquid",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".bootstrap_iterations": 1,
+                                            ".bootstrap_sample_size": 1.0,
+                                            ".bootstrap_uncertainties": false,
+                                            ".frame_counts": [],
+                                            ".reference_reduced_potentials": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "converge_uncertainty/production_simulation_liquid.statistics_file_path"
+                                            },
+                                            ".required_effective_samples": 0,
+                                            ".statistics_paths": [
+                                                {
+                                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                    "full_path": "gradient_reduced_potentials_$(repl)_liquid.forward_potentials_path"
+                                                }
+                                            ],
+                                            ".statistics_type": {
+                                                "@type": "evaluator.utils.statistics.ObservableType",
+                                                "value": "PotentialEnergy"
+                                            },
+                                            ".target_reduced_potentials": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "gradient_reduced_potentials_$(repl)_liquid.forward_potentials_path"
+                                            }
+                                        },
+                                        "type": "ReweightStatistics"
+                                    },
+                                    "gradient_reduced_potentials_$(repl)_liquid": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "gradient_reduced_potentials_$(repl)_liquid",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".coordinate_file_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "equilibration_simulation_liquid.output_coordinate_file"
+                                            },
+                                            ".effective_sample_indices": [],
+                                            ".enable_pbc": true,
+                                            ".force_field_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.force_field_path"
+                                            },
+                                            ".parameter_key": {
+                                                "@type": "evaluator.workflow.utils.ReplicatorValue",
+                                                "replicator_id": "repl"
+                                            },
+                                            ".perturbation_scale": 0.0001,
+                                            ".statistics_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "converge_uncertainty/production_simulation_liquid.statistics_file_path"
+                                            },
+                                            ".substance": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.substance"
+                                            },
+                                            ".thermodynamic_state": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.thermodynamic_state"
+                                            },
+                                            ".trajectory_file_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "converge_uncertainty/production_simulation_liquid.trajectory_file_path"
+                                            },
+                                            ".use_subset_of_force_field": true
+                                        },
+                                        "type": "OpenMMGradientPotentials"
+                                    },
+                                    "reverse_reweight_$(repl)_liquid": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "reverse_reweight_$(repl)_liquid",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".bootstrap_iterations": 1,
+                                            ".bootstrap_sample_size": 1.0,
+                                            ".bootstrap_uncertainties": false,
+                                            ".frame_counts": [],
+                                            ".reference_reduced_potentials": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "converge_uncertainty/production_simulation_liquid.statistics_file_path"
+                                            },
+                                            ".required_effective_samples": 0,
+                                            ".statistics_paths": [
+                                                {
+                                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                    "full_path": "gradient_reduced_potentials_$(repl)_liquid.reverse_potentials_path"
+                                                }
+                                            ],
+                                            ".statistics_type": {
+                                                "@type": "evaluator.utils.statistics.ObservableType",
+                                                "value": "PotentialEnergy"
+                                            },
+                                            ".target_reduced_potentials": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "gradient_reduced_potentials_$(repl)_liquid.reverse_potentials_path"
+                                            }
+                                        },
+                                        "type": "ReweightStatistics"
+                                    }
+                                },
+                                "type": "ProtocolGroup"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolGroupSchema",
+                                "id": "gradient_group_$(repl)_gas",
+                                "inputs": {
+                                    ".allow_merging": true
+                                },
+                                "protocol_schemas": {
+                                    "central_difference_$(repl)_gas": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "central_difference_$(repl)_gas",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".forward_observable_value": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "forward_reweight_$(repl)_gas.value"
+                                            },
+                                            ".forward_parameter_value": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "gradient_reduced_potentials_$(repl)_gas.forward_parameter_value"
+                                            },
+                                            ".parameter_key": {
+                                                "@type": "evaluator.workflow.utils.ReplicatorValue",
+                                                "replicator_id": "repl"
+                                            },
+                                            ".reverse_observable_value": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "reverse_reweight_$(repl)_gas.value"
+                                            },
+                                            ".reverse_parameter_value": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "gradient_reduced_potentials_$(repl)_gas.reverse_parameter_value"
+                                            }
+                                        },
+                                        "type": "CentralDifferenceGradient"
+                                    },
+                                    "forward_reweight_$(repl)_gas": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "forward_reweight_$(repl)_gas",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".bootstrap_iterations": 1,
+                                            ".bootstrap_sample_size": 1.0,
+                                            ".bootstrap_uncertainties": false,
+                                            ".frame_counts": [],
+                                            ".reference_reduced_potentials": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "converge_uncertainty/production_simulation_gas.statistics_file_path"
+                                            },
+                                            ".required_effective_samples": 0,
+                                            ".statistics_paths": [
+                                                {
+                                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                    "full_path": "gradient_reduced_potentials_$(repl)_gas.forward_potentials_path"
+                                                }
+                                            ],
+                                            ".statistics_type": {
+                                                "@type": "evaluator.utils.statistics.ObservableType",
+                                                "value": "PotentialEnergy"
+                                            },
+                                            ".target_reduced_potentials": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "gradient_reduced_potentials_$(repl)_gas.forward_potentials_path"
+                                            }
+                                        },
+                                        "type": "ReweightStatistics"
+                                    },
+                                    "gradient_reduced_potentials_$(repl)_gas": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "gradient_reduced_potentials_$(repl)_gas",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".coordinate_file_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "equilibration_simulation_gas.output_coordinate_file"
+                                            },
+                                            ".effective_sample_indices": [],
+                                            ".enable_pbc": false,
+                                            ".force_field_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.force_field_path"
+                                            },
+                                            ".parameter_key": {
+                                                "@type": "evaluator.workflow.utils.ReplicatorValue",
+                                                "replicator_id": "repl"
+                                            },
+                                            ".perturbation_scale": 0.0001,
+                                            ".statistics_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "converge_uncertainty/production_simulation_gas.statistics_file_path"
+                                            },
+                                            ".substance": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.substance"
+                                            },
+                                            ".thermodynamic_state": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "global.thermodynamic_state"
+                                            },
+                                            ".trajectory_file_path": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "converge_uncertainty/production_simulation_gas.trajectory_file_path"
+                                            },
+                                            ".use_subset_of_force_field": true
+                                        },
+                                        "type": "OpenMMGradientPotentials"
+                                    },
+                                    "reverse_reweight_$(repl)_gas": {
+                                        "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                        "id": "reverse_reweight_$(repl)_gas",
+                                        "inputs": {
+                                            ".allow_merging": true,
+                                            ".bootstrap_iterations": 1,
+                                            ".bootstrap_sample_size": 1.0,
+                                            ".bootstrap_uncertainties": false,
+                                            ".frame_counts": [],
+                                            ".reference_reduced_potentials": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "converge_uncertainty/production_simulation_gas.statistics_file_path"
+                                            },
+                                            ".required_effective_samples": 0,
+                                            ".statistics_paths": [
+                                                {
+                                                    "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                    "full_path": "gradient_reduced_potentials_$(repl)_gas.reverse_potentials_path"
+                                                }
+                                            ],
+                                            ".statistics_type": {
+                                                "@type": "evaluator.utils.statistics.ObservableType",
+                                                "value": "PotentialEnergy"
+                                            },
+                                            ".target_reduced_potentials": {
+                                                "@type": "evaluator.workflow.utils.ProtocolPath",
+                                                "full_path": "gradient_reduced_potentials_$(repl)_gas.reverse_potentials_path"
+                                            }
+                                        },
+                                        "type": "ReweightStatistics"
+                                    }
+                                },
+                                "type": "ProtocolGroup"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "scale_liquid_gradient_$(repl)",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".divisor": 1000,
+                                    ".value": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "gradient_group_$(repl)_liquid/central_difference_$(repl)_liquid.gradient"
+                                    }
+                                },
+                                "type": "DivideValue"
+                            },
+                            {
+                                "@type": "evaluator.workflow.schemas.ProtocolSchema",
+                                "id": "combine_gradients_$(repl)",
+                                "inputs": {
+                                    ".allow_merging": true,
+                                    ".value_a": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "scale_liquid_gradient_$(repl).result"
+                                    },
+                                    ".value_b": {
+                                        "@type": "evaluator.workflow.utils.ProtocolPath",
+                                        "full_path": "gradient_group_$(repl)_gas/central_difference_$(repl)_gas.gradient"
+                                    }
+                                },
+                                "type": "SubtractValues"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
     },
     "weights": {
         "Density": 1.0,

@@ -13,11 +13,12 @@ from openeye.oegraphsim import OEFingerPrint, OEFPType_Tree, OEMakeFP, OETanimot
 from openforcefield.topology import Molecule
 
 from nistdataselection.curation.filtering import (
+    filter_by_elements,
     filter_by_smirks,
     filter_by_substance_composition,
     filter_by_temperature,
     filter_undefined_stereochemistry,
-    filter_by_elements)
+)
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils import SubstanceType
 from nistdataselection.utils.utils import property_to_file_name, smiles_to_pdf
@@ -71,7 +72,7 @@ def filter_data(data_frame):
             # Long chain alkane /ether
             "[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]",
             # 1, 3 carbonyls with at least one ketone carbonyl.
-            "[#6](=[#8])-[#6](-[#1])(-[#1])-[#6](=[#8])-[#6]"
+            "[#6](=[#8])-[#6](-[#1])(-[#1])-[#6](=[#8])-[#6]",
         ],
     )
 
@@ -301,12 +302,13 @@ def main():
 
         chosen_smiles = [*{tuple(sorted(x)) for x in chosen_smiles}]
 
-        with open(os.path.join(root_output_directory, f"{property_name}.json"), "w") as file:
+        with open(
+            os.path.join(root_output_directory, f"{property_name}.json"), "w"
+        ) as file:
             json.dump(chosen_smiles, file)
 
         smiles_to_pdf(
-            chosen_smiles,
-            os.path.join(root_output_directory, f"{property_name}.pdf"),
+            chosen_smiles, os.path.join(root_output_directory, f"{property_name}.pdf"),
         )
 
 

@@ -57,16 +57,21 @@ def filter_data(data_frame):
         data_frame, 280.0 * unit.kelvin, 315.0 * unit.kelvin
     )
 
-    # Filter out long chain molecules and 3 + 4 membered rings
+    # Filter out long chain molecules, 3 + 4 membered rings
+    # and 1, 3 carbonyl compounds where one of the carbonyls
+    # is a ketone (cases where the enol form may be present in
+    # non-negligible amounts).
     data_frame = filter_by_smirks(
         data_frame,
         None,
         [
-            # "[#6a]",
+            # 3 + 4 membered rings.
             "[#6r3]",
             "[#6r4]",
-            # "[#6]=[#6]",
+            # Long chain alkane /ether
             "[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]~[#6,#8]",
+            # 1, 3 carbonyls with at least one ketone carbonyl.
+            "[#6](=[#8])-[#6](-[#1])(-[#1])-[#6](=[#8])-[#6]"
         ],
     )
 
@@ -275,7 +280,7 @@ def main():
             for environment in environments_of_interest:
                 property_environments.append((property_of_interest, environment))
 
-        # list(pool.starmap(partial_function, property_environments))
+        list(pool.starmap(partial_function, property_environments))
 
     for property_of_interest in properties_of_interest:
 

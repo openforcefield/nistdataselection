@@ -27,7 +27,14 @@ logger = logging.getLogger(__name__)
 
 
 def load_training_mixtures():
-    """
+    """Loads in the training substances. These will
+    be used to exclude training compounds from the test
+    set.
+
+    Returns
+    -------
+    set of tuple of str
+        The substances in the training set.
     """
 
     training_set = pandas.read_csv(
@@ -52,6 +59,19 @@ def load_training_mixtures():
 
 
 def filter_data(data_frame):
+    """Filters out data which is not of interest for the test
+    set.
+
+    Parameters
+    ----------
+    data_frame: pandas.DataFrame
+        The data frame to filter.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The filtered data frame.
+    """
 
     # Filter to be closer to ambient.
     data_frame = filter_by_temperature(
@@ -87,6 +107,21 @@ def filter_data(data_frame):
 
 @functools.lru_cache(3000)
 def compute_component_finger_print(smiles, finger_print_type):
+    """Computes the finger print for a particular molecule
+    using the OpenEye toolkit.
+
+    Parameters
+    ----------
+    smiles: str
+        The smiles pattern to generate a finger print for.
+    finger_print_type: OEFPTypeBase
+        The type of finger print to generate.
+
+    Returns
+    -------
+    OEFingerPrint
+        The generate finger print.
+    """
 
     oe_molecule = Molecule.from_smiles(smiles).to_openeye()
 
@@ -97,6 +132,21 @@ def compute_component_finger_print(smiles, finger_print_type):
 
 
 def compute_finger_print(mixture, finger_print_type):
+    """Computes the finger print of a multicomponent
+    substance.
+
+    Parameters
+    ----------
+    mixture: tuple of str
+        The smiles patterns which compose the substance.
+    finger_print_type: OEFPTypeBase
+        The type of finger print to generate.
+
+    Returns
+    -------
+    tuple of OEFingerPrint
+        The finger print of each component.
+    """
 
     mixture_finger_print = tuple(
         compute_component_finger_print(x, finger_print_type) for x in mixture
@@ -106,6 +156,36 @@ def compute_finger_print(mixture, finger_print_type):
 
 
 def compute_distance(mixture_a, mixture_b, finger_print_type):
+    """Computes the 'distance' between two mixtures based on
+    their finger prints.
+
+    The distance is defined as the minimum of
+
+    - the OETanimoto distance between component a of mixture a and
+      component a of mixture b + the OETanimoto distance between
+      component b of mixture a and component b of mixture b
+
+    and
+
+    - the OETanimoto distance between component b of mixture a and
+      component a of mixture b + the OETanimoto distance between
+      component a of mixture a and component b of mixture b
+
+    Parameters
+    ----------
+    mixture_a: tuple of str
+        The smiles patterns of the components in mixture a.
+    mixture_b: tuple of str
+        The smiles patterns of the components in mixture b.
+    finger_print_type: OEFPTypeBase
+        The type of finger print to base the distance metric
+        on.
+
+    Returns
+    -------
+    float
+        The distance between the mixtures
+    """
 
     if mixture_a == mixture_b:
         return 0.0
@@ -126,6 +206,34 @@ def compute_distance(mixture_a, mixture_b, finger_print_type):
 
 
 def compute_distance_with_set(mixture_a, mixture_set, finger_print_type):
+    """Computes the distance between a particular mixture
+    and a set of mixtures.
+
+    The distance is computed by:
+
+    1. Computing the distance between `mixture_a` and each mixture
+       in `mixture_set` using `compute_distance`
+    2. Remove the mixture from `mixture_set` which is closest to
+       `mixture_a` and adding the distance between the two to the
+       total distance.
+    3. Repeating step 2 until all mixtures have been removed from the
+       `mixture_set`.
+
+    Parameters
+    ----------
+    mixture_a: tuple of str
+        The smiles patterns of the components in mixture a.
+    mixture_set: list of tuple of str
+        The smiles patterns of the components in the set of mixtures.
+    finger_print_type: OEFPTypeBase
+        The type of finger print to base the distance metric
+        on.
+
+    Returns
+    -------
+    float
+        The distance between the mixtures
+    """
 
     open_list = [*mixture_set]
     distance = 0.0
@@ -150,6 +258,40 @@ def choose_molecules(
     training_mixtures,
     root_output_directory,
 ):
+    """A function which aims to select a set of substances which are
+    as distinct as possible from both the training and currently selected
+    test set.
+
+    This proceeds by:
+
+    1. Selecting the molecule which is 'furthest' away from both the training
+       set and the currently selected test set (which starts of empty), where
+       the distance is defined as:
+
+       sqrt(compute_distance_with_set(unselected_substance, training_set) ** 2 +
+            compute_distance_with_set(unselected_substance, test_set) ** 2)
+
+    2. Moving the selected molecule from the unselected set into the test set.
+
+    3. Repeat steps 1 and two until either the target number of molecules have
+       been selected, or there are no more unselected molecules to choose from.
+
+
+    Parameters
+    ----------
+    property_of_interest: list of tuple of type of PhysicalPropery and SubstanceType
+        The properties of interest.
+    environment: str
+        The environment (e.g. alcohol_alkane) to select molecules for.
+    finger_print_type: OEFPTypeBase
+        The type of finger print to base the distance metrics on.
+    n_mixtures_per_environment: int
+        The target number of molecules to select.
+    training_mixtures: list of tuple of str
+        The substances in the training set.
+    root_output_directory: str
+        The root directory to store the selected substances in.
+    """
 
     property_name = property_to_file_name(*property_of_interest)
 
@@ -310,6 +452,8 @@ def main():
         smiles_to_pdf(
             chosen_smiles, os.path.join(root_output_directory, f"{property_name}.pdf"),
         )
+
+    # TODO: Select the individual data points.
 
 
 if __name__ == "__main__":

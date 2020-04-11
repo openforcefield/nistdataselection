@@ -4,8 +4,12 @@ import functools
 import json
 import logging
 import os
+from collections import defaultdict
+from math import sqrt
 from multiprocessing.pool import Pool
+from tempfile import TemporaryDirectory
 
+import numpy
 import pandas
 from evaluator import unit
 from evaluator.properties import Density, EnthalpyOfMixing, ExcessMolarVolume
@@ -19,7 +23,8 @@ from nistdataselection.curation.filtering import (
     filter_by_temperature,
     filter_undefined_stereochemistry,
 )
-from nistdataselection.processing import load_processed_data_set
+from nistdataselection.curation.selection import StatePoint, select_data_points
+from nistdataselection.processing import load_processed_data_set, save_processed_data_set
 from nistdataselection.utils import SubstanceType
 from nistdataselection.utils.utils import property_to_file_name, smiles_to_pdf
 
@@ -250,13 +255,12 @@ def compute_distance_with_set(mixture_a, mixture_set, finger_print_type):
     return distance
 
 
-def choose_molecules(
+def choose_substances(
     property_of_interest,
     environment,
     finger_print_type,
     n_mixtures_per_environment,
     training_mixtures,
-    root_output_directory,
 ):
     """A function which aims to select a set of substances which are
     as distinct as possible from both the training and currently selected
@@ -276,10 +280,9 @@ def choose_molecules(
     3. Repeat steps 1 and two until either the target number of molecules have
        been selected, or there are no more unselected molecules to choose from.
 
-
     Parameters
     ----------
-    property_of_interest: list of tuple of type of PhysicalPropery and SubstanceType
+    property_of_interest: tuple of type of PhysicalProperty and SubstanceType
         The properties of interest.
     environment: str
         The environment (e.g. alcohol_alkane) to select molecules for.
@@ -289,8 +292,10 @@ def choose_molecules(
         The target number of molecules to select.
     training_mixtures: list of tuple of str
         The substances in the training set.
-    root_output_directory: str
-        The root directory to store the selected substances in.
+    Returns
+    -------
+    list of tuple of str
+        The selected molecules.
     """
 
     property_name = property_to_file_name(*property_of_interest)
@@ -313,7 +318,7 @@ def choose_molecules(
         )
 
     except AssertionError:
-        return
+        return []
 
     # Filter out the training mixtures.
     data_frame = filter_by_substance_composition(data_frame, None, training_mixtures)
@@ -340,7 +345,7 @@ def choose_molecules(
                 mixture, mixtures, finger_print_type
             )
 
-            return training_distance + test_distance
+            return sqrt(training_distance ** 2 + test_distance ** 2)
 
         least_similar = sorted(open_list, key=distance_metric, reverse=True)[0]
 
@@ -352,20 +357,79 @@ def choose_molecules(
             f"{len(closed_list)} / {max_n_possible} selected"
         )
 
-    if len(closed_list) == 0:
-        return
+    return closed_list
 
-    output_directory = os.path.join(root_output_directory, environment)
-    os.makedirs(output_directory, exist_ok=True)
 
-    file_path = os.path.join(output_directory, f"{property_name}")
+def choose_data_points(
+    property_of_interest, chosen_substances, target_states, environments_of_interest,
+):
+    """Select the data points to include in the benchmark set
+    for each of the chosen substances.
 
-    with open(f"{file_path}.json", "w") as file:
-        json.dump(closed_list, file)
+    Parameters
+    ----------
+    property_of_interest: tuple of type of PhysicalProperty and SubstanceType
+        The type of property to select data points for.
+    chosen_substances: list of tuple of str
+        The substances to choose data points for.
+    target_states: list of StatePoint
+        The target states to select data points at.
 
-    smiles_to_pdf(closed_list, f"{file_path}.pdf")
+    Returns
+    -------
+    pandas.DataFrame
+        The selected data points.
+    """
 
-    logger.info(f"{property_name}_{environment}: Finished.")
+    with TemporaryDirectory() as data_directory:
+
+        data_frames = []
+
+        for environment in environments_of_interest:
+
+            data_folder = os.path.join(
+                "..", "..", "..", "data_availability", "data_by_environments", environment, "all_data"
+            )
+
+            try:
+                data_frame = load_processed_data_set(data_folder, *property_of_interest)
+            except AssertionError:
+                continue
+
+            if len(data_frame) == 0:
+                continue
+
+            data_frames.append(data_frame)
+
+        data_frame = pandas.concat(data_frames, ignore_index=True, sort=False)
+        data_frame = filter_by_substance_composition(
+            data_frame, chosen_substances, None
+        )
+        # Fill in the missing columns
+        if "Exact Amount 1" not in data_frame:
+            data_frame["Exact Amount 1"] = numpy.nan
+        if "Exact Amount 2" not in data_frame:
+            data_frame["Exact Amount 2"] = numpy.nan
+        save_processed_data_set(data_directory, data_frame, *property_of_interest)
+
+        target_states = {property_of_interest: target_states}
+
+        selected_data_set = select_data_points(
+            data_directory=data_directory,
+            chosen_substances=None,
+            target_state_points=target_states,
+        )
+
+    selected_data_frame = selected_data_set.to_pandas()
+
+    # Prune any data points measured for too low or too high
+    # mole fractions.
+    selected_data_frame = selected_data_frame[
+        (selected_data_frame["Mole Fraction 1"] > 0.15)
+        & (selected_data_frame["Mole Fraction 1"] < 0.85)
+    ]
+
+    return selected_data_frame
 
 
 def main():
@@ -378,6 +442,20 @@ def main():
     n_processes = 4
 
     # Define the types of property which are of interest.
+    properties_of_interest = [
+        (EnthalpyOfMixing, SubstanceType.Binary),
+        (Density, SubstanceType.Binary),
+        (ExcessMolarVolume, SubstanceType.Binary),
+    ]
+
+    # Define the state we would ideally chose data points at.
+    target_states = [
+        StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.25, 0.75)),
+        StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.50, 0.50)),
+        StatePoint(298.15 * unit.kelvin, 1.0 * unit.atmosphere, (0.75, 0.25)),
+    ]
+
+    # Define the environments of interest.
     environments_of_interest = [
         "alcohol_ester",
         "alcohol_alkane",
@@ -395,65 +473,66 @@ def main():
         "ketone_ketone",
     ]
 
+    # Chose the target number of substances per environment
+    # / property.
     n_mixtures_per_environment = 10
 
-    properties_of_interest = [
-        (EnthalpyOfMixing, SubstanceType.Binary),
-        (Density, SubstanceType.Binary),
-        (ExcessMolarVolume, SubstanceType.Binary),
-    ]
-
+    # Define the type of finger print to use for the distance
+    # metric.
     finger_print_type = OEFPType_Tree
 
+    # Load in the training substances so we can avoid selecting
+    # them for the test set.
     training_mixtures = load_training_mixtures()
+
+    # Select the particular substances to include in the test set.
+    partial_function = functools.partial(
+        choose_substances,
+        finger_print_type=finger_print_type,
+        n_mixtures_per_environment=n_mixtures_per_environment,
+        training_mixtures=training_mixtures,
+    )
+
+    property_environments = []
+
+    for property_of_interest in properties_of_interest:
+        for environment in environments_of_interest:
+            property_environments.append((property_of_interest, environment))
 
     with Pool(n_processes) as pool:
 
-        partial_function = functools.partial(
-            choose_molecules,
-            finger_print_type=finger_print_type,
-            n_mixtures_per_environment=n_mixtures_per_environment,
-            training_mixtures=training_mixtures,
-            root_output_directory=root_output_directory,
+        selected_substances = list(
+            pool.starmap(partial_function, property_environments)
         )
 
-        property_environments = []
+    # Combine the selected substance lists.
+    substances_per_property = defaultdict(list)
 
-        for property_of_interest in properties_of_interest:
-            for environment in environments_of_interest:
-                property_environments.append((property_of_interest, environment))
+    for substance_list, (property_type, _) in zip(
+        selected_substances, property_environments
+    ):
+        substances_per_property[property_type].extend(substance_list)
 
-        list(pool.starmap(partial_function, property_environments))
+    # Remove any duplicate substances
+    substances_per_property = {x: [*set(y)] for x, y in substances_per_property.items()}
 
-    for property_of_interest in properties_of_interest:
+    for property_type, chosen_substances in substances_per_property.items():
 
-        property_name = property_to_file_name(*property_of_interest)
-        chosen_smiles = []
+        file_name = property_to_file_name(*property_type)
+        file_path = os.path.join(root_output_directory, file_name)
 
-        for environment in environments_of_interest:
+        # Save the chosen substances to disk.
+        smiles_to_pdf(chosen_substances, f"{file_path}.pdf")
 
-            data_path = os.path.join(
-                root_output_directory, environment, f"{property_name}.json"
-            )
+        with open(f"{file_path}.json", "w") as file:
+            json.dump(chosen_substances, file)
 
-            if not os.path.isfile(data_path):
-                continue
-
-            with open(data_path) as file:
-                chosen_smiles.extend(json.load(file))
-
-        chosen_smiles = [*{tuple(sorted(x)) for x in chosen_smiles}]
-
-        with open(
-            os.path.join(root_output_directory, f"{property_name}.json"), "w"
-        ) as file:
-            json.dump(chosen_smiles, file)
-
-        smiles_to_pdf(
-            chosen_smiles, os.path.join(root_output_directory, f"{property_name}.pdf"),
+        # Select the data points.
+        data_frame = choose_data_points(
+            property_type, substances_per_property[property_type], target_states, environments_of_interest
         )
 
-    # TODO: Select the individual data points.
+        data_frame.to_csv(f"{file_path}.csv")
 
 
 if __name__ == "__main__":

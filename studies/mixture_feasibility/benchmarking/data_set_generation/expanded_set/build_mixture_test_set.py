@@ -24,7 +24,10 @@ from nistdataselection.curation.filtering import (
     filter_undefined_stereochemistry,
 )
 from nistdataselection.curation.selection import StatePoint, select_data_points
-from nistdataselection.processing import load_processed_data_set, save_processed_data_set
+from nistdataselection.processing import (
+    load_processed_data_set,
+    save_processed_data_set,
+)
 from nistdataselection.utils import SubstanceType
 from nistdataselection.utils.utils import property_to_file_name, smiles_to_pdf
 
@@ -388,7 +391,13 @@ def choose_data_points(
         for environment in environments_of_interest:
 
             data_folder = os.path.join(
-                "..", "..", "..", "data_availability", "data_by_environments", environment, "all_data"
+                "..",
+                "..",
+                "..",
+                "data_availability",
+                "data_by_environments",
+                environment,
+                "all_data",
             )
 
             try:
@@ -529,7 +538,10 @@ def main():
 
         # Select the data points.
         data_frame = choose_data_points(
-            property_type, substances_per_property[property_type], target_states, environments_of_interest
+            property_type,
+            substances_per_property[property_type],
+            target_states,
+            environments_of_interest,
         )
 
         data_frame.to_csv(f"{file_path}.csv")

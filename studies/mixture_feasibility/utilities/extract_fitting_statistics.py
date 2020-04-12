@@ -136,6 +136,24 @@ def generate_statistics(target_options, target_data_set, estimated_data_set):
         data_row["Denom"] = denominator
         data_row["Term"] = objective_contribution
 
+        for gradient in estimated_property.gradients:
+
+            gradient_unit = default_unit
+
+            if gradient.key.attribute == "epsilon":
+                gradient_unit /= unit.kilocalorie / unit.mole
+            elif gradient.key.attribute == "rmin_half":
+                gradient_unit /= unit.angstrom
+
+            gradient_value = gradient.value.to(gradient_unit).magnitude
+
+            objective_gradient = (
+                2.0 * weight * delta * gradient_value / denominator ** 2
+            )
+            header = f"d {gradient.key.smirks} {gradient.key.attribute}"
+
+            data_row[header] = objective_gradient
+
         data_per_property[property_type].append(data_row)
 
     for property_type, data_rows in data_per_property.items():

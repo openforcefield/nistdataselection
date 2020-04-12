@@ -610,6 +610,171 @@ def main():
             uncertainty=UNDEFINED,
             source=MeasurementSource(doi="10.3891/acta.chem.scand.20-0536"),
         ),
+        # acetone
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=300.4 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CC(C)=O"),
+            value=30.848632 * unit.kilojoule / unit.mole,
+            uncertainty=0.008368 * unit.kilojoule / unit.mole,
+            source=MeasurementSource(doi="10.1021/ja01559a015"),
+        ),
+        # butan-2-one
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCC(C)=O"),
+            value=34.51 * unit.kilojoule / unit.mole,
+            uncertainty=0.04 * unit.kilojoule / unit.mole,
+            source=MeasurementSource(doi="0021-9614(79)90127-7"),
+        ),
+        # pentan-3-one
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCC(=O)CC"),
+            value=38.52 * unit.kilojoule / unit.mole,
+            uncertainty=UNDEFINED,
+            source=MeasurementSource(doi="10.1016/0021-9614(83)90091-5"),
+        ),
+        # 4-methylpentan-2-one
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CC(=O)CC(C)C"),
+            value=40.56 * unit.kilojoule / unit.mole,
+            uncertainty=UNDEFINED,
+            source=MeasurementSource(doi="10.1016/0021-9614(83)90091-5"),
+        ),
+        # 3-hexanone
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCCC(=O)CC"),
+            value=42.45 * unit.kilojoule / unit.mole,
+            uncertainty=UNDEFINED,
+            source=MeasurementSource(doi="10.1016/0021-9614(83)90091-5"),
+        ),
+        # 2-methylheptane
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCCCCC(C)C"),
+            value=39.66 * unit.kilojoule / unit.mole,
+            uncertainty=UNDEFINED,
+            source=MeasurementSource(doi="10.1135/cccc19790637"),
+        ),
+        # 3-methylpentane
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCC(C)CC"),
+            value=30.26 * unit.kilojoule / unit.mole,
+            uncertainty=UNDEFINED,
+            source=MeasurementSource(doi="10.1135/cccc19790637"),
+        ),
+        # 2-Methylhexane
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCCCC(C)C"),
+            value=34.85 * unit.kilojoule / unit.mole,
+            uncertainty=UNDEFINED,
+            source=MeasurementSource(doi="10.1135/cccc19790637"),
+        ),
+        # 2,3-Dimethylpentane
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCC(C)C(C)C"),
+            value=34.25 * unit.kilojoule / unit.mole,
+            uncertainty=UNDEFINED,
+            source=MeasurementSource(doi="10.1135/cccc19790637"),
+        ),
+        # Octane
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCCCCCCC"),
+            value=41.47 * unit.kilojoule / unit.mole,
+            uncertainty=UNDEFINED,
+            source=MeasurementSource(doi="10.1135/cccc19790637"),
+        ),
+        # Methyl Propyl Ether
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCCOC"),
+            value=27.57 * unit.kilojoule / unit.mole,
+            uncertainty=0.068925 * unit.kilojoule / unit.mole,
+            source=MeasurementSource(doi="10.1016/0021-9614(80)90152-4"),
+        ),
+        # Ethyl isopropyl ether
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCOC(C)C"),
+            value=30.04 * unit.kilojoule / unit.mole,
+            uncertainty=0.0751 * unit.kilojoule / unit.mole,
+            source=MeasurementSource(doi="10.1016/0021-9614(80)90152-4"),
+        ),
+        # Dipropyl ether
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCCOCCC"),
+            value=35.68 * unit.kilojoule / unit.mole,
+            uncertainty=0.0892 * unit.kilojoule / unit.mole,
+            source=MeasurementSource(doi="10.1016/0021-9614(80)90152-4"),
+        ),
+        # butyl methyl ether
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("CCCCOC"),
+            value=32.43 * unit.kilojoule / unit.mole,
+            uncertainty=0.081075 * unit.kilojoule / unit.mole,
+            source=MeasurementSource(doi="10.1016/0021-9614(80)90152-4"),
+        ),
+        # methyl isopropyl ether
+        EnthalpyOfVaporization(
+            thermodynamic_state=ThermodynamicState(
+                temperature=298.15 * unit.kelvin, pressure=1.0 * unit.atmosphere
+            ),
+            phase=h_vap_phase,
+            substance=Substance.from_components("COC(C)C"),
+            value=26.41 * unit.kilojoule / unit.mole,
+            uncertainty=0.066025 * unit.kilojoule / unit.mole,
+            source=MeasurementSource(doi="10.1016/0021-9614(80)90152-4"),
+        ),
     )
 
     output_directory = "sourced_h_vap_data"

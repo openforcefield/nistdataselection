@@ -1,4 +1,5 @@
-"""
+"""A script which combines the pure and mixture test sets
+into a single data set object.
 """
 import logging
 import os

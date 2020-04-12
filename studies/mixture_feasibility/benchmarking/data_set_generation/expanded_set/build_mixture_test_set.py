@@ -1,4 +1,5 @@
-"""
+"""A script to select the mixture property data points to include
+in the expanded test set.
 """
 import functools
 import json

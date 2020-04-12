@@ -1,4 +1,5 @@
-"""
+"""A script to select the pure property data points to include
+in the expanded test set.
 """
 import logging
 import os

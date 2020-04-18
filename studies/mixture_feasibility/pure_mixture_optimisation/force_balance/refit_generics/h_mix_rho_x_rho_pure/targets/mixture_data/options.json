@@ -1,0 +1,32 @@
+{
+    "connection_options": {
+        "server_address": "localhost",
+        "server_port": 8006
+    },
+    "data_set_path": "training_set.json",
+    "denominators": {
+        "Density": {
+            "@type": "evaluator.unit.Quantity",
+            "unit": "g / ml",
+            "value": 0.04821932532357388
+        },
+        "EnthalpyOfMixing": {
+            "@type": "evaluator.unit.Quantity",
+            "unit": "kJ / mol",
+            "value": 1.5943650773897426
+        }
+    },
+    "estimation_options": {
+        "batch_mode": {
+            "@type": "evaluator.client.client.BatchMode",
+            "value": "SharedComponents"
+        },
+        "calculation_layers": [
+            "SimulationLayer"
+        ]
+    },
+    "weights": {
+        "Density": 1.0,
+        "EnthalpyOfMixing": 1.0
+    }
+}

@@ -15,42 +15,7 @@ class Statistics(Enum):
     Tau = "Tau"
 
 
-def compute_statistic_unit(base_unit, statistics_type):
-    """Computes the correct unit for a given type of statistic.
-
-    Parameters
-    ----------
-    base_unit: unit.Unit
-        The original unit of the property.
-    statistics_type: Statistics
-        The type of statistic to get the unit for.
-
-    Returns
-    -------
-    unit.Unit
-        The unit the statistic should be given in.
-    """
-    if statistics_type == Statistics.Slope:
-        return None
-    elif statistics_type == Statistics.Intercept:
-        return base_unit
-    elif statistics_type == Statistics.R:
-        return None
-    elif statistics_type == Statistics.R2:
-        return None
-    elif statistics_type == Statistics.P:
-        return None
-    elif statistics_type == Statistics.RMSE:
-        return base_unit
-    elif statistics_type == Statistics.MSE:
-        return base_unit
-    elif statistics_type == Statistics.MUE:
-        return base_unit
-    elif statistics_type == Statistics.Tau:
-        return None
-
-
-def compute_statistics(measured_values, estimated_values, statistics):
+def _compute_statistics(measured_values, estimated_values, statistics):
     """Calculates a collection of common statistics comparing the measured
     and estimated values.
 
@@ -141,7 +106,7 @@ def compute_statistics(measured_values, estimated_values, statistics):
     return numpy.array([summary_statistics[x] for x in statistics]), statistics
 
 
-def compute_bootstrapped_statistics(
+def _compute_bootstrapped_statistics(
     measured_values,
     measured_stds,
     estimated_values,
@@ -181,7 +146,7 @@ def compute_bootstrapped_statistics(
     sample_count = len(measured_values)
 
     # Compute the mean of the statistics.
-    mean_statistics, statistics_labels = compute_statistics(
+    mean_statistics, statistics_labels = _compute_statistics(
         measured_values, estimated_values, statistics
     )
 
@@ -204,7 +169,7 @@ def compute_bootstrapped_statistics(
         if estimated_stds is not None:
             sample_estimated_values += numpy.random.normal(0.0, estimated_stds)
 
-        sample_statistics[sample_index], _ = compute_statistics(
+        sample_statistics[sample_index], _ = _compute_statistics(
             sample_measured_values, sample_estimated_values, statistics
         )
 
@@ -238,3 +203,104 @@ def compute_bootstrapped_statistics(
         )
 
     return means, standard_errors, confidence_intervals
+
+
+def compute_statistics(data_frame, property_type, bootstrap_iterations):
+    """Computes a set of statistics comparing deviations of a set
+    of estimated properties from the corresponding reference properties
+
+    Parameters
+    ----------
+    data_frame: pandas.DataFrame
+        The data frame which contain both the estimated and reference
+        properties.
+    property_type: type of PhysicalProperty
+        The type of physical property to compute the statistics for.
+    bootstrap_iterations: int
+        The number of bootstrap intervals to perform when computing the
+        standard error and confidence intervals.
+
+    Returns
+    -------
+    dict of Statistics and float
+        The value of each statistic.
+    dict of Statistics and float
+        The standard deviation of each statistic.
+    dict of Statistics and tuple of float and float
+        The 95% confidence intervals of each statistic.
+    """
+
+    # noinspection PyUnresolvedReferences
+    default_unit = property_type.default_unit()
+
+    measured_values = data_frame[
+        f"Reference {property_type.__name__} Value ({default_unit:~})"
+    ]
+    estimated_values = data_frame[
+        f"Estimated {property_type.__name__} Value ({default_unit:~})"
+    ]
+    estimated_std = data_frame[
+        f"Estimated {property_type.__name__} Uncertainty ({default_unit:~})"
+    ]
+
+    statistics = [
+        Statistics.Slope,
+        Statistics.Intercept,
+        Statistics.R,
+        Statistics.R2,
+        Statistics.P,
+        Statistics.RMSE,
+        Statistics.MSE,
+        Statistics.MUE,
+        Statistics.Tau,
+    ]
+
+    (
+        bootstrapped_statistics,
+        bootstrapped_std,
+        bootstrapped_ci,
+    ) = _compute_bootstrapped_statistics(
+        measured_values,
+        None,
+        estimated_values,
+        estimated_std,
+        statistics=statistics,
+        bootstrap_iterations=bootstrap_iterations,
+    )
+
+    return bootstrapped_statistics, bootstrapped_std, bootstrapped_ci
+
+
+def compute_statistic_unit(base_unit, statistics_type):
+    """Computes the correct unit for a given type of statistic.
+
+    Parameters
+    ----------
+    base_unit: unit.Unit
+        The original unit of the property.
+    statistics_type: Statistics
+        The type of statistic to get the unit for.
+
+    Returns
+    -------
+    unit.Unit
+        The unit the statistic should be given in.
+    """
+    if statistics_type == Statistics.Slope:
+        return None
+    elif statistics_type == Statistics.Intercept:
+        return base_unit
+    elif statistics_type == Statistics.R:
+        return None
+    elif statistics_type == Statistics.R2:
+        return None
+    elif statistics_type == Statistics.P:
+        return None
+    elif statistics_type == Statistics.RMSE:
+        return base_unit
+    elif statistics_type == Statistics.MSE:
+        return base_unit
+    elif statistics_type == Statistics.MUE:
+        return base_unit
+    elif statistics_type == Statistics.Tau:
+        return None

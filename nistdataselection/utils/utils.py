@@ -145,7 +145,7 @@ def property_to_title(
     if property_unit is not None and property_unit != unit.dimensionless:
 
         if not latex_unit:
-            title = f"{title} (${property_unit:~}$)"
+            title = f"{title} ({property_unit:~})"
         else:
             title = f"{title} (${property_unit:~L}$)"
 

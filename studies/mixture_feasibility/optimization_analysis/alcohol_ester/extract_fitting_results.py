@@ -47,6 +47,14 @@ def main():
             "alcohol_ester",
             "h_mix_rho_x_rho_pure_h_vap",
         ),
+        "h_mix_v_excess": os.path.join(
+            "..",
+            "..",
+            "mixture_optimisation",
+            "force_balance",
+            "alcohol_ester",
+            "h_mix_v_excess",
+        ),
     }
 
     environments = {

@@ -2,12 +2,8 @@ import os
 
 from evaluator.properties import Density, EnthalpyOfMixing, EnthalpyOfVaporization
 
-from nistdataselection.analysis.plotting import (
-    plot_objective_per_iteration,
-    plot_statistic_per_iteration,
-)
-from nistdataselection.analysis.statistics import Statistics
-from nistdataselection.utils import SubstanceType
+from nistdataselection.analysis.plotting import plot_gradient_per_environment
+from nistdataselection.utils.utils import SubstanceType
 
 
 def main():
@@ -31,12 +27,8 @@ def main():
         (EnthalpyOfMixing, SubstanceType.Binary),
     ]
 
-    # Plot a summary of each statistic per iteration.
-    for property_type in property_types:
-        plot_statistic_per_iteration(property_type, Statistics.RMSE, output_directory)
-
-    # Plot the statistics per environment
-    plot_objective_per_iteration(study_names, output_directory)
+    plot_gradient_per_environment(property_types, study_names, output_directory, 0)
+    plot_gradient_per_environment(property_types, study_names, output_directory, 1)
 
 
 if __name__ == "__main__":

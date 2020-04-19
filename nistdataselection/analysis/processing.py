@@ -709,7 +709,7 @@ def _compute_data_rows(
                 data_path, property_type, substance_type
             )
 
-        except (ValueError, AssertionError):
+        except FileNotFoundError:
             return []
 
         data_rows.extend(
@@ -736,7 +736,7 @@ def _compute_data_rows(
                 iteration_data_path, property_type, substance_type
             )
 
-        except (ValueError, AssertionError):
+        except FileNotFoundError:
             continue
 
         data_rows.extend(
@@ -906,7 +906,7 @@ def extract_gradients(
                     iteration_data_path, property_type, substance_type
                 )
 
-            except (ValueError, AssertionError):
+            except FileNotFoundError:
                 continue
 
             if len(data_frame) == 0:

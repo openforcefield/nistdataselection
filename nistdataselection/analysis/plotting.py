@@ -5,6 +5,7 @@ import numpy
 import pandas
 import seaborn
 from matplotlib import pyplot
+from openforcefield.typing.engines.smirnoff import ForceField
 
 from nistdataselection.processing import load_processed_data_set
 from nistdataselection.utils.utils import (
@@ -35,6 +36,14 @@ def plot_categories_with_custom_ci(x, y, hue, lower_bound, upper_bound, **kwargs
 
     plot_data = data.pivot(index=x, columns=hue, values=y)
     plot_data.plot(kind="bar", yerr=ci, ax=pyplot.gca(), **kwargs)
+
+
+def plot_categories(x, y, hue, **kwargs):
+
+    data = kwargs.pop("data")
+
+    plot_data = data.pivot(index=x, columns=hue, values=y)
+    plot_data.plot(kind="bar", ax=pyplot.gca(), **kwargs)
 
 
 def plot_bar_with_custom_ci(x, y, lower_bound, upper_bound, **kwargs):
@@ -342,9 +351,13 @@ def plot_statistic_per_environment(
         )
 
 
-def plot_statistic_per_iteration(property_type, statistic_type, output_directory):
+def plot_statistic_per_iteration(
+    property_type, statistic_type, output_directory, per_composition=False
+):
 
-    summary_data_path = os.path.join("statistics", "per_composition.csv")
+    data_name = "per_environment.csv" if not per_composition else "per_composition.csv"
+
+    summary_data_path = os.path.join("statistics", data_name)
 
     summary_data = pandas.read_csv(summary_data_path)
 
@@ -538,3 +551,72 @@ def plot_gradient_per_environment(
             plot.savefig(os.path.join(folder_path, f"{file_name}_gradient.png"))
 
             pyplot.close("all")
+
+
+def plot_parameter_changes(
+    original_parameter_path,
+    optimized_parameter_directory,
+    study_names,
+    parameter_smirks,
+    output_directory,
+):
+
+    from simtk import unit as simtk_unit
+
+    parameter_attributes = ["epsilon", "rmin_half"]
+    default_units = {
+        "epsilon": simtk_unit.kilocalories_per_mole,
+        "rmin_half": simtk_unit.angstrom,
+    }
+
+    # Find the values of the original and optimized parameters.
+    data_rows = []
+
+    for study_name in study_names:
+
+        original_force_field = ForceField(
+            original_parameter_path, allow_cosmetic_attributes=True,
+        )
+        optimized_force_field = ForceField(
+            os.path.join(optimized_parameter_directory, f"{study_name}.offxml"),
+            allow_cosmetic_attributes=True,
+        )
+
+        original_handler = original_force_field.get_parameter_handler("vdW")
+        optimized_handler = optimized_force_field.get_parameter_handler("vdW")
+
+        for parameter in original_handler.parameters:
+
+            if parameter.smirks not in parameter_smirks:
+                continue
+
+            for attribute_type in parameter_attributes:
+
+                original_value = getattr(parameter, attribute_type)
+                optimized_value = getattr(
+                    optimized_handler.parameters[parameter.smirks], attribute_type
+                )
+
+                percentage_change = optimized_value - original_value
+
+                data_row = {
+                    "Study": study_name,
+                    "Smirks": parameter.smirks,
+                    "Attribute": f"{attribute_type} ({default_units[attribute_type]})",
+                    "Delta": percentage_change.value_in_unit(
+                        default_units[attribute_type]
+                    ),
+                }
+
+                data_rows.append(data_row)
+
+    parameter_data = pandas.DataFrame(data_rows)
+
+    palette = seaborn.color_palette(n_colors=len(study_names))
+
+    plot = seaborn.FacetGrid(parameter_data, row="Attribute", height=4.0, aspect=2.0,)
+    plot.map_dataframe(plot_categories, "Smirks", "Delta", "Study", color=palette)
+
+    plot.add_legend()
+
+    plot.savefig(os.path.join(output_directory, f"parameter_changes.png"))

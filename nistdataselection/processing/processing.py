@@ -2,6 +2,7 @@
 A utility for taking a collection of ThermoML data files, and
 formatting them into a more easily manipulable format.
 """
+import errno
 import functools
 import glob
 import logging
@@ -306,7 +307,8 @@ def load_processed_data_set(directory, property_type, substance_type):
         The loaded data set.
     """
 
-    assert os.path.isdir(directory)
+    if not os.path.isdir(directory):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), directory)
 
     property_type = property_to_snake_case(property_type)
 
@@ -315,11 +317,7 @@ def load_processed_data_set(directory, property_type, substance_type):
     file_path = os.path.join(directory, file_name)
 
     if not os.path.isfile(file_path):
-
-        raise ValueError(
-            f"No data file could be found for "
-            f"{substance_type} {property_type}s at {file_path}"
-        )
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), file_path)
 
     data_set = pandas.read_csv(file_path)
 

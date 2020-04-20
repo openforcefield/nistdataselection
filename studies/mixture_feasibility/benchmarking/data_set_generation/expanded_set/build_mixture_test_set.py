@@ -321,7 +321,7 @@ def choose_substances(
             *property_of_interest,
         )
 
-    except AssertionError:
+    except FileNotFoundError:
         return []
 
     # Filter out the training mixtures.
@@ -403,7 +403,7 @@ def choose_data_points(
 
             try:
                 data_frame = load_processed_data_set(data_folder, *property_of_interest)
-            except AssertionError:
+            except FileNotFoundError:
                 continue
 
             if len(data_frame) == 0:

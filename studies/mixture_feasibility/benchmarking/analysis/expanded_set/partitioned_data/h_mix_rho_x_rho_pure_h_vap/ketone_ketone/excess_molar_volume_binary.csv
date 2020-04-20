@@ -1,0 +1,4 @@
+Id,Temperature (K),Pressure (kPa),N Components,Component 1,Mole Fraction 1,Component 2,Mole Fraction 2,Reference ExcessMolarVolume Value (cm ** 3 / mol),Reference ExcessMolarVolume Uncertainty (cm ** 3 / mol),Estimated ExcessMolarVolume Value (cm ** 3 / mol),Estimated ExcessMolarVolume Uncertainty (cm ** 3 / mol),Environment 1,Environment 2
+507f41bed88047729b119612de949c85,298.15,101.0,2,CCC(C)=O,0.7605,O=C1CCCCC1,0.2395,-0.7296896431788689,0.0,-0.22557241907770245,0.046108194283112386,ketone,ketone
+f0da651cbfd9493382fd22f090711e6a,298.15,101.0,2,CCC(C)=O,0.2539,O=C1CCCCC1,0.7461,-0.8292559746854664,0.0,-0.2604361845847318,0.03258938811681823,ketone,ketone
+e781bdf3063943f3beb603d631c98df4,298.15,101.0,2,CCC(C)=O,0.4757,O=C1CCCCC1,0.5243,-1.1137580733953882,0.0,-0.3267904935882801,0.037168467655046084,ketone,ketone

@@ -1,0 +1,4 @@
+Id,Temperature (K),Pressure (kPa),N Components,Component 1,Mole Fraction 1,Component 2,Mole Fraction 2,Reference EnthalpyOfMixing Value (kJ / mol),Reference EnthalpyOfMixing Uncertainty (kJ / mol),Estimated EnthalpyOfMixing Value (kJ / mol),Estimated EnthalpyOfMixing Uncertainty (kJ / mol),Environment 1,Environment 2
+4ddec0c2fdd7476aaac9d710b9b91f55,303.15,101.0,2,C1COCCO1,0.47200000000000003,O=CO,0.528,-1.6769999999999998,0.0,1.03808763074165,0.03354047198534888,ether,ester
+e1c8ca3dacbb407dbe1ac72a9b16fc24,303.15,101.0,2,C1COCCO1,0.225,O=CO,0.775,-0.8134,0.0,1.1315517231852539,0.028284184502429702,ether,ester
+f953ed2378de4535b9a1746a829fe973,303.15,101.0,2,C1COCCO1,0.762,O=CO,0.23800000000000002,-1.148,0.0,0.6154402743084546,0.03564540051618957,ether,ester

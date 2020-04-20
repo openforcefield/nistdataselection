@@ -1,0 +1,4 @@
+Id,Temperature (K),Pressure (kPa),N Components,Component 1,Mole Fraction 1,Reference EnthalpyOfVaporization Value (kJ / mol),Reference EnthalpyOfVaporization Uncertainty (kJ / mol),Estimated EnthalpyOfVaporization Value (kJ / mol),Estimated EnthalpyOfVaporization Uncertainty (kJ / mol),Environment 1
+cc60bc98c0a741118aa7c02888e56746,298.16,101.325,1,O=C1CCCC1,1.0,42.63,0.0,45.57616658906377,0.25073498328759236,ketone
+d511f5e790d24de79dd7814e9a9f94fa,298.16,101.325,1,O=C1CCCCC1,1.0,44.89,0.0,50.76501068756469,0.30357563130135484,ketone
+76b745b785a14cb58c26239496c8114c,298.15,101.325,1,CCCC(C)=O,1.0,38.43,0.0,41.94843429304438,0.290867855320703,ketone

@@ -1,0 +1,4 @@
+Id,Temperature (K),Pressure (kPa),N Components,Component 1,Mole Fraction 1,Component 2,Mole Fraction 2,Reference EnthalpyOfMixing Value (kJ / mol),Reference EnthalpyOfMixing Uncertainty (kJ / mol),Estimated EnthalpyOfMixing Value (kJ / mol),Estimated EnthalpyOfMixing Uncertainty (kJ / mol),Environment 1,Environment 2
+7eb74829580d4d45a03620ab55b1b128,298.15,99.0,2,CCCCCC,0.7515,C1CCCCC1,0.2485,0.14,0.0,0.37716631370598463,0.04590725098128783,alkane,alkane
+6bf8ecff13d54817b54656490b16ed4d,298.15,101.0,2,CCCCCC,0.5168,C1CCCCC1,0.4832,0.2144,0.0,0.39214545605491935,0.04108291931256146,alkane,alkane
+fbf92f7a99004540aa4e3a5b35ec322b,298.15,99.0,2,CCCCCC,0.2298,C1CCCCC1,0.7702,0.182,0.0,0.370162907876491,0.04245181961822025,alkane,alkane

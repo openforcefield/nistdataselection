@@ -1,0 +1,4 @@
+Id,Temperature (K),Pressure (kPa),N Components,Component 1,Mole Fraction 1,Reference Density Value (g / ml),Reference Density Uncertainty (g / ml),Estimated Density Value (g / ml),Estimated Density Uncertainty (g / ml),Environment 1
+d93d36a8c2de4cd691c4d50711bebe2a,298.15,101.325,1,O=C1CCCC1,1.0,0.9453,0.0,0.928683394080138,0.00020982103224811104,ketone
+57ab5a06f0324cd1aa4c0b08c4d2be3c,298.15,101.325,1,O=C1CCCCC1,1.0,0.9430000000000002,0.0,0.9316915617015025,0.0003592521815613003,ketone
+a98802def82c4a4e92b6795e6b46b212,298.15,101.325,1,CCCC(C)=O,1.0,0.8019900000000002,0.0,0.7903878533101828,0.00022661678591864094,ketone

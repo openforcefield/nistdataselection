@@ -1,0 +1,5 @@
+Id,Temperature (K),Pressure (kPa),N Components,Component 1,Mole Fraction 1,Reference EnthalpyOfVaporization Value (kJ / mol),Reference EnthalpyOfVaporization Uncertainty (kJ / mol),Estimated EnthalpyOfVaporization Value (kJ / mol),Estimated EnthalpyOfVaporization Uncertainty (kJ / mol),Environment 1
+07e3edf4d4d14d76bb9c8df57dfca568,298.15,101.325,1,C1CCOCC1,1.0,34.94,0.0,39.634721206946786,0.26885863893944945,ether
+cf3ad1b9915e4f17ab540235d55f6011,298.15,101.325,1,COC(C)(C)C,1.0,32.42,0.0,31.671706999226267,0.25808101530562916,ether
+aac032810be04c17a234fa2eca70f46c,298.15,101.325,1,CC(C)OC(C)C,1.0,32.12,0.0,34.95238730391558,0.32127587194659907,ether
+664ed486364b4e89b9dfcb2a45870616,298.15,101.325,1,C1COCCO1,1.0,38.64,0.0,50.62971289739398,0.23652323668125336,ether

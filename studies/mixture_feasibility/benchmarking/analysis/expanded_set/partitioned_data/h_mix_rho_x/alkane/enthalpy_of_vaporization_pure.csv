@@ -1,0 +1,6 @@
+Id,Temperature (K),Pressure (kPa),N Components,Component 1,Mole Fraction 1,Reference EnthalpyOfVaporization Value (kJ / mol),Reference EnthalpyOfVaporization Uncertainty (kJ / mol),Estimated EnthalpyOfVaporization Value (kJ / mol),Estimated EnthalpyOfVaporization Uncertainty (kJ / mol),Environment 1
+cf756b8f9e014625927ca0ca0c66fc5f,298.15,101.325,1,CCCCCCC,1.0,36.58,0.0,38.747372165512395,0.32555923295693423,alkane
+ec0cdf538d6441a88d7543b950e8bcc3,298.15,101.325,1,CCCCCC,1.0,31.55,0.0,33.731058977087955,0.30817341501497275,alkane
+55a515d11b8d46a690e6ce3e35bfb285,298.15,101.325,1,CC(C)CC(C)(C)C,1.0,35.13,0.0,41.42597236944108,0.3205905798970685,alkane
+8ee7c82e60b5479288b3482b428d8b84,298.15,101.325,1,CC1CCCCC1,1.0,35.38,0.0,39.885312551265976,0.30254429986380604,alkane
+413e16d0dd5d41979421011544e9394a,298.15,101.325,1,C1CCCCC1,1.0,33.02,0.0,36.14866352689024,0.2043295963684181,alkane

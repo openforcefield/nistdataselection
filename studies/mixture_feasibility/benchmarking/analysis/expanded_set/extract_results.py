@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def main():
 
-    n_processes = 4
+    n_processes = 2
 
     # Define the paths to the studies
     study_paths = {
@@ -23,6 +23,9 @@ def main():
         ),
         "h_mix_rho_x_rho_pure": os.path.join(
             "..", "..", "results", "expanded_set", "h_mix_rho_x_rho_pure.json"
+        ),
+        "h_mix_rho_x_rho_pure_h_vap": os.path.join(
+            "..", "..", "results", "expanded_set", "h_mix_rho_x_rho_pure_h_vap.json"
         ),
         "openff-1.0.0": os.path.join(
             "..", "..", "results", "expanded_set", "openff-1.0.0.json"

@@ -18,7 +18,7 @@ def main():
     os.makedirs(output_directory, exist_ok=True)
 
     # Define how many processes to parallelize the computations over.
-    n_processes = 4
+    n_processes = 2
     # Define how many bootstrap iterations to perform when computing
     # the statistics.
     n_bootstrap_iterations = 2000

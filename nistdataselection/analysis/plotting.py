@@ -247,8 +247,6 @@ def plot_statistic(statistic_types, output_directory):
         size=4.0,
         aspect=1.0,
         sharey=False,
-        # margin_titles=True
-        # gridspec_kws={"wspace": 0.2},
     )
     plot.map_dataframe(
         plot_bar_with_custom_ci,
@@ -352,7 +350,11 @@ def plot_statistic_per_environment(
 
 
 def plot_statistic_per_iteration(
-    property_type, statistic_type, output_directory, per_composition=False
+    property_type,
+    statistic_type,
+    output_directory,
+    per_composition=False,
+    max_iterations=-1,
 ):
 
     data_name = "per_environment.csv" if not per_composition else "per_composition.csv"
@@ -369,8 +371,15 @@ def plot_statistic_per_iteration(
     if len(summary_data) == 0:
         return
 
+    n_iterations = summary_data["Iteration"].max()
+
+    if max_iterations < 0:
+        max_iterations = n_iterations
+
     summary_data_iter_0 = summary_data[summary_data["Iteration"] == 0]
-    summary_data_iter_remaining = summary_data[summary_data["Iteration"] > 0]
+    summary_data_iter_remaining = summary_data[
+        (summary_data["Iteration"] > 0) & (summary_data["Iteration"] <= max_iterations)
+    ]
 
     summary_data_iter_remaining = pandas.merge(
         summary_data_iter_remaining,
@@ -400,7 +409,7 @@ def plot_statistic_per_iteration(
         col="Statistic",
         row="Study",
         size=4.0,
-        aspect=10.0,
+        aspect=5.0,
         sharey=False,
     )
     plot.map_dataframe(
@@ -413,7 +422,7 @@ def plot_statistic_per_iteration(
         color=palette,
     )
 
-    plot.set_titles("{col_name}|{row_name}")
+    plot.set_titles(f"{statistic_type.value}_n - {statistic_type.value}_0|{{row_name}}")
 
     for i, axes_row in enumerate(plot.axes):
 
@@ -427,6 +436,11 @@ def plot_statistic_per_iteration(
                 axes_col.set_ylabel(f"{row.strip()}")
 
     plot.add_legend()
+
+    pyplot.subplots_adjust(top=0.92)
+
+    property_title = property_to_title(*property_type)
+    plot.fig.suptitle(property_title)
 
     file_name = property_to_file_name(*property_type)
     file_name = f"{file_name}_{statistic_type.value.lower()}.png"
@@ -501,6 +515,7 @@ def plot_gradient_per_environment(
                 sharex=False,
                 sharey=False,
                 hue_order=environments,
+                col_wrap=3,
                 palette=palette,
                 size=4.0,
                 aspect=1.0,
@@ -521,21 +536,21 @@ def plot_gradient_per_environment(
 
             max_axis_lim = -1e10
 
-            for _, axes_row in enumerate(plot.axes):
-                for _, axis in enumerate(axes_row):
+            for _, axis in enumerate(plot.axes):
+                # for _, axis in enumerate(axes_row):
 
-                    x_lim = tuple(abs(x) for x in axis.get_xlim())
-                    y_lim = tuple(abs(x) for x in axis.get_ylim())
+                x_lim = tuple(abs(x) for x in axis.get_xlim())
+                y_lim = tuple(abs(x) for x in axis.get_ylim())
 
-                    max_axis_lim = max([max_axis_lim, *x_lim, max(y_lim)])
+                max_axis_lim = max([max_axis_lim, *x_lim, max(y_lim)])
 
-            for _, axes_row in enumerate(plot.axes):
-                for _, axis in enumerate(axes_row):
-                    axis.set_xlim((-max_axis_lim, max_axis_lim))
-                    axis.set_ylim((-max_axis_lim, max_axis_lim))
+            for _, axis in enumerate(plot.axes):
+                # for _, axis in enumerate(axes_row):
+                axis.set_xlim((-max_axis_lim, max_axis_lim))
+                axis.set_ylim((-max_axis_lim, max_axis_lim))
 
-                    axis.xaxis.labelpad = 120
-                    axis.yaxis.labelpad = 120
+                axis.xaxis.labelpad = 120
+                axis.yaxis.labelpad = 120
 
             pyplot.subplots_adjust(top=0.85)
 
@@ -614,7 +629,9 @@ def plot_parameter_changes(
 
     palette = seaborn.color_palette(n_colors=len(study_names))
 
-    plot = seaborn.FacetGrid(parameter_data, row="Attribute", height=4.0, aspect=2.0,)
+    plot = seaborn.FacetGrid(
+        parameter_data, row="Attribute", height=4.0, aspect=2.0, sharey=False
+    )
     plot.map_dataframe(plot_categories, "Smirks", "Delta", "Study", color=palette)
 
     plot.add_legend()

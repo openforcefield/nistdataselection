@@ -1,12 +1,7 @@
 import os
 from glob import glob
 
-from evaluator.properties import (
-    Density,
-    EnthalpyOfMixing,
-    EnthalpyOfVaporization,
-    ExcessMolarVolume,
-)
+from evaluator.properties import Density, EnthalpyOfMixing, EnthalpyOfVaporization
 
 from nistdataselection.analysis.processing import generate_statistics
 from nistdataselection.utils import SubstanceType
@@ -18,7 +13,7 @@ def main():
     os.makedirs(output_directory, exist_ok=True)
 
     # Define how many processes to parallelize the computations over.
-    n_processes = 4
+    n_processes = 2
     # Define how many bootstrap iterations to perform when computing
     # the statistics.
     n_bootstrap_iterations = 2000
@@ -36,7 +31,6 @@ def main():
         (Density, SubstanceType.Pure),
         (EnthalpyOfVaporization, SubstanceType.Pure),
         (Density, SubstanceType.Binary),
-        (ExcessMolarVolume, SubstanceType.Binary),
         (EnthalpyOfMixing, SubstanceType.Binary),
     ]
 

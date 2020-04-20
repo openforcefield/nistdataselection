@@ -33,7 +33,13 @@ def main():
 
     # Plot a summary of each statistic per iteration.
     for property_type in property_types:
-        plot_statistic_per_iteration(property_type, Statistics.RMSE, output_directory)
+        plot_statistic_per_iteration(
+            property_type,
+            Statistics.RMSE,
+            output_directory,
+            per_composition=property_type[1] == SubstanceType.Binary,
+            max_iterations=5,
+        )
 
     # Plot the statistics per environment
     plot_objective_per_iteration(study_names, output_directory)

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def main():
 
-    n_processes = 4
+    n_processes = 2
 
     # Define the paths to the studies
     study_paths = {
@@ -21,14 +21,14 @@ def main():
         "h_mix_rho_x": os.path.join(
             "..", "..", "results", "alcohol_ester", "h_mix_rho_x.json"
         ),
-        "h_mix_v_excess": os.path.join(
-            "..", "..", "results", "alcohol_ester", "h_mix_v_excess.json"
-        ),
         "h_mix_rho_x_rho_pure": os.path.join(
             "..", "..", "results", "alcohol_ester", "h_mix_rho_x_rho_pure.json"
         ),
         "h_mix_rho_x_rho_pure_h_vap": os.path.join(
             "..", "..", "results", "alcohol_ester", "h_mix_rho_x_rho_pure_h_vap.json"
+        ),
+        "h_mix_v_excess": os.path.join(
+            "..", "..", "results", "alcohol_ester", "h_mix_v_excess.json"
         ),
         "openff-1.0.0": os.path.join(
             "..", "..", "results", "alcohol_ester", "openff-1.0.0.json"
@@ -48,9 +48,6 @@ def main():
             chemical_environment_codes["caboxylic_acid"],
             chemical_environment_codes["ester"],
         ],
-        "ether": [chemical_environment_codes["ether"]],
-        "ketone": [chemical_environment_codes["ketone"]],
-        "alkane": [""],
     }
 
     with Pool(n_processes) as pool:

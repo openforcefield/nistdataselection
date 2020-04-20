@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def main():
 
-    n_processes = 4
+    n_processes = 2
 
     # Define the paths to the studies
     study_paths = {

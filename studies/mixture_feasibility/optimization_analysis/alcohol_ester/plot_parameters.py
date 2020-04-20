@@ -12,7 +12,8 @@ def main():
     study_names = [
         "h_mix_rho_x",
         "h_mix_rho_x_rho_pure",
-        # "h_mix_rho_x_rho_pure_h_vap",
+        "h_mix_rho_x_rho_pure_h_vap",
+        "h_mix_v_excess",
         "rho_pure_h_vap",
     ]
 

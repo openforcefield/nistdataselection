@@ -29,5 +29,6 @@ dependencies:
   - openff-evaluator
   - matplotlib
   - scikit-learn
+  - seaborn
   - tabulate
   - tqdm

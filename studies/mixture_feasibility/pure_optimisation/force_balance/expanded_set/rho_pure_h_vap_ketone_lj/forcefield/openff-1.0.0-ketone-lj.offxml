@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <SMIRNOFF version="0.3" aromaticity_model="OEAroModel_MDL">
-    <!-- This is the initial "Parsley" force field released by the Open Force Field Initiative. -->
+    <!-- This is the initial "Parsley" force field released by the Open Force Field Initiative, modified with an additional LJ type. -->
+    <!-- This additional type is for hydrogen attached to carbon next to carbonyl in ketone/amide -->
     <!-- The Parsley force field is available with and without bond constraints to hydrogen. -->
     <!-- This file contains bond constraints to hydrogen, and is suitable for long-timestep simulations. -->
 	<Author>The Open Force Field Initiative</Author>
